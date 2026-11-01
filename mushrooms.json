@@ -1,0 +1,479 @@
+{
+  "meta": {
+    "region": "Catalunya",
+    "focus_comarques": ["Berguedà", "Ripollès", "Cerdanya"],
+    "season": "autumn",
+    "version": "1.0"
+  },
+  "species": [
+    {
+      "id": "rovelló",
+      "common_name": "Rovelló",
+      "scientific_name": "Lactarius sanguifluus",
+      "aka": ["Pinetell", "Esclata-sang"],
+      "trees": ["Pinus sylvestris", "Pinus nigra"],
+      "tree_keywords": ["pi roig", "pi negre", "scots pine", "black pine"],
+      "prefers_scots_pine": true,
+      "soil": {
+        "type": "calcareous",
+        "keyword": ["calcícola", "calcàries", "mesòfil", "neutrobàsic"],
+        "ph": "basic"
+      },
+      "altitude_m": { "min": 600, "ideal_min": 800, "ideal_max": 1400, "max": 1800 },
+      "slope_aspect": ["south", "southwest"],
+      "temperature_c": { "min": 5, "ideal_min": 10, "ideal_max": 20, "max": 25 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 5,
+      "wind_sensitivity": "high",
+      "notes": "Prefers open pine forests (reforestation, no undergrowth). Solana (south-facing). Calcareous soil. Emerges well after rain + mild temps."
+    },
+    {
+      "id": "cep",
+      "common_name": "Cep",
+      "scientific_name": "Boletus edulis",
+      "aka": ["Sureny"],
+      "trees": ["Pinus sylvestris", "Pinus nigra", "Fagus sylvatica", "Quercus spp."],
+      "tree_keywords": ["pi roig", "pi negre", "faig", "roure", "scots pine", "beech", "oak"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": ["acidòfil", "calcícola", "mesòfil"],
+        "ph": "neutral_to_slightly_acid"
+      },
+      "altitude_m": { "min": 800, "ideal_min": 1200, "ideal_max": 1800, "max": 2200 },
+      "slope_aspect": ["north", "northeast"],
+      "temperature_c": { "min": 8, "ideal_min": 15, "ideal_max": 22, "max": 26 },
+      "rain_trigger_mm": 25,
+      "rain_window_days": 10,
+      "dry_spell_before_days": 7,
+      "wind_sensitivity": "medium",
+      "notes": "Likes sustained moisture. High altitude. Obaga (north-facing). Prefers acidic soils but found in both types."
+    },
+    {
+      "id": "fredolic",
+      "common_name": "Fredolic",
+      "scientific_name": "Tricholoma terreum",
+      "aka": [],
+      "trees": ["Pinus sylvestris", "Pinus nigra", "Abies alba"],
+      "tree_keywords": ["pi roig", "pi negre", "avet", "scots pine", "black pine", "fir"],
+      "prefers_scots_pine": true,
+      "soil": {
+        "type": "calcareous",
+        "keyword": ["calcícola", "mesòfil"],
+        "ph": "basic_to_neutral"
+      },
+      "altitude_m": { "min": 800, "ideal_min": 1000, "ideal_max": 1600, "max": 2000 },
+      "slope_aspect": ["north", "south"],
+      "temperature_c": { "min": 2, "ideal_min": 5, "ideal_max": 15, "max": 18 },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "notes": "Late autumn / early winter mushroom. Tolerates cold well. Often grows after rovellons season ends."
+    },
+    {
+      "id": "rossinyol",
+      "common_name": "Rossinyol",
+      "scientific_name": "Cantharellus cibarius",
+      "aka": ["Camagroc (related)"],
+      "trees": ["Fagus sylvatica", "Quercus spp.", "Castanea sativa"],
+      "tree_keywords": ["faig", "roure", "castanyer", "beech", "oak", "chestnut"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil", "silícic"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 400, "ideal_min": 600, "ideal_max": 1200, "max": 1600 },
+      "slope_aspect": ["north", "northeast"],
+      "temperature_c": { "min": 12, "ideal_min": 15, "ideal_max": 25, "max": 28 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "medium",
+      "notes": "Broadleaf forests on siliceous/acid soils. Obaga. More of a summer-autumn mushroom."
+    },
+    {
+      "id": "trompeta-de-la-mort",
+      "common_name": "Trompeta de la Mort",
+      "scientific_name": "Craterellus cornucopioides",
+      "aka": [],
+      "trees": ["Fagus sylvatica", "Quercus spp."],
+      "tree_keywords": ["faig", "roure", "beech", "oak"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil", "silícic", "humit"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 400, "ideal_min": 700, "ideal_max": 1400, "max": 1800 },
+      "slope_aspect": ["north", "northeast"],
+      "temperature_c": { "min": 5, "ideal_min": 10, "ideal_max": 18, "max": 22 },
+      "rain_trigger_mm": 25,
+      "rain_window_days": 10,
+      "dry_spell_before_days": 5,
+      "wind_sensitivity": "low",
+      "notes": "Late autumn rains trigger. Grows in clusters in humid broadleaf forests. Easy to miss due to dark color."
+    },
+    {
+      "id": "llenega-negra",
+      "common_name": "Llenegra Negra",
+      "scientific_name": "Hygrophorus olivaceoalbus",
+      "aka": [],
+      "trees": ["Picea abies", "Abies alba", "Pinus sylvestris"],
+      "tree_keywords": ["avet", "pi roig", "picea", "fir", "spruce", "scots pine"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 1000, "ideal_min": 1400, "ideal_max": 2000, "max": 2400 },
+      "slope_aspect": ["north"],
+      "temperature_c": { "min": 3, "ideal_min": 6, "ideal_max": 14, "max": 18 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "notes": "High altitude conifer forests. Very cold tolerant. Slippery cap. Often found in fir/spruce forests of Ripollès and Cerdanya."
+    },
+    {
+      "id": "llenega-blanca",
+      "common_name": "Llenegra Blanca",
+      "scientific_name": "Hygrophorus eburneus",
+      "aka": [],
+      "trees": ["Fagus sylvatica", "Quercus spp."],
+      "tree_keywords": ["faig", "roure", "beech", "oak"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "calcareous",
+        "keyword": ["calcícola"],
+        "ph": "basic"
+      },
+      "altitude_m": { "min": 400, "ideal_min": 600, "ideal_max": 1200, "max": 1600 },
+      "slope_aspect": ["north", "northeast"],
+      "temperature_c": { "min": 5, "ideal_min": 8, "ideal_max": 18, "max": 22 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "medium",
+      "notes": "Calcareous broadleaf forests. Often found alongside other hygrophorus species."
+    },
+    {
+      "id": "camagroc",
+      "common_name": "Camagroc",
+      "scientific_name": "Cantharellus lutescens",
+      "aka": ["Trompeta groga"],
+      "trees": ["Pinus sylvestris", "Pinus nigra"],
+      "tree_keywords": ["pi roig", "pi negre", "scots pine", "black pine"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 800, "ideal_min": 1000, "ideal_max": 1800, "max": 2200 },
+      "slope_aspect": ["north", "northeast"],
+      "temperature_c": { "min": 4, "ideal_min": 8, "ideal_max": 16, "max": 20 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 8,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "low",
+      "notes": "High altitude pine forests, acidic soil. Late autumn. Very common in Pyrenees. Appears after first cold rains."
+    },
+    {
+      "id": "ou-de-reig",
+      "common_name": "Ou de Reig",
+      "scientific_name": "Amanita caesarea",
+      "aka": [],
+      "trees": ["Quercus spp.", "Castanea sativa", "Fagus sylvatica"],
+      "tree_keywords": ["roure", "castanyer", "alzina", "faig", "oak", "chestnut", "beech"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil", "silícic"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 200, "ideal_min": 400, "ideal_max": 900, "max": 1200 },
+      "slope_aspect": ["south", "southeast"],
+      "temperature_c": { "min": 15, "ideal_min": 20, "ideal_max": 28, "max": 32 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 5,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "medium",
+      "notes": "Summer mushroom (June-September). Lower altitude. Warm temperatures needed. Very prized. Siliceous soils."
+    },
+    {
+      "id": "bolet-de-tinta",
+      "common_name": "Bolet de Tinta",
+      "scientific_name": "Coprinus comatus",
+      "aka": ["Bolet d'escriure"],
+      "trees": [],
+      "tree_keywords": ["grassland", "meadow", "prat", "herba"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": ["ric en nitrogen", "organic"],
+        "ph": "neutral"
+      },
+      "altitude_m": { "min": 0, "ideal_min": 200, "ideal_max": 1200, "max": 2000 },
+      "slope_aspect": ["any"],
+      "temperature_c": { "min": 8, "ideal_min": 12, "ideal_max": 22, "max": 26 },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 5,
+      "dry_spell_before_days": 2,
+      "wind_sensitivity": "low",
+      "notes": "Meadows, roadsides, disturbed soils. Not forest. Must be eaten very fresh - autodigests quickly."
+    },
+    {
+      "id": "orella-de-llebre",
+      "common_name": "Orella de Llebre",
+      "scientific_name": "Otidea onotica",
+      "aka": [],
+      "trees": ["Pinus sylvestris", "Fagus sylvatica"],
+      "tree_keywords": ["pi roig", "faig", "scots pine", "beech"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "acidic",
+        "keyword": ["acidòfil"],
+        "ph": "acid"
+      },
+      "altitude_m": { "min": 400, "ideal_min": 800, "ideal_max": 1400, "max": 1800 },
+      "slope_aspect": ["north"],
+      "temperature_c": { "min": 8, "ideal_min": 12, "ideal_max": 20, "max": 24 },
+      "rain_trigger_mm": 18,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "low",
+      "notes": "Mixed and conifer forests on acid soils. Distinctly ear-shaped. Less common, requires good eye."
+    },
+    {
+      "id": "murgola",
+      "common_name": "Murgola",
+      "scientific_name": "Morchella esculenta",
+      "aka": ["Múrgula"],
+      "trees": ["Fraxinus spp.", "Ulmus spp.", "mixed"],
+      "tree_keywords": ["freixe", "om", "ribera", "meadow", "vores de bosc"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "calcareous",
+        "keyword": ["calcícola", "ric en matèria orgànica"],
+        "ph": "basic_to_neutral"
+      },
+      "altitude_m": { "min": 200, "ideal_min": 500, "ideal_max": 1200, "max": 1600 },
+      "slope_aspect": ["any"],
+      "temperature_c": { "min": 8, "ideal_min": 12, "ideal_max": 20, "max": 24 },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "season": "spring",
+      "notes": "SPRING mushroom (March-May). Very different season logic. Riverbanks, forest edges. Highly prized."
+    },
+    {
+      "id": "picornell",
+      "common_name": "Picornell",
+      "scientific_name": "Macrolepiota procera",
+      "aka": ["Apagallums"],
+      "trees": ["mixed", "forest edges"],
+      "tree_keywords": ["vores de bosc", "prats", "meadow", "forest edge"],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": ["ric en humus"],
+        "ph": "neutral_to_acid"
+      },
+      "altitude_m": { "min": 200, "ideal_min": 400, "ideal_max": 1200, "max": 1600 },
+      "slope_aspect": ["any"],
+      "temperature_c": { "min": 10, "ideal_min": 15, "ideal_max": 24, "max": 28 },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 6,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "notes": "Forest edges and clearings. Very tall. Hard to confuse. Good after rain in warm autumn."
+    }
+  ],
+  "scoring_rules": {
+    "rain": {
+      "weight": 0.35,
+      "description": "Total precipitation in last N days vs trigger threshold",
+      "formula": "min(actual_mm / trigger_mm, 1.5) * weight"
+    },
+    "temperature": {
+      "weight": 0.25,
+      "description": "Current temp within ideal range scores full points",
+      "formula": "gaussian_score(current_temp, ideal_min, ideal_max) * weight"
+    },
+    "wind": {
+      "weight": 0.20,
+      "description": "Low wind = high score. Max daily gust threshold: 40 km/h",
+      "formula": "max(0, 1 - gust_kmh/40) * weight"
+    },
+    "altitude": {
+      "weight": 0.10,
+      "description": "Station altitude within species ideal range",
+      "formula": "gaussian_score(altitude, ideal_min, ideal_max) * weight"
+    },
+    "humidity": {
+      "weight": 0.10,
+      "description": "Relative humidity > 70% preferred",
+      "formula": "min(humidity_pct / 70, 1.0) * weight"
+    }
+  },
+  "target_stations": {
+    "Berguedà": [
+      {
+        "name": "Rasos de Peguera",
+        "lat": 42.105, "lon": 1.892, "alt_m": 1350, "radius_m": 1800,
+        "notes": "Pi roig reforestation sense sotabosc. Zona clàssica de rovelló. Calcari."
+      },
+      {
+        "name": "Coll de Pal",
+        "lat": 42.242, "lon": 1.865, "alt_m": 1680, "radius_m": 2200,
+        "notes": "Pi roig i pi negre. Transició calcari/silícic. Ruta forestal cap al port."
+      },
+      {
+        "name": "Vallcebre",
+        "lat": 42.115, "lon": 1.928, "alt_m": 1150, "radius_m": 2000,
+        "notes": "Bosc mixt pi roig i faig. Zona del vídeo de YouTube. Calcari. Bon rovelló."
+      },
+      {
+        "name": "Sant Jaume de Frontanyà",
+        "lat": 42.155, "lon": 2.015, "alt_m": 1000, "radius_m": 1500,
+        "notes": "Pi roig, reforestation oberta. La zona 'graal' del rovelló del vídeo. Calcari."
+      },
+      {
+        "name": "Fígols – Gresolet",
+        "lat": 42.175, "lon": 1.935, "alt_m": 1100, "radius_m": 2500,
+        "notes": "Bosc de faig i pi. Accés per la pista de Gresolet. Calcari. Fredolic tardor."
+      }
+    ],
+    "Ripollès": [
+      {
+        "name": "Ogassa – Ripoll",
+        "lat": 42.215, "lon": 2.182, "alt_m": 800, "radius_m": 2000,
+        "notes": "Pi roig a les vessants N de Ripoll. Calcari. Rovelló i fredolic."
+      },
+      {
+        "name": "Planoles",
+        "lat": 42.275, "lon": 2.097, "alt_m": 1100, "radius_m": 2200,
+        "notes": "Pi roig i avet als pendents sobre la vall de Ribes. Calcari."
+      },
+      {
+        "name": "Queralbs – Núria",
+        "lat": 42.362, "lon": 2.175, "alt_m": 1500, "radius_m": 2500,
+        "notes": "Bosc mixt silícic. Àrea de cep i camagroc. Transició calcari/silícic."
+      },
+      {
+        "name": "Setcases",
+        "lat": 42.373, "lon": 2.282, "alt_m": 1560, "radius_m": 2000,
+        "notes": "Avet i pi negre subalpí. Silícic. Llenegra negra, camagroc, cep d'altura."
+      },
+      {
+        "name": "Camprodon",
+        "lat": 42.326, "lon": 2.372, "alt_m": 950, "radius_m": 3000,
+        "notes": "Bosc de roure i pi. Silícic/mixt. Rossinyol, trompeta de la mort, cep."
+      }
+    ],
+    "Cerdanya": [
+      {
+        "name": "Tossa d'Alp – vessants",
+        "lat": 42.298, "lon": 1.877, "alt_m": 1600, "radius_m": 2500,
+        "notes": "Pi negre calcari. Vessants de Tossa. Fredolic, rovelló alt, camagroc."
+      },
+      {
+        "name": "Bagà – carena",
+        "lat": 42.282, "lon": 1.872, "alt_m": 1100, "radius_m": 2000,
+        "notes": "Bosc mixt faig i pi. Calcari. Entre Berguedà i Cerdanya."
+      },
+      {
+        "name": "La Canya – Ripollès/Cerdanya",
+        "lat": 42.225, "lon": 2.353, "alt_m": 880, "radius_m": 2500,
+        "notes": "Pi roig i roure. Calcari. Zona menys transitada entre Ripollès i Garrotxa."
+      }
+    ],
+    "Montseny": [
+      {
+        "name": "Montseny – Arbúcies",
+        "lat": 41.830, "lon": 2.430, "alt_m": 700, "radius_m": 3000,
+        "notes": "Roureda i fageda sobre granit silícic. Zona ideal de cep, rossinyol i ou de reig. Parc Natural."
+      },
+      {
+        "name": "Montseny – Santa Fe",
+        "lat": 41.795, "lon": 2.422, "alt_m": 1050, "radius_m": 2000,
+        "notes": "Fageda silícica densa. Excel·lent per cep i trompeta de la mort. Obaga nord."
+      },
+      {
+        "name": "Montseny – El Brull",
+        "lat": 41.834, "lon": 2.405, "alt_m": 800, "radius_m": 2500,
+        "notes": "Bosc de roure i pi sobre granit. Silícic. Cep, rossinyol, camagroc a tardor."
+      }
+    ],
+    "Garrotxa": [
+      {
+        "name": "Garrotxa – Santa Pau",
+        "lat": 42.168, "lon": 2.580, "alt_m": 620, "radius_m": 2500,
+        "notes": "Coníferes sobre sòl volcànic (basalt). Sòl mixt volcànic-calcari. Zona de rovelló i fredolic."
+      },
+      {
+        "name": "Garrotxa – Collsacabra",
+        "lat": 42.018, "lon": 2.448, "alt_m": 900, "radius_m": 3000,
+        "notes": "Fageda calcària i roureda. Zona de llenegra, trompeta de la mort i rossinyol."
+      },
+      {
+        "name": "Garrotxa – Sales de Llierca",
+        "lat": 42.200, "lon": 2.620, "alt_m": 550, "radius_m": 2000,
+        "notes": "Bosc mixt sobre sòl silícic-volcànic. Zona poc transitada de l'Alta Garrotxa. Cep i rossinyol."
+      }
+    ],
+    "Pallars Sobirà": [
+      {
+        "name": "Pallars – Espot",
+        "lat": 42.596, "lon": 1.095, "alt_m": 1700, "radius_m": 3000,
+        "notes": "Avets i pi negre al Parc Nacional d'Aigüestortes. Sòl mixt-silícic. Llenegra negra, camagroc, cep alt."
+      },
+      {
+        "name": "Pallars – Vall Fosca",
+        "lat": 42.560, "lon": 1.100, "alt_m": 1550, "radius_m": 2500,
+        "notes": "Pineda subalpina. Sòl mixt. Camagroc, fredolic, llenegra negra. Zona molt poc transitada."
+      },
+      {
+        "name": "Pallars – Sort",
+        "lat": 42.408, "lon": 1.138, "alt_m": 700, "radius_m": 2500,
+        "notes": "Roureda i pineda als pendents sobre la Noguera Pallaresa. Calcari. Rovelló i fredolic tardor."
+      }
+    ]
+  },
+  "data_sources": {
+    "weather": {
+      "name": "Meteocat",
+      "url": "https://www.meteocat.com",
+      "api_base": "https://api.meteo.cat/xema/v1",
+      "requires_key": true,
+      "free_tier": true,
+      "notes": "Official Catalan Met service. Best precipitation records. Key needed for API."
+    },
+    "vegetation": {
+      "name": "GeoVeg / SIVIM",
+      "url": "https://geoveg.creaf.cat",
+      "wms": "https://geoveg.creaf.cat/geoserver/geoveg/wms",
+      "requires_key": false,
+      "notes": "Vegetation map of Catalonia at 1:25000. Free WMS. Tree type + soil acidity keywords."
+    },
+    "soil": {
+      "name": "ICGC Soil Map",
+      "url": "https://www.icgc.cat",
+      "wms": "https://geoserveis.icgc.cat/servei/icgc_sol/wms/service",
+      "requires_key": false,
+      "notes": "Institut Cartogràfic i Geològic de Catalunya. Free WMS for soil types."
+    },
+    "terrain": {
+      "name": "ICGC DEM / Relleu",
+      "url": "https://www.icgc.cat",
+      "wms": "https://geoserveis.icgc.cat/servei/icgc_geotop/wms/service",
+      "requires_key": false,
+      "notes": "Digital elevation model. Aspect (obaga/solana) and altitude calculations."
+    }
+  }
+}

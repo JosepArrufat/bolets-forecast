@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+geo_cache.json
+youtubetranscript.md
+forecast.py
+data/
