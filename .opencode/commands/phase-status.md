@@ -1,5 +1,6 @@
 ---
 description: Show Bolets roadmap status and the next step
+model: github-copilot/claude-sonnet-4.6
 ---
 
 Read `PHASES.md` and report, without editing any file:

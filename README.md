@@ -39,6 +39,10 @@ run in its own fresh session so context stays small:
 the result, verification evidence and the next step. Run one step at a time; do
 not run two phase sessions in parallel on the same working tree.
 
+The commands pin `github-copilot/claude-sonnet-4.6` because the default
+OpenCode Go cell can return `prefill_cap_refused`. If that model is unavailable,
+change the `model:` line in `.opencode/commands/phase.md`.
+
 ---
 
 ## What it does
@@ -127,6 +131,7 @@ bolets/
 ├── app.py           — single-file Python web app (stdlib only, no pip)
 ├── forecast.py      — original CLI-only scorer (kept for reference/debugging)
 ├── mushrooms.json   — species database + station definitions + scoring weights
+├── zones.json       — curated micro-zone definitions, keyed by station name
 ├── geo_cache.json   — auto-generated, IGME + CORINE cache per lat/lon
 ├── parking_cache.json — precomputed nearby parking per station (warm_parking.py)
 ├── warm_parking.py  — one-off script to fill parking_cache.json from Overpass
@@ -244,6 +249,100 @@ Edit the `target_stations` section in `mushrooms.json`:
 - `alt_m` — elevation in metres, used in the altitude score
 
 The geo data for the new station is fetched and cached automatically on first load.
+
+---
+
+## Adding a micro-zone
+
+`zones.json` splits a station into smaller, independently scored zones (a stand,
+a slope sector, a reforestation patch). It is keyed by the **station name exactly
+as written in `mushrooms.json`**.
+
+> The JSON below is a **schema example with placeholder values**, not a real
+> zone. Do not copy its coordinates, altitude, aspect, soil or confidence.
+> Replace every field with a value you can cite in `sources`.
+
+```json
+{
+  "version": 1,
+  "zones": {
+    "Station name from mushrooms.json": [
+      {
+        "id": "example-zone",
+        "name": "Example — north slope",
+        "lat": 0.0,
+        "lon": 0.0,
+        "alt_m": 0,
+        "alt_range_m": [0, 0],
+        "aspect_deg": 0,
+        "aspect": "north",
+        "slope_deg": 0,
+        "forest": {
+          "type": "conifer",
+          "dominant": "Pinus sylvestris",
+          "canopy_pct": 0,
+          "undergrowth": "low"
+        },
+        "soil": { "type": "calcareous", "ph": 0.0, "source": "cited source" },
+        "water_m": 0,
+        "access": {
+          "parking": [0.0, 0.0],
+          "trailhead": "named trailhead",
+          "drive_min": 0,
+          "difficulty": "easy"
+        },
+        "confidence": 0.0,
+        "confidence_label": "baixa",
+        "sources": [
+          "source 1 for coordinate/altitude",
+          "source 2 for aspect/forest",
+          "source 3 for confidence"
+        ],
+        "notes": "One field note with a date and observer."
+      }
+    ]
+  }
+}
+```
+
+**Required for every zone:** `id`, `name`, `lat`, `lon`, `alt_m`, `sources`, and
+`confidence` (plus `confidence_label`). Omit a field when there is no real source
+for it. Never invent a coordinate, altitude, aspect, soil value or confidence to
+fill the schema — a zone with fewer fields and an honest `sources` list is better
+than a complete-looking invented one.
+
+**How zones are scored**
+
+- The zone uses its own `alt_m` and its own IGME/CORINE sample fetched at
+  `lat`/`lon` (cached in `geo_cache.json` like stations).
+- Weather comes from the parent station, so all zones in a massís share the same
+  forecast; only altitude and the geo sample change the result.
+- The formula is the same `score_station` used for stations, so zone scores are
+  directly comparable with the legacy station score.
+- Curated `soil`/`forest` values are carried through in the API for display and
+  later enrichment; the 1:25k enrichment that overrides the coarse sample is
+  Phase 3 work.
+- A station with no entry, or an empty `zones` object, keeps the legacy
+  one-station-one-score behaviour.
+
+**API shape.** Each station in `/api/forecast` now includes `zones: []` (empty
+when none are curated). Each zone carries the legacy `species`, `days`, `dates`,
+`geo` and `quality` fields plus a compact summary:
+
+```json
+"zone_score": {
+  "species_id": "lactarius-sanguifluus",
+  "species": "Rovelló",
+  "scientific": "Lactarius sanguifluus",
+  "score": 78,
+  "label": "Molt bona",
+  "day_offset": 2,
+  "date": "2026-11-09"
+}
+```
+
+Set `ZONES_FILE=/path/to/zones.json` to load a different zone file (used by the
+verification fixture).
 
 ---
 

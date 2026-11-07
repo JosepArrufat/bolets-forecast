@@ -19,6 +19,14 @@ stays available for review and decisions.
 **One step per session.** If a phase has substeps, `/phase 2` runs only the first
 not-done substep and stops. Invoke it again for the next one.
 
+### If the command errors instead of starting
+
+`prefill_cap_refused` means the model's serving cell is at capacity; it is not a
+command bug. The commands are pinned to `github-copilot/claude-sonnet-4.6` for
+this reason. If that model is also unavailable, change the `model:` line in
+`.opencode/commands/phase.md` and `phase-status.md` to another working model, or
+retry after about 30 seconds.
+
 ## Rules for every step
 
 1. Read `PHASES.md`, `PROPOSAL.md`, and `README.md` before coding. Follow the
@@ -59,7 +67,7 @@ not-done substep and stops. Invoke it again for the next one.
 | Step | Title | Status | Session | Evidence |
 |---|---|---|---|---|
 | 1 | Map navigation and free features | done | 2026-11-07 | `app.py`, `README.md`, `PROPOSAL.md`, `warm_parking.py`, `parking_cache.json`, `Dockerfile`; py_compile + node --check + API + headless screenshots |
-| 2.1 | Zone schema and per-zone scoring (no UI) | todo | — | — |
+| 2.1 | Zone schema and per-zone scoring (no UI) | done | 2026-11-07 | `zones.json`, `app.py`, `README.md`, `Dockerfile`; py_compile + API curls + 22-station regression + two-zone fixture |
 | 2.2 | Curate Berguedà zones | todo | — | — |
 | 2.3 | Curate Ripollès zones | todo | — | — |
 | 2.4 | Curate Cerdanya zones | todo | — | — |
@@ -195,6 +203,38 @@ map. A station can have zero or more zones; zero zones means the old behaviour.
 **Blocked if:** the zone schema would require inventing coordinates before any
 real zone data is available. Start with the schema and one manually verified
 zone only if a source is documented.
+
+**Result (2026-11-07):**
+- Status: done
+- Files:
+  - `zones.json` (new) — version 1 schema with an empty `zones` map. No curated
+    zones were added because stand-level sources belong to steps 2.2–2.5; this
+    avoids inventing coordinates, altitudes or confidence.
+  - `app.py` — `ZONES_FILE` path (with `ZONES_FILE` env override), `get_zones()`
+    re-read on every `/api/forecast`, `score_zone()` using the zone's own
+    `alt_m` and `fetch_geo()` sample through the existing `score_station()`
+    formula, `zone_score_summary()` (best species/score/day), per-zone error
+    isolation, and `zones` added to station objects (empty list keeps legacy
+    behaviour).
+  - `README.md` — schema, required fields, scoring behaviour, API shape and
+    `ZONES_FILE` override.
+  - `Dockerfile` — copies `zones.json` into the image.
+- Verification:
+  - `python3 -m py_compile app.py` → OK.
+  - `zones.json` parses as `{"version": 1, "zones": {}}`.
+  - `/api/forecast` on port 8799 → HTTP 200, 2,254,341 bytes, 22 stations in 6
+    comarques; every station still exposes `species`, `days`, `dates`, `geo`,
+    `quality` and now `zones: []`. No regression.
+  - Two-zone fixture via `ZONES_FILE=/tmp/opencode/zones-test.json` (synthetic,
+    not committed) → HTTP 200; Rasos de Peguera returned 2 zones at 900 m and
+    1300 m. Today's top score was 69 vs 75 and `zone_score` differed, proving
+    per-zone altitude/scoring while the legacy station score stayed 75.
+  - Embedded JS unchanged, so no new `node --check` run; `/` returned HTTP 200.
+- Screenshots: none; this step does not change the UI.
+- Notes / sources: no curated zone data was invented. `mushrooms.json` station
+  definitions and `geo_cache.json` remain the only location/soil sources until
+  step 2.2 documents real stands.
+- Next step: 2.2 (curate Berguedà zones).
 
 ### Step 2.2 — Curate Berguedà zones
 
