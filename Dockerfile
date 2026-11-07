@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 WORKDIR /app
-COPY app.py mushrooms.json ./
+COPY app.py mushrooms.json parking_cache.json ./
 RUN mkdir -p /app/data
 ENV PORT=8080
 EXPOSE 8080

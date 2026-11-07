@@ -1,0 +1,752 @@
+{
+  "42.1050,1.8920": [
+    {
+      "name": "Aparcament",
+      "lat": 42.1211945,
+      "lon": 1.8766361,
+      "capacity": null,
+      "distance_m": 2202
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1269609,
+      "lon": 1.8850516,
+      "capacity": null,
+      "distance_m": 2508
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1289817,
+      "lon": 1.8958978,
+      "capacity": null,
+      "distance_m": 2686
+    },
+    {
+      "name": "Caravanes del Berguedà",
+      "lat": 42.1077999,
+      "lon": 1.8596286,
+      "capacity": null,
+      "distance_m": 2689
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1240925,
+      "lon": 1.870734,
+      "capacity": null,
+      "distance_m": 2754
+    }
+  ],
+  "42.2420,1.8650": [
+    {
+      "name": "Aparcament",
+      "lat": 42.2380742,
+      "lon": 1.8657603,
+      "capacity": null,
+      "distance_m": 441
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2396646,
+      "lon": 1.8750056,
+      "capacity": null,
+      "distance_m": 864
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2514654,
+      "lon": 1.8660134,
+      "capacity": null,
+      "distance_m": 1056
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2346748,
+      "lon": 1.8749365,
+      "capacity": null,
+      "distance_m": 1154
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2536764,
+      "lon": 1.8630577,
+      "capacity": null,
+      "distance_m": 1308
+    }
+  ],
+  "42.1150,1.9280": [
+    {
+      "name": "Aparcament",
+      "lat": 42.1294096,
+      "lon": 1.9402563,
+      "capacity": null,
+      "distance_m": 1894
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1317572,
+      "lon": 1.9230435,
+      "capacity": null,
+      "distance_m": 1908
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1320105,
+      "lon": 1.9226678,
+      "capacity": null,
+      "distance_m": 1942
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1308095,
+      "lon": 1.916009,
+      "capacity": null,
+      "distance_m": 2017
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1295881,
+      "lon": 1.9105109,
+      "capacity": null,
+      "distance_m": 2171
+    }
+  ],
+  "42.1550,2.0150": [
+    {
+      "name": "Aparcament",
+      "lat": 42.1453204,
+      "lon": 1.999369,
+      "capacity": null,
+      "distance_m": 1679
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1350101,
+      "lon": 1.9928349,
+      "capacity": null,
+      "distance_m": 2878
+    }
+  ],
+  "42.1750,1.9350": [
+    {
+      "name": "Aparcament",
+      "lat": 42.1734567,
+      "lon": 1.9457252,
+      "capacity": null,
+      "distance_m": 900
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1737577,
+      "lon": 1.9460629,
+      "capacity": null,
+      "distance_m": 922
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1739694,
+      "lon": 1.9462879,
+      "capacity": null,
+      "distance_m": 937
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1749247,
+      "lon": 1.94661,
+      "capacity": null,
+      "distance_m": 957
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1855853,
+      "lon": 1.9328636,
+      "capacity": "9",
+      "distance_m": 1190
+    }
+  ],
+  "42.2150,2.1820": [
+    {
+      "name": "Aparcament",
+      "lat": 42.2103256,
+      "lon": 2.1691274,
+      "capacity": null,
+      "distance_m": 1181
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2203169,
+      "lon": 2.1688058,
+      "capacity": null,
+      "distance_m": 1237
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2210725,
+      "lon": 2.167984,
+      "capacity": null,
+      "distance_m": 1337
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2223573,
+      "lon": 2.1688959,
+      "capacity": null,
+      "distance_m": 1354
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2210311,
+      "lon": 2.1671023,
+      "capacity": null,
+      "distance_m": 1398
+    }
+  ],
+  "42.2750,2.0970": [
+    {
+      "name": "Aparcament",
+      "lat": 42.2709689,
+      "lon": 2.086324,
+      "capacity": null,
+      "distance_m": 986
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2706026,
+      "lon": 2.0857459,
+      "capacity": null,
+      "distance_m": 1047
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2661725,
+      "lon": 2.0843387,
+      "capacity": null,
+      "distance_m": 1431
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2799302,
+      "lon": 2.1205321,
+      "capacity": null,
+      "distance_m": 2012
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2635321,
+      "lon": 2.0645987,
+      "capacity": null,
+      "distance_m": 2955
+    }
+  ],
+  "42.3620,2.1750": [
+    {
+      "name": "Aparcament",
+      "lat": 42.3620225,
+      "lon": 2.1750912,
+      "capacity": null,
+      "distance_m": 8
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3641759,
+      "lon": 2.1753052,
+      "capacity": null,
+      "distance_m": 243
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3549917,
+      "lon": 2.1671443,
+      "capacity": null,
+      "distance_m": 1012
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3529839,
+      "lon": 2.1668553,
+      "capacity": null,
+      "distance_m": 1205
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.354098,
+      "lon": 2.1646014,
+      "capacity": null,
+      "distance_m": 1226
+    }
+  ],
+  "42.3730,2.2820": [
+    {
+      "name": "Aparcament",
+      "lat": 42.3711046,
+      "lon": 2.2984215,
+      "capacity": null,
+      "distance_m": 1365
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.373277,
+      "lon": 2.3009917,
+      "capacity": null,
+      "distance_m": 1560
+    },
+    {
+      "name": "Aparcament municipal",
+      "lat": 42.374432,
+      "lon": 2.3019235,
+      "capacity": null,
+      "distance_m": 1644
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3754973,
+      "lon": 2.3023794,
+      "capacity": null,
+      "distance_m": 1697
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3943493,
+      "lon": 2.2898357,
+      "capacity": null,
+      "distance_m": 2460
+    }
+  ],
+  "42.3260,2.3720": [
+    {
+      "name": "Aparcament",
+      "lat": 42.3195336,
+      "lon": 2.3789261,
+      "capacity": null,
+      "distance_m": 917
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3165178,
+      "lon": 2.3774277,
+      "capacity": null,
+      "distance_m": 1145
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3140236,
+      "lon": 2.368097,
+      "capacity": null,
+      "distance_m": 1370
+    },
+    {
+      "name": "Aparcament clients Esclat",
+      "lat": 42.3129113,
+      "lon": 2.3721139,
+      "capacity": null,
+      "distance_m": 1455
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.3121378,
+      "lon": 2.3710729,
+      "capacity": null,
+      "distance_m": 1543
+    }
+  ],
+  "42.2980,1.8770": [
+    {
+      "name": "Pàrquing Ruta Trencapinyes",
+      "lat": 42.2913919,
+      "lon": 1.8866661,
+      "capacity": null,
+      "distance_m": 1083
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.29114,
+      "lon": 1.8871439,
+      "capacity": null,
+      "distance_m": 1130
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2908712,
+      "lon": 1.8874392,
+      "capacity": null,
+      "distance_m": 1169
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2941644,
+      "lon": 1.8634419,
+      "capacity": null,
+      "distance_m": 1194
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2979833,
+      "lon": 1.893674,
+      "capacity": "1",
+      "distance_m": 1371
+    }
+  ],
+  "42.2820,1.8720": [
+    {
+      "name": "Aparcament",
+      "lat": 42.2941644,
+      "lon": 1.8634419,
+      "capacity": null,
+      "distance_m": 1525
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2847303,
+      "lon": 1.8905505,
+      "capacity": null,
+      "distance_m": 1556
+    },
+    {
+      "name": "Pàrquing Ruta Trencapinyes",
+      "lat": 42.2913919,
+      "lon": 1.8866661,
+      "capacity": null,
+      "distance_m": 1596
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2842084,
+      "lon": 1.8913055,
+      "capacity": null,
+      "distance_m": 1607
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2908712,
+      "lon": 1.8874392,
+      "capacity": null,
+      "distance_m": 1608
+    }
+  ],
+  "42.2250,2.3530": [],
+  "41.8300,2.4300": [
+    {
+      "name": "Aparcament",
+      "lat": 41.8448221,
+      "lon": 2.4234761,
+      "capacity": null,
+      "distance_m": 1734
+    },
+    {
+      "name": "Coll de Bordoriol",
+      "lat": 41.8264222,
+      "lon": 2.4090456,
+      "capacity": null,
+      "distance_m": 1781
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.8528388,
+      "lon": 2.4356919,
+      "capacity": null,
+      "distance_m": 2583
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.80467,
+      "lon": 2.4179598,
+      "capacity": null,
+      "distance_m": 2988
+    }
+  ],
+  "41.7950,2.4220": [
+    {
+      "name": "Aparcament",
+      "lat": 41.8040715,
+      "lon": 2.4198536,
+      "capacity": null,
+      "distance_m": 1024
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.80467,
+      "lon": 2.4179598,
+      "capacity": null,
+      "distance_m": 1126
+    },
+    {
+      "name": "Area de les Ferreres",
+      "lat": 41.8027011,
+      "lon": 2.434434,
+      "capacity": null,
+      "distance_m": 1340
+    },
+    {
+      "name": "Parking Can Gorgs",
+      "lat": 41.7815121,
+      "lon": 2.4028651,
+      "capacity": null,
+      "distance_m": 2183
+    },
+    {
+      "name": "Parking vies d'escalada Itzi",
+      "lat": 41.79205,
+      "lon": 2.4491974,
+      "capacity": null,
+      "distance_m": 2278
+    }
+  ],
+  "41.8340,2.4050": [
+    {
+      "name": "Coll de Bordoriol",
+      "lat": 41.8264222,
+      "lon": 2.4090456,
+      "capacity": null,
+      "distance_m": 907
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.8458347,
+      "lon": 2.3928931,
+      "capacity": null,
+      "distance_m": 1655
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.8470274,
+      "lon": 2.3903361,
+      "capacity": null,
+      "distance_m": 1891
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.8448221,
+      "lon": 2.4234761,
+      "capacity": null,
+      "distance_m": 1947
+    },
+    {
+      "name": "Aparcament",
+      "lat": 41.8479601,
+      "lon": 2.3889221,
+      "capacity": null,
+      "distance_m": 2045
+    }
+  ],
+  "42.1680,2.5800": [
+    {
+      "name": "Aparcament",
+      "lat": 42.1502119,
+      "lon": 2.5929244,
+      "capacity": null,
+      "distance_m": 2247
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.147751,
+      "lon": 2.5809288,
+      "capacity": null,
+      "distance_m": 2253
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1473131,
+      "lon": 2.5697973,
+      "capacity": null,
+      "distance_m": 2449
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1489154,
+      "lon": 2.5649563,
+      "capacity": null,
+      "distance_m": 2458
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.146558,
+      "lon": 2.5703613,
+      "capacity": null,
+      "distance_m": 2513
+    }
+  ],
+  "42.0180,2.4480": [
+    {
+      "name": "Aparcament",
+      "lat": 42.0181415,
+      "lon": 2.443583,
+      "capacity": null,
+      "distance_m": 365
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.0124273,
+      "lon": 2.4498373,
+      "capacity": null,
+      "distance_m": 638
+    },
+    {
+      "name": "Parking Hotel l'Avenc",
+      "lat": 42.0052332,
+      "lon": 2.4414345,
+      "capacity": null,
+      "distance_m": 1520
+    },
+    {
+      "name": "Aparcament públic de pagament",
+      "lat": 42.0262586,
+      "lon": 2.4643045,
+      "capacity": "125",
+      "distance_m": 1630
+    },
+    {
+      "name": "Aparcament residents",
+      "lat": 42.0263302,
+      "lon": 2.4649087,
+      "capacity": null,
+      "distance_m": 1676
+    }
+  ],
+  "42.2000,2.6200": [
+    {
+      "name": "Aparcament",
+      "lat": 42.2111137,
+      "lon": 2.6094666,
+      "capacity": null,
+      "distance_m": 1510
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2106354,
+      "lon": 2.6068638,
+      "capacity": null,
+      "distance_m": 1603
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2113067,
+      "lon": 2.6065843,
+      "capacity": null,
+      "distance_m": 1674
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.2114746,
+      "lon": 2.6042576,
+      "capacity": null,
+      "distance_m": 1819
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.1821175,
+      "lon": 2.628894,
+      "capacity": null,
+      "distance_m": 2119
+    }
+  ],
+  "42.5960,1.0950": [
+    {
+      "name": "Aparcament",
+      "lat": 42.6018931,
+      "lon": 1.0764477,
+      "capacity": null,
+      "distance_m": 1654
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5988206,
+      "lon": 1.1149621,
+      "capacity": null,
+      "distance_m": 1664
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5801323,
+      "lon": 1.08277,
+      "capacity": null,
+      "distance_m": 2029
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5761593,
+      "lon": 1.0876623,
+      "capacity": null,
+      "distance_m": 2287
+    },
+    {
+      "name": "Aparcament Hotel Saurat",
+      "lat": 42.5755274,
+      "lon": 1.0890183,
+      "capacity": null,
+      "distance_m": 2329
+    }
+  ],
+  "42.5600,1.1000": [
+    {
+      "name": "Aparcament",
+      "lat": 42.563829,
+      "lon": 1.0962837,
+      "capacity": null,
+      "distance_m": 523
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.564488,
+      "lon": 1.0975702,
+      "capacity": null,
+      "distance_m": 537
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5647809,
+      "lon": 1.0941964,
+      "capacity": null,
+      "distance_m": 713
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5637881,
+      "lon": 1.0925068,
+      "capacity": null,
+      "distance_m": 744
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.5745365,
+      "lon": 1.0907926,
+      "capacity": null,
+      "distance_m": 1784
+    }
+  ],
+  "42.4080,1.1380": [
+    {
+      "name": "Aparcament",
+      "lat": 42.4037607,
+      "lon": 1.1376577,
+      "capacity": null,
+      "distance_m": 472
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.4075948,
+      "lon": 1.1292407,
+      "capacity": null,
+      "distance_m": 721
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.4021431,
+      "lon": 1.1336897,
+      "capacity": null,
+      "distance_m": 741
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.4141039,
+      "lon": 1.1324917,
+      "capacity": null,
+      "distance_m": 816
+    },
+    {
+      "name": "Aparcament",
+      "lat": 42.4059738,
+      "lon": 1.1281921,
+      "capacity": null,
+      "distance_m": 836
+    }
+  ]
+}

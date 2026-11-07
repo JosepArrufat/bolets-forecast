@@ -2,7 +2,7 @@
 
 **Live demo:** https://bolets-forecast.fly.dev
 
-A mushroom hunting forecast tool for Catalunya — specifically the comarques of **Berguedà**, **Ripollès**, and **Cerdanya**. It combines real-time weather data with geological and vegetation data to score how likely each of the top 13 edible Catalan mushrooms is to appear at a set of key forest stations, today.
+A mushroom hunting forecast tool for Catalunya — currently **Berguedà**, **Ripollès**, **Cerdanya**, **Montseny**, **Garrotxa** and **Pallars Sobirà** (22 forest stations). It combines real-time weather data with geological and vegetation data to score how likely each of the top 13 edible Catalan mushrooms is to appear at a set of key forest stations, today and for the next six days.
 
 No hallucination. No invented forest locations. Every score is derived from publicly available scientific data sources, all free, none requiring registration.
 
@@ -23,14 +23,37 @@ The first run fetches geological and vegetation data for all stations (takes 10�
 
 ---
 
+## Working on the roadmap
+
+The roadmap is split into small steps in **`PHASES.md`**. Each step is designed to
+run in its own fresh session so context stays small:
+
+```text
+/phase next        # first step not marked done
+/phase 2.1         # one exact step
+/phase 2           # first not-done substep of phase 2
+/phase-status      # read-only status report
+```
+
+`/phase` runs in a child session (`subagent: true`) and updates `PHASES.md` with
+the result, verification evidence and the next step. Run one step at a time; do
+not run two phase sessions in parallel on the same working tree.
+
+---
+
 ## What it does
 
 ### The UI
 
-- **Left sidebar** — all stations grouped by comarca. Each card shows altitude, last 7 days of rain, average temperature, max wind, and the top 4 species by score.
-- **Map** — Leaflet map with a numbered marker per station, colored green/amber/red by best species score. Click any marker to open the detail panel.
-- **Right panel** — opens on station click. Shows soil type badge (calcareous/siliceous/mixed), forest type badge (from CORINE), the raw lithology text from IGME, a 3-stat weather summary, and the full ranked species list. Click any species row to expand its score breakdown and notes.
+- **Search and filters** — search by place, forest, municipality or species (Enter geocodes any place name). Filter by species, comarca, minimum score, and sort by score, distance, altitude, name or comarca.
+- **Free "best zones" leaderboard** — the top six zones for the selected species and day, visible to everyone, with a one-tap route link. No paywall.
+- **Left sidebar** — all stations grouped by comarca. Each card shows altitude, last 7 days of rain, average temperature, max wind, the top 4 species by score, the best day in the 7-day window, and a route button.
+- **Map** — Leaflet map with clustered markers, numbered and colored by the selected species' score. Click a marker to open the detail panel. Hover syncs the marker with its card. A legend is always visible.
+- **Right panel** — opens on station click. Shows a data-quality bar (meteo + soil + forest completeness), 7-day score strip, soil type badge (calcareous/siliceous/mixed), forest type badge (from CORINE), raw lithology, weather summary, and the full ranked species list. Click any species row to expand its score breakdown and notes.
+- **Trip planning** — free "Com arribar-hi" (Google Maps), OpenStreetMap link, nearby parking from OpenStreetMap/Overpass, and a shareable zone link.
+- **Shareable URL state** — species, day, comarca, search, sort, active zone and map view are encoded in the URL. Back/forward and deep links work.
 - **Topo ICGC toggle** — top-right map button overlays the official ICGC topographic tiles for terrain context.
+- **Geolocate** — "Situa'm" centres the map and reorders zones by distance from you.
 
 ### The scoring
 
@@ -105,6 +128,12 @@ bolets/
 ├── forecast.py      — original CLI-only scorer (kept for reference/debugging)
 ├── mushrooms.json   — species database + station definitions + scoring weights
 ├── geo_cache.json   — auto-generated, IGME + CORINE cache per lat/lon
+├── parking_cache.json — precomputed nearby parking per station (warm_parking.py)
+├── warm_parking.py  — one-off script to fill parking_cache.json from Overpass
+├── PROPOSAL.md      — audit of BoletRadar + phased roadmap to surpass it
+├── PHASES.md        — execution ledger: status, substeps and acceptance criteria
+├── .opencode/commands/phase.md        — `/phase <step>` fresh-session runner
+├── .opencode/commands/phase-status.md — `/phase-status` read-only report
 ├── appIdea.md       — original project spec
 └── youtubetranscript.md  — transcript of the YouTube video that defines the rules
 ```
@@ -138,10 +167,18 @@ Open-Meteo is good but uses ERA5 reanalysis + forecast models. Meteocat's XEMA n
 
 ## Improvements roadmap
 
+### Just shipped (Phase 1 — navigation)
+- **Search, filters and sorting** across places, forests, municipalities and species.
+- **Free best-zones leaderboard**, route links and nearby parking — nothing hidden behind a paywall.
+- **Map ↔ list sync**, marker clustering, always-on legend, geolocation and URL state.
+- **Data-quality indicator** per zone (meteo + soil + forest completeness) and a 7-day score strip.
+- See `PROPOSAL.md` for the full plan (micro-zones, terrain/canopy enrichment, weather quality, field reports, PWA).
+
 ### Short term
 - **Meteocat API key** — register at meteo.cat, add `METEOCAT_API_KEY` env var, swap weather fetch for local station data. The `forecast.py` has the URL pattern ready.
 - **Fine-tune forest offsets** — Ribes de Freser and Puigcerdà still land on non-forest. Adjust `forest_lat/forest_lon` in `mushrooms.json` to confirmed pine forest GPS points.
 - **Add more stations** — Meteocat XEMA has stations at Vallcebre, Bagà forest, La Molina, etc. Adding 5–6 more points per comarca would increase granularity.
+- **Micro-zones per massís** — split each station circle into 3–6 scored zones by aspect, altitude band, canopy and soil (Phase 2 in `PROPOSAL.md`).
 
 ### Medium term
 - **IGME MAGNA 50 fallback** — try MAGNA 50 first (1:50k, more detail), fall back to 1:1M when no result. Would catch local siliceous pockets within calcareous zones.
