@@ -22,10 +22,11 @@ not-done substep and stops. Invoke it again for the next one.
 ### If the command errors instead of starting
 
 `prefill_cap_refused` means the model's serving cell is at capacity; it is not a
-command bug. The commands are pinned to `github-copilot/claude-sonnet-4.6` for
-this reason. If that model is also unavailable, change the `model:` line in
-`.opencode/commands/phase.md` and `phase-status.md` to another working model, or
-retry after about 30 seconds.
+command bug. The commands are pinned to `opencode-go/deepseek-v4-pro`, which
+works in this setup; `opencode-go/glm-5.3-flash` is the cheaper fallback. Qwen
+models currently require a Go credential. If the pinned model is unavailable,
+change the `model:` line in `.opencode/commands/phase.md` and
+`phase-status.md`, or retry after about 30 seconds.
 
 ## Rules for every step
 

@@ -1,7 +1,7 @@
 ---
 description: Run one Bolets roadmap step in a fresh child session
 subagent: true
-model: github-copilot/claude-sonnet-4.6
+model: opencode-go/deepseek-v4-pro
 ---
 
 You are a fresh-context implementation session for the Bolets mushroom forecast.

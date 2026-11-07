@@ -1,6 +1,6 @@
 ---
 description: Show Bolets roadmap status and the next step
-model: github-copilot/claude-sonnet-4.6
+model: opencode-go/deepseek-v4-pro
 ---
 
 Read `PHASES.md` and report, without editing any file:

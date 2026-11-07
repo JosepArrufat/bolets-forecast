@@ -39,9 +39,11 @@ run in its own fresh session so context stays small:
 the result, verification evidence and the next step. Run one step at a time; do
 not run two phase sessions in parallel on the same working tree.
 
-The commands pin `github-copilot/claude-sonnet-4.6` because the default
-OpenCode Go cell can return `prefill_cap_refused`. If that model is unavailable,
-change the `model:` line in `.opencode/commands/phase.md`.
+The commands pin `opencode-go/deepseek-v4-pro` because the DeepSeek V4.1
+Flash cell can return `prefill_cap_refused`. `opencode-go/glm-5.3-flash` is a
+cheaper fallback. Qwen models currently need a Go credential. If the pinned
+model is unavailable, change the `model:` line in
+`.opencode/commands/phase.md`.
 
 ---
 
@@ -331,7 +333,7 @@ when none are curated). Each zone carries the legacy `species`, `days`, `dates`,
 
 ```json
 "zone_score": {
-  "species_id": "lactarius-sanguifluus",
+  "species_id": "rovelló",
   "species": "Rovelló",
   "scientific": "Lactarius sanguifluus",
   "score": 78,
@@ -340,6 +342,9 @@ when none are curated). Each zone carries the legacy `species`, `days`, `dates`,
   "date": "2026-11-09"
 }
 ```
+
+(The score and date above are illustrative; the API fills them from the live
+forecast.)
 
 Set `ZONES_FILE=/path/to/zones.json` to load a different zone file (used by the
 verification fixture).
