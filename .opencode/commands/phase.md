@@ -39,6 +39,10 @@ example `2`), run only the first not-done substep and stop. One step per session
   small scripts over base64 image reads.
 - For curation steps, write candidate zones incrementally after each station.
   Do not spend the whole session researching maps and leave no committed work.
+- For zone curation, verify every centroid against CORINE/ICGC forest cover
+  before writing it. Accept only 311, 312, 313 or 324, and check that the
+  dominant tree matches `forest.dominant`. A coordinate offset from a station is
+  not a source.
 - Stop and mark the step `blocked` if:
   - a model request fails with `prefill_cap_refused` twice (wait 30 s once),
   - the same tool pattern repeats three times without a file change,

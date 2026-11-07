@@ -63,6 +63,10 @@ change the `model:` line in `.opencode/commands/phase.md` and
 - Keep context small: save maps/probes in `/tmp/opencode` and read only what is
   needed; avoid repeated base64 image reads.
 - Write candidate work incrementally after each station or file.
+- For zone curation, verify every centroid against CORINE/ICGC forest cover
+  before writing it. Accept only 311, 312, 313 or 324, and check that the
+  dominant tree matches the zone's `forest.dominant`. A coordinate offset from a
+  station is not a source.
 - Stop and mark `blocked` if a model request fails with `prefill_cap_refused`
   twice, if the same tool pattern repeats three times without a file change, or
   if the step exceeds 45 minutes. Record artifacts and what was learned.
@@ -80,7 +84,7 @@ change the `model:` line in `.opencode/commands/phase.md` and
 |---|---|---|---|---|
 | 1 | Map navigation and free features | done | 2026-11-07 | `app.py`, `README.md`, `PROPOSAL.md`, `warm_parking.py`, `parking_cache.json`, `Dockerfile`; py_compile + node --check + API + headless screenshots |
 | 2.1 | Zone schema and per-zone scoring (no UI) | done | 2026-11-07 | `zones.json`, `app.py`, `README.md`, `Dockerfile`; py_compile + API curls + 22-station regression + two-zone fixture |
-| 2.2 | Curate Berguedà zones | done | 2026-11-07 | `zones.json`; 15 zones, 5 stations; py_compile OK; API returns zones with scores |
+| 2.2 | Curate Berguedà zones | blocked | 2026-11-07 | 15 draft zones exist, but CORINE check fails: Coll de Pal obaga = urban 112, Coll de Pal solana = pastures 231, Vallcebre carena = sparsely vegetated 333, Fígols obaga = pastures 231, Fígols vall = sclerophyllous 323; needs re-curation |
 | 2.3 | Curate Ripollès zones | todo | — | — |
 | 2.4 | Curate Cerdanya zones | todo | — | — |
 | 2.5 | Curate Montseny, Garrotxa, Pallars zones | todo | — | — |
@@ -315,7 +319,17 @@ forest in ICGC orthophoto; no duplicate zones; API returns them.
   in the orthophoto, and some `ph_approx`/canopy values are estimates. Re-check
   each zone before treating 2.2 as final; do not copy them into later phases
   without verification.
-- Next step: 2.3 (curate Ripollès zones)
+- **CORINE verification (2026-11-07):** 6 of 15 centroids fail the forest-cover
+  gate:
+  - `colldepal-obaga-nord` → CORINE 112 (urban discontinuous)
+  - `colldepal-solana-sud` → CORINE 231 (pastures)
+  - `vallcebre-carena-alta` → CORINE 333 (sparsely vegetated)
+  - `figols-gresolet-obaga-faig` → CORINE 231 (pastures)
+  - `figols-gresolet-vall-riera` → CORINE 323 (sclerophyllous vegetation)
+  - Rasos zones → CORINE 311 (broadleaf), not the expected pine; re-check.
+  This step is **blocked** until every centroid sits on 311/312/313/324 and the
+  dominant tree matches the zone's `forest.dominant`.
+- Next step: 2.2 re-verification and re-curation, not 2.3.
 
 ### Step 2.3 — Curate Ripollès zones
 
