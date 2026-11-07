@@ -9,6 +9,7 @@ truth for what is done, what is next, and what "done" means for each step.
 /phase next          # first step that is not done
 /phase 2             # first not-done substep of phase 2
 /phase 2.1           # exactly step 2.1
+/steps               # phase map: main goal, end goal, status
 /phase-status        # read-only status report
 ```
 
@@ -74,6 +75,38 @@ change the `model:` line in `.opencode/commands/phase.md` and
   twice, if the same tool pattern repeats three times without a file change, or
   if the step exceeds 45 minutes. Record artifacts and what was learned.
 
+## Phase map
+
+| Phase | Name | Main goal | End goal | Status |
+|---|---|---|---|---|
+| 1 | Navigation and free access | Make the map usable and remove the paywalled decisions | A free map where anyone can search, filter, compare and reach a zone in under a minute; best zones, routes and parking are never paywalled | done |
+| 2 | Micro-zones | Replace one station circle with independently scored forest zones | Every massís has real zones with altitude band, aspect, canopy, soil and access; the UI explains why two stands 500 m apart score differently | in progress |
+| 3 | Terrain and canopy science | Replace coarse point samples with DEM, LiDAR, soil and habitat features | Each zone is scored with aspect, slope, solar radiation, TPI, cold-air pooling, canopy/undergrowth and 1:25k soil/habitat; every factor is sourced and explainable | todo |
+| 4 | Weather quality | Make the weather local, elevation-corrected and water-balance aware | Zone-level weather from XEMA/radar, drought/recharge, confidence and phenology; a 7-day forecast reliable enough to plan a trip | todo |
+| 5 | Field loop | Close the loop with trip reports, logbook and alerts | Reports calibrate the model; published AUC/Brier; private logbook, photos, yield stats and alerts that improve every season | todo |
+| 6 | PWA and expansion | Make it field-ready and cover more of Catalonia | Installable offline PWA, all Catalonia, 20–25 species, verified locations and field-grade performance | todo |
+
+**Phase 1 — Navigation and free access.** Main: fix search, filters, map/list
+sync, routing and the paywall. End: a free, fast map that gets a hunter to a
+candidate zone.
+
+**Phase 2 — Micro-zones.** Main: massís → sector → stand, scored independently.
+End: the app answers “where inside this forest?” with real zones, not a circle.
+
+**Phase 3 — Terrain and canopy science.** Main: add the physical variables that
+make a stand different from its neighbour. End: an explainable habitat and
+microclimate score per zone, backed by DEM/LiDAR/soil sources.
+
+**Phase 4 — Weather quality.** Main: replace smooth point weather with
+elevation-corrected station/radar data and a soil water balance. End: a local,
+confidence-rated 7-day forecast and a phenology wave.
+
+**Phase 5 — Field loop.** Main: capture what actually happened in the field.
+End: a calibrated model with published accuracy, a private logbook and alerts.
+
+**Phase 6 — PWA and expansion.** Main: offline field use and geographic/species
+coverage. End: an installable Catalonia-wide app with 20–25 verified species.
+
 ## Status legend
 
 - `todo` — not started
@@ -88,10 +121,10 @@ change the `model:` line in `.opencode/commands/phase.md` and
 | 1 | Map navigation and free features | done | 2026-11-07 | `app.py`, `README.md`, `PROPOSAL.md`, `warm_parking.py`, `parking_cache.json`, `Dockerfile`; py_compile + node --check + API + headless screenshots |
 | 2.1 | Zone schema and per-zone scoring (no UI) | done | 2026-11-07 | `zones.json`, `app.py`, `README.md`, `Dockerfile`; py_compile + API curls + 22-station regression + two-zone fixture |
 | 2.2 | Curate Berguedà zones | done | 2026-11-07 | `zones.json` (15 zones), `mushrooms.json` (5 station coords/alt corrected); every zone re-sourced from CORINE 2018 + Copernicus DEM + IGME + SoilGrids; 15/15 pass the forest-cover gate; API 200 / 22 stations / 6 comarques |
-| 2.3 | Curate Ripollès zones | in progress | 2026-11-07 | — |
-| 2.4 | Curate Cerdanya zones | todo | — | — |
-| 2.5 | Curate Montseny, Garrotxa, Pallars zones | todo | — | — |
-| 2.6 | Zone UI: map, list, detail, comparison | todo | — | — |
+| 2.3 | Curate Ripollès zones | done | 2026-11-07 | `zones.json` (+15), `mushrooms.json` (5 station coords/alt/notes corrected); 15/15 forest-cover gate; API 200 / 22 stations / 30 zones / 6 comarques |
+| 2.4 | Curate Cerdanya zones | done | 2026-11-07 | `zones.json` (+9), `mushrooms.json` (3 station coords/alt/notes corrected); 9/9 CORINE forest-cover gate; API 200 / 22 stations / 6 comarques / 39 zones |
+| 2.5 | Curate Montseny, Garrotxa, Pallars zones | done | 2026-11-07 | `zones.json` (+27 → 66), `mushrooms.json` (9 stations re-sourced); 27/27 CORINE forest-cover gate; ICGC 5m LiDAR + IGME + SoilGrids probes; schema valid; score_zone path verified |
+| 2.6 | Zone UI: map, list, detail, comparison | in progress | 2026-11-07 | — |
 | 2.7 | Phase 2 verification and docs | todo | — | — |
 | 3.1 | Terrain enrichment skeleton and cache | todo | — | — |
 | 3.2 | DEM: aspect, slope, solar radiation, TPI, cold air | todo | — | — |
@@ -353,14 +386,178 @@ maps under `/tmp/opencode` (`ogassa_*`, `planoles_*`, `queralbs_*`, `setcases_*`
 still researching and had **not** written any zones. Reuse the artifacts, but
 verify every coordinate independently. Do not spawn a nested subagent.
 
+**Result (2026-11-07) — re-sourced from DEM + CORINE:**
+
+- Status: done
+- Files:
+  - `zones.json` — 15 Ripollès zones (3 × 5 stations) appended to the existing
+    15 Berguedà zones (30 total). Every centroid re-verified live against CORINE
+    CLC 2018 WMS and Copernicus DEM (Open-Meteo elevation); `aspect_deg`/`aspect`
+    and `slope_deg` derived from N/S/E/W DEM neighbours; `soil.type` is IGME
+    1:1M lithology; `ph_approx` is SoilGrids v2.
+  - `mushrooms.json` — 5 Ripollès stations corrected to DEM-verified forest
+    points: Ogassa–Ripoll (800→859 m), Planoles (1100→1458 m, and re-pointed from
+    a 1695 m ridge to a 1458 m pine slope), Queralbs–Núria (1500→1482 m),
+    Setcases (1560→1832 m), Camprodon (950→1184 m). Notes corrected to the actual
+    CORINE class and IGME lithology (Planoles/Setcases are mixed, not "calcari").
+- Method: grid-scanned a ±2.5–3.2 km box per station at 0.5 km (CORINE CLC 2018
+  GetFeatureInfo + Copernicus DEM), kept cells in the documented forest class,
+  then selected 3 zones per station for aspect/altitude diversity (obaga, solana,
+  carena). No coordinate is an offset from a station; every centroid is a
+  CORINE+DEG-verified forest pixel.
+- Honest-ification: same as 2.2 — `canopy_pct`, `undergrowth`, `water_m`,
+  `drive_min`, `difficulty` are `null`; `confidence` is 0.6 "medium" (CORINE is
+  100 m, DEM ~90 m, IGME 1:1M); dominant species comes from station notes
+  (local knowledge), not verified tree-by-tree.
+- Verification:
+  - `python3 -m py_compile app.py` → OK; `zones.json` + `mushrooms.json` parse.
+  - Zone schema validate: 10 station keys, 30 zones, unique ids, required fields
+    present, every station key exists in `mushrooms.json`.
+  - CORINE forest-cover gate re-run on all 15 Ripollès zones: **0 failures** —
+    every centroid returns 312 (conifer) or 311 (broadleaf) and the dominant
+    tree matches the class (312↔Pinus/Abies, 311↔Quercus).
+  - `/api/forecast` HTTP 200: 22 stations, 6 comarques, 30 zones, 0 zone errors.
+    Zone scores differ within a massís (e.g. Camprodon 67/79/67, Ogassa 59/59/65).
+  - No UI change → no JS/screenshot evidence needed.
+- Screenshots: none; this step does not change the UI.
+- Altitude audit carried forward: the remaining un-fixed stations are
+  Bagà – carena (−319 m, step 2.4) and Montseny – El Brull (−258 m, step 2.5).
+  These steps must re-source station coordinates with the DEM+CORINE method.
+- Notes / sources: CORINE CLC 2018 WMS, Copernicus DEM via Open-Meteo elevation,
+  IGME 1:1M lithology, SoilGrids v2 pH, OSM locality/toponym names, station notes
+  (documented local knowledge). Probing scripts and the grid scan are saved under
+  `/tmp/opencode` (`scan_ripolles.py`, `select_ripolles.py`,
+  `build_ripolles_zones.py`, `ripolles_grid.json`).
+- Next step: 2.4 (curate Cerdanya zones, after re-sourcing Bagà – carena).
+
 ### Step 2.4 — Curate Cerdanya zones
 
 Same rules, 3 stations × 3 zones: Tossa d'Alp, Bagà – carena, La Canya.
+
+**Result (2026-11-07):**
+
+- Status: done
+- Files:
+  - `zones.json` — 9 Cerdanya zones (3 × 3 stations) appended to the existing 30
+    (39 total, 13 station keys). Every centroid re-verified live against CORINE
+    CLC 2018 WMS; `alt_m`, `aspect_deg`/`aspect` and `slope_deg` derived from the
+    ICGC 5 m LiDAR DEM (2021-2023) at ~150 m spacing; `soil.type` is IGME 1:1M
+    lithology; `ph_approx` is SoilGrids v2.
+  - `mushrooms.json` — 3 Cerdanya stations re-sourced to DEM-verified forest
+    points: Tossa d'Alp (42.298,1.877→42.3065,1.9, 1600→1808 m), Bagà – carena
+    (42.282,1.872→42.2825,1.8711, 1100→1392 m, resolving the −319 m audit flag),
+    La Canya (42.225,2.353→42.223,2.35, 880→938 m). Notes corrected to the actual
+    CORINE class and IGME lithology (Tossa is mixed calcari-silícic, not pure
+    "calcari").
+- Method: grid-scanned a ±3 km box per station at 0.5 km (CORINE CLC 2018
+  GetFeatureInfo + Copernicus DEM via Open-Meteo elevation), kept forest cells in
+  the documented class, then selected 3 zones per station for aspect/altitude
+  diversity. The Open-Meteo elevation API hit its hourly limit mid-run, so the
+  final alt/aspect/slope were taken from the ICGC 5 m LiDAR DEM instead (a
+  higher-resolution source than the Copernicus DEM used in 2.2/2.3 — recorded as
+  an upgrade, not an inconsistency). Aspect is measured, not assumed: several
+  candidate cells flipped obaga↔solana between the ~90 m Copernicus and the 5 m
+  LiDAR DEM, so zone names follow the LiDAR-measured aspect.
+- Honest-ification: same as 2.2/2.3 — `canopy_pct`, `undergrowth`, `water_m`,
+  `drive_min`, `difficulty` are `null`; `confidence` 0.6 "medium" (CORINE 100 m,
+  IGME 1:1M, dominant species from station notes not verified tree-by-tree).
+- Verification:
+  - `python3 -m py_compile app.py` → OK; `zones.json` + `mushrooms.json` parse.
+  - Schema validate: 13 station keys, 39 zones, unique ids, required fields
+    present, every station key exists in `mushrooms.json`.
+  - CORINE forest-cover gate re-run live on all 9: **0 failures** — every centroid
+    returns 312 (conifer)/311 (broadleaf)/313 (mixed) and the dominant tree matches
+    the class (312↔Pinus, 311↔Fagus/Quercus, 313↔Pinus+Fagus).
+  - `/api/forecast` HTTP 200: 22 stations, 6 comarques, 39 zones, 0 zone errors,
+    0 station errors. Zone scores differ within a massís (Bagà 64/81/69, Tossa
+    51/47/51, La Canya 61/58/61).
+  - No UI change → no JS/screenshot evidence needed.
+- Screenshots: none; this step does not change the UI.
+- Altitude audit carried forward: only **Montseny – El Brull (−258 m)** remains,
+  for step 2.5.
+- Data-quality notes for a later step (not changed here, out of 2.4 scope):
+  - `La Canya – Ripollès/Cerdanya` is assigned comarca **Cerdanya** but sits at
+    ~42.22 N, 2.35 E, i.e. **Ripollès** near Sant Joan de les Abadesses, and the
+    toponym "La Canya" is ambiguous (Nominatim only finds "la Canya" in Garrotxa
+    and "Serra de la Canya" in Ripollès). Recommend step 6.2 re-check the comarca.
+  - `Bagà – carena` and the Berguedà `Coll de Pal` are the same BV-4024 massís at
+    different altitudes (Bagà zones 1177–1421 m vs Coll de Pal 1619–1955 m); they
+    are distinct stands, not duplicates.
+- Notes / sources: CORINE CLC 2018 WMS, ICGC 5m LiDAR DEM (2021-2023), Copernicus
+  DEM via Open-Meteo elevation (grid scan), IGME 1:1M lithology, SoilGrids v2 pH,
+  OSM/Nominatim, station notes. Probing scripts saved under `/tmp/opencode`
+  (`scan_cerdanya.py`, `probe_cerdanya_terrain150.py`, `probe_cerdanya_soil.py`,
+  `build_cerdanya_zones.py`, `cerdanya_grid.json`, `cerdanya_terrain150.json`,
+  `cerdanya_soil.json`, `cerdanya_station_corr.json`).
+- Next step: 2.5 (curate Montseny, Garrotxa and Pallars zones, after re-sourcing
+  Montseny – El Brull).
 
 ### Step 2.5 — Curate Montseny, Garrotxa and Pallars zones
 
 Same rules, 9 stations × 3 zones. Montseny is siliceous broadleaf; Garrotxa is
 volcanic/mixed; Pallars is high-altitude fir/pine. Expect different species.
+
+**Result (2026-11-07):**
+
+- Status: done
+- Files:
+  - `zones.json` — 27 zones (3 × 9 stations) appended to the existing 39 → 66
+    total, 22 station keys. Every centroid re-verified live against CORINE CLC
+    2018 WMS; `alt_m`, `aspect_deg`/`aspect` and `slope_deg` derived from the
+    ICGC 5m LiDAR DEM (2021-2023) at ~150 m spacing; `soil.type` is IGME 1:1M
+    lithology; `ph_approx` is SoilGrids v2. `canopy_pct`, `undergrowth`,
+    `water_m`, `drive_min`, `difficulty` are `null`; `confidence` 0.6 "medium".
+  - `mushrooms.json` — 9 stations re-sourced to DEM-verified forest points:
+    Montseny – Arbúcies (700→780 m), Montseny – Santa Fe (1050→929 m), Montseny –
+    El Brull (800→1058 m, **resolves the −258 m audit flag**), Garrotxa – Santa
+    Pau (620→735 m), Garrotxa – Collsacabra (900→1028 m), Garrotxa – Sales de
+    Llierca (550→356 m), Pallars – Espot (1700→1816 m), Pallars – Vall Fosca
+    (1550→1567 m), Pallars – Sort (700→835 m). Notes corrected to the actual
+    CORINE class and IGME lithology.
+- Method: grid-scanned a ±3 km box per station at 1 km (CORINE CLC 2018
+  GetFeatureInfo + Copernicus DEM), kept forest cells in the documented class,
+  then probed 48 candidate points with ICGC 5m LiDAR (alt/aspect/slope) + IGME +
+  SoilGrids + CORINE re-verify, and selected 3 zones per station for
+  aspect/altitude diversity (obaga, solana, carena). No coordinate is an offset
+  from a station; every centroid is a CORINE+LiDAR-verified forest pixel.
+- Honest-ification: same as 2.2–2.4 — `canopy_pct`, `undergrowth`, `water_m`,
+  `drive_min`, `difficulty` are `null`; `confidence` 0.6 "medium" (CORINE 100 m,
+  IGME 1:1M). For Garrotxa, IGME 1:1M reports calcareous conglomerate and does
+  **not** resolve the volcanic basalts (Santa Pau, Sales de Llierca); zone notes
+  flag this rather than invent a "volcanic" soil value. Dominant species comes
+  from station notes (documented local knowledge), not verified tree-by-tree.
+- Verification:
+  - `python3 -m py_compile app.py` → OK; `zones.json` + `mushrooms.json` parse.
+  - Schema validate: 22 station keys, 66 zones, 66 unique ids, all required
+    fields present, every station key exists in `mushrooms.json`.
+  - CORINE forest-cover gate re-run live on all 27 new zones: **0 failures** —
+    every centroid returns 311 (broadleaf) or 312 (conifer) and the dominant
+    tree matches the class (312↔Pinus/Abies, 311↔Quercus/Fagus/Castanea).
+  - Lat/lon/alt sanity: all 22 stations and 66 zones inside Catalonia with
+    plausible altitude (356–1832 m).
+  - `GET /` → HTTP 200 (no UI change in this step → no JS/screenshot evidence
+    needed, as in 2.2–2.4).
+  - Zone-scoring path: `get_zones()` returns 22 keys / 66 zones; `score_zone()`
+    on the new El Brull zones returns distinct `zone_score` with live IGME/CORINE
+    geo (siliceous / 311) and no error.
+- **Live `/api/forecast` caveat:** could not exercise the full live endpoint in
+  this session because Open-Meteo's daily forecast quota was exhausted
+  (`X-RateLimit-Remaining: 0`, `Retry-After` ~8.5 h). The endpoint still returns
+  HTTP 200 but each station carries `error: "HTTP Error 429"` and `zones: []`
+  until the quota resets. This is an external, project-wide condition (weather
+  is always re-fetched live), not a defect in the zone data. The zone-scoring
+  path was verified directly via `score_zone()` with synthetic weather instead.
+- Screenshots: none; this step does not change the UI.
+- Altitude audit: **all 22 stations are now DEM-verified** (the audit flags from
+  steps 2.2–2.4 are closed). Carried forward for a later step (out of scope
+  here): the `La Canya – Ripollès/Cerdanya` comarca ambiguity already noted in
+  2.4.
+- Notes / sources: CORINE CLC 2018 WMS, ICGC 5m LiDAR DEM (2021-2023), Copernicus
+  DEM via Open-Meteo elevation (coarse grid scan), IGME 1:1M lithology, SoilGrids
+  v2 pH, station notes. Probing scripts and raw probes saved under `/tmp/opencode`
+  (`scan_mgp.py`, `probe_mgp.py`, `build_mgp_zones.py`, `mgp_grid.json`,
+  `mgp_probe.json`, `mgp_station_corr.json`).
+- Next step: 2.6 (zone UI: map, list, detail, comparison).
 
 ### Step 2.6 — Zone UI: map, list, detail, comparison
 

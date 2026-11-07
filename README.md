@@ -32,6 +32,7 @@ run in its own fresh session so context stays small:
 /phase next        # first step not marked done
 /phase 2.1         # one exact step
 /phase 2           # first not-done substep of phase 2
+/steps             # phase map: main goal, end goal, status
 /phase-status      # read-only status report
 ```
 
@@ -140,6 +141,7 @@ bolets/
 ├── PROPOSAL.md      — audit of BoletRadar + phased roadmap to surpass it
 ├── PHASES.md        — execution ledger: status, substeps and acceptance criteria
 ├── .opencode/commands/phase.md        — `/phase <step>` fresh-session runner
+├── .opencode/commands/steps.md        — `/steps` phase map and goals
 ├── .opencode/commands/phase-status.md — `/phase-status` read-only report
 ├── appIdea.md       — original project spec
 └── youtubetranscript.md  — transcript of the YouTube video that defines the rules
