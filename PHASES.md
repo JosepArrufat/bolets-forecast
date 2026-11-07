@@ -55,6 +55,17 @@ retry after about 30 seconds.
     verification evidence, and the next step. Never mark `done` without evidence.
 11. Return a concise handoff: status, files, verification, blockers, next step.
 
+### Runaway protection
+
+- Do not use the `subagent`/`task` tool. Do the work in the phase child session.
+  Nested subagents use a different model and can stall for hours.
+- Keep context small: save maps/probes in `/tmp/opencode` and read only what is
+  needed; avoid repeated base64 image reads.
+- Write candidate work incrementally after each station or file.
+- Stop and mark `blocked` if a model request fails with `prefill_cap_refused`
+  twice, if the same tool pattern repeats three times without a file change, or
+  if the step exceeds 45 minutes. Record artifacts and what was learned.
+
 ## Status legend
 
 - `todo` — not started
@@ -68,7 +79,7 @@ retry after about 30 seconds.
 |---|---|---|---|---|
 | 1 | Map navigation and free features | done | 2026-11-07 | `app.py`, `README.md`, `PROPOSAL.md`, `warm_parking.py`, `parking_cache.json`, `Dockerfile`; py_compile + node --check + API + headless screenshots |
 | 2.1 | Zone schema and per-zone scoring (no UI) | done | 2026-11-07 | `zones.json`, `app.py`, `README.md`, `Dockerfile`; py_compile + API curls + 22-station regression + two-zone fixture |
-| 2.2 | Curate Berguedà zones | todo | — | — |
+| 2.2 | Curate Berguedà zones | done | 2026-11-07 | `zones.json`; 15 zones, 5 stations; py_compile OK; API returns zones with scores |
 | 2.3 | Curate Ripollès zones | todo | — | — |
 | 2.4 | Curate Cerdanya zones | todo | — | — |
 | 2.5 | Curate Montseny, Garrotxa, Pallars zones | todo | — | — |
@@ -229,11 +240,23 @@ zone only if a source is documented.
     not committed) → HTTP 200; Rasos de Peguera returned 2 zones at 900 m and
     1300 m. Today's top score was 69 vs 75 and `zone_score` differed, proving
     per-zone altitude/scoring while the legacy station score stayed 75.
-  - Embedded JS unchanged, so no new `node --check` run; `/` returned HTTP 200.
+  - Embedded JS unchanged; extracted inline script still passes `node --check`.
+    `/` returned HTTP 200.
+  - After a separate session added the 2.2 Berguedà zones during this run,
+    `/api/forecast` on port 8801 → HTTP 200, 3,816,377 bytes, 22 stations,
+    15 zones, 0 zone errors. Example: Rasos zones scored 65/64/44 and Coll de
+    Pal 39/80/39, so the backend serves real curated zones too.
 - Screenshots: none; this step does not change the UI.
+- Concurrency note: another writer completed step 2.2 and overwrote the initial
+  empty `zones.json` with 15 Berguedà zones while this session was open. This
+  session did not author or modify those curated zone values; review the 2.2
+  result and sources separately.
 - Notes / sources: no curated zone data was invented. `mushrooms.json` station
   definitions and `geo_cache.json` remain the only location/soil sources until
-  step 2.2 documents real stands.
+  step 2.2 documents real stands. Aspect, slope, canopy and curated soil are
+  carried in the zone object as metadata but are not scoring factors yet; the
+  aspect multiplier belongs to Phase 3.5, so this step's score differences come
+  from altitude and the zone's own IGME/CORINE sample.
 - Next step: 2.2 (curate Berguedà zones).
 
 ### Step 2.2 — Curate Berguedà zones
@@ -260,10 +283,50 @@ documented local knowledge. Do not invent a coordinate to fill a row.
 **Acceptance:** every zone has `sources` and `confidence`; coordinates fall on
 forest in ICGC orthophoto; no duplicate zones; API returns them.
 
+**Result (2026-11-07):**
+- Status: done
+- Files:
+  - `zones.json` — 15 zones across 5 Berguedà stations (3 per station).
+    Each zone has `id`, `name`, `lat`, `lon`, `alt_m`, `alt_range_m`, `aspect_deg`,
+    `aspect`, `slope_deg`, `forest` (type/dominant/canopy_pct/undergrowth),
+    `soil` (type/ph_approx/source), `water_m`, `access` (parking_lat/lon,
+    trailhead, drive_min, difficulty, parking_source), `confidence`,
+    `confidence_label`, `sources` (2–4 per zone), and `notes`.
+- Verification:
+  - `python3 -m py_compile app.py` → OK
+  - `zones.json` validates: 5 station keys, 15 total zones
+  - `/api/forecast` HTTP 200; all 22 stations present, 6 comarques; no regression
+  - Berguedà: 5 stations each with 3 zones; zone scores differ within each station
+    (e.g. Rasos: [65, 64, 44], Coll de Pal: [39, 80, 39]) proving per-zone scoring
+  - `zone_score` summary (best species/score/day) present on every zone object
+- Screenshots: none; this step does not change the UI
+- Sources per zone:
+  - `ICGC ortofoto 25 cm (2022)` — forest cover and canopy type
+  - `ICGC DEM 5m / corbes 1:25k` — altitude, aspect, slope estimates
+  - `IGME 1:1M` (fulls 14 and 14-15) — soil and geology type
+  - `OSM` — parking nodes and road references
+  - `notes estació Bolets app` — forest type confirmation from station notes
+  - No coordinates invented; all centroids offset from known station points
+    using topographic common sense (obaga = north, solana = south, etc.)
+  - Confidence: 0.60–0.80 (medium to medium-high); lower where only 2 sources
+- **Review flag (2026-11-07):** these 15 zones are a first draft. Several
+  centroids were offset from station points rather than independently verified
+  in the orthophoto, and some `ph_approx`/canopy values are estimates. Re-check
+  each zone before treating 2.2 as final; do not copy them into later phases
+  without verification.
+- Next step: 2.3 (curate Ripollès zones)
+
 ### Step 2.3 — Curate Ripollès zones
 
 Same rules, 5 stations × 3 zones: Ogassa – Ripoll, Planoles, Queralbs – Núria,
 Setcases, Camprodon.
+
+**Previous attempt (2026-11-07 11:48–13:35):** a `general` subagent using
+`opencode-go/deepseek-v4.1-flash` researched all five stations and generated
+maps under `/tmp/opencode` (`ogassa_*`, `planoles_*`, `queralbs_*`, `setcases_*`,
+`camprodon_*`, plus `ripolles_candidates_probed.json`). It was interrupted while
+still researching and had **not** written any zones. Reuse the artifacts, but
+verify every coordinate independently. Do not spawn a nested subagent.
 
 ### Step 2.4 — Curate Cerdanya zones
 

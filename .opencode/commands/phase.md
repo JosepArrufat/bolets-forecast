@@ -32,6 +32,18 @@ example `2`), run only the first not-done substep and stop. One step per session
 ## Implementation rules
 
 - Implement only the requested step. Do not start the next step.
+- **Do not use the `subagent`/`task` tool.** Do the work in this child session.
+  Nested subagents inherit a different model and can stall for hours.
+- Keep context small. Do not read large images repeatedly; save maps and probes
+  under `/tmp/opencode` and read only the few you need. Prefer text output and
+  small scripts over base64 image reads.
+- For curation steps, write candidate zones incrementally after each station.
+  Do not spend the whole session researching maps and leave no committed work.
+- Stop and mark the step `blocked` if:
+  - a model request fails with `prefill_cap_refused` twice (wait 30 s once),
+  - the same tool pattern repeats three times without a file change,
+  - the step has been running for more than 45 minutes.
+  Record what was learned and where the artifacts are, then return.
 - Preserve the current UI and scoring unless the step explicitly changes them.
 - Do not invent forest locations, coordinates, soil values, sightings, or
   confidence. Every curated value needs a source and a confidence label.
