@@ -37,6 +37,12 @@ example `2`), run only the first not-done substep and stop. One step per session
 - Keep context small. Do not read large images repeatedly; save maps and probes
   under `/tmp/opencode` and read only the few you need. Prefer text output and
   small scripts over base64 image reads.
+- Never pipe a long-running scan through `tail`/`head`; that hides progress and
+  makes the session look frozen. Print one line per station or write a progress
+  file after each item.
+- Prefer coarse sampling first (for example 1 km), then refine only the
+  candidate cells. A 0.5 km grid over five stations is hundreds of HTTP calls
+  and can take 15+ minutes.
 - For curation steps, write candidate zones incrementally after each station.
   Do not spend the whole session researching maps and leave no committed work.
 - For zone curation, verify every centroid against CORINE/ICGC forest cover

@@ -62,6 +62,9 @@ change the `model:` line in `.opencode/commands/phase.md` and
   Nested subagents use a different model and can stall for hours.
 - Keep context small: save maps/probes in `/tmp/opencode` and read only what is
   needed; avoid repeated base64 image reads.
+- Do not pipe long-running scans through `tail`/`head`; it hides progress and
+  looks frozen. Print one line per station or write a progress file after each
+  item. Prefer a coarse 1 km scan first, then refine candidates.
 - Write candidate work incrementally after each station or file.
 - For zone curation, verify every centroid against CORINE/ICGC forest cover
   before writing it. Accept only 311, 312, 313 or 324, and check that the
@@ -84,8 +87,8 @@ change the `model:` line in `.opencode/commands/phase.md` and
 |---|---|---|---|---|
 | 1 | Map navigation and free features | done | 2026-11-07 | `app.py`, `README.md`, `PROPOSAL.md`, `warm_parking.py`, `parking_cache.json`, `Dockerfile`; py_compile + node --check + API + headless screenshots |
 | 2.1 | Zone schema and per-zone scoring (no UI) | done | 2026-11-07 | `zones.json`, `app.py`, `README.md`, `Dockerfile`; py_compile + API curls + 22-station regression + two-zone fixture |
-| 2.2 | Curate Berguedà zones | blocked | 2026-11-07 | 15 draft zones exist, but CORINE check fails: Coll de Pal obaga = urban 112, Coll de Pal solana = pastures 231, Vallcebre carena = sparsely vegetated 333, Fígols obaga = pastures 231, Fígols vall = sclerophyllous 323; needs re-curation |
-| 2.3 | Curate Ripollès zones | todo | — | — |
+| 2.2 | Curate Berguedà zones | done | 2026-11-07 | `zones.json` (15 zones), `mushrooms.json` (5 station coords/alt corrected); every zone re-sourced from CORINE 2018 + Copernicus DEM + IGME + SoilGrids; 15/15 pass the forest-cover gate; API 200 / 22 stations / 6 comarques |
+| 2.3 | Curate Ripollès zones | in progress | 2026-11-07 | — |
 | 2.4 | Curate Cerdanya zones | todo | — | — |
 | 2.5 | Curate Montseny, Garrotxa, Pallars zones | todo | — | — |
 | 2.6 | Zone UI: map, list, detail, comparison | todo | — | — |
@@ -288,48 +291,55 @@ documented local knowledge. Do not invent a coordinate to fill a row.
 **Acceptance:** every zone has `sources` and `confidence`; coordinates fall on
 forest in ICGC orthophoto; no duplicate zones; API returns them.
 
-**Result (2026-11-07):**
+**Result (2026-11-07) — re-sourced from DEM + CORINE:**
+
+The first draft (offsets from station points) failed a CORINE forest-cover
+check: 6/15 centroids were non-forest and several "pine" zones sat on broadleaf.
+A deeper audit found the *station* coordinates themselves were altitude-wrong,
+so the zones inherited the error. This run re-sourced every centroid from two
+machine-checkable sources (CORINE CLC 2018 + Copernicus DEM) plus IGME/SoilGrids.
+
 - Status: done
 - Files:
-  - `zones.json` — 15 zones across 5 Berguedà stations (3 per station).
-    Each zone has `id`, `name`, `lat`, `lon`, `alt_m`, `alt_range_m`, `aspect_deg`,
-    `aspect`, `slope_deg`, `forest` (type/dominant/canopy_pct/undergrowth),
-    `soil` (type/ph_approx/source), `water_m`, `access` (parking_lat/lon,
-    trailhead, drive_min, difficulty, parking_source), `confidence`,
-    `confidence_label`, `sources` (2–4 per zone), and `notes`.
+  - `zones.json` — 15 Berguedà zones (3 × 5 stations), fully re-sourced. Every
+    centroid was found by searching DEM+CORINE for a point in the target forest
+    class at the target altitude; `alt_m`, `aspect_deg`/`aspect` and `slope_deg`
+    are derived from the DEM; `forest.type` is the CORINE class; `soil.type` is
+    IGME lithology via `fetch_geo()`; `ph_approx` is real SoilGrids v2 pH.
+  - `mushrooms.json` — 5 Berguedà stations corrected to DEM-verified forest
+    points: Rasos (1350→1268 m), Coll de Pal (1680→1678 m), Vallcebre
+    (1150→1134 m), Sant Jaume (1000→940 m), Fígols (1100→1219 m). Vallcebre's
+    note corrected: CORINE classifies it as broadleaf (beech), pine is minor.
+- Method: for each zone, grid-search Copernicus DEM (Open-Meteo elevation API)
+  for the claimed altitude band, probe those cells against CORINE CLC 2018 WMS
+  (`fetch_corine`), keep points in the documented forest class (conifer for the
+  pine stands, broadleaf for beech/oak/riparian), and compute aspect/slope from
+  N/S/E/W DEM neighbours. No coordinate is an offset; each is DEM+CORINE-verified.
+- Honest-ification: dropped the invented specifics — `canopy_pct`, `undergrowth`,
+  `water_m`, `drive_min` and `difficulty` are now `null`; `ph_approx` is real
+  (SoilGrids) instead of hand-written; `confidence` is 0.6 "medium" uniformly
+  because CORINE is 100 m, the DEM is ~90 m, IGME is 1:1M, and the dominant
+  species still comes from station notes (not independently verified per stand).
 - Verification:
   - `python3 -m py_compile app.py` → OK
-  - `zones.json` validates: 5 station keys, 15 total zones
-  - `/api/forecast` HTTP 200; all 22 stations present, 6 comarques; no regression
-  - Berguedà: 5 stations each with 3 zones; zone scores differ within each station
-    (e.g. Rasos: [65, 64, 44], Coll de Pal: [39, 80, 39]) proving per-zone scoring
-  - `zone_score` summary (best species/score/day) present on every zone object
+  - `zones.json` validates: 5 station keys, 15 zones, unique ids, all required
+    fields present, all station keys present in `mushrooms.json`
+  - CORINE gate re-run on all 15: **0 failures** — every centroid returns
+    311/312/313 and the dominant tree matches the class (312↔Pinus, 311↔Fagus/
+    Quercus/Alnus)
+  - `/api/forecast` HTTP 200, 22 stations, 6 comarques, 15 zones each with a
+    `zone_score`; no regression
 - Screenshots: none; this step does not change the UI
-- Sources per zone:
-  - `ICGC ortofoto 25 cm (2022)` — forest cover and canopy type
-  - `ICGC DEM 5m / corbes 1:25k` — altitude, aspect, slope estimates
-  - `IGME 1:1M` (fulls 14 and 14-15) — soil and geology type
-  - `OSM` — parking nodes and road references
-  - `notes estació Bolets app` — forest type confirmation from station notes
-  - No coordinates invented; all centroids offset from known station points
-    using topographic common sense (obaga = north, solana = south, etc.)
-  - Confidence: 0.60–0.80 (medium to medium-high); lower where only 2 sources
-- **Review flag (2026-11-07):** these 15 zones are a first draft. Several
-  centroids were offset from station points rather than independently verified
-  in the orthophoto, and some `ph_approx`/canopy values are estimates. Re-check
-  each zone before treating 2.2 as final; do not copy them into later phases
-  without verification.
-- **CORINE verification (2026-11-07):** 6 of 15 centroids fail the forest-cover
-  gate:
-  - `colldepal-obaga-nord` → CORINE 112 (urban discontinuous)
-  - `colldepal-solana-sud` → CORINE 231 (pastures)
-  - `vallcebre-carena-alta` → CORINE 333 (sparsely vegetated)
-  - `figols-gresolet-obaga-faig` → CORINE 231 (pastures)
-  - `figols-gresolet-vall-riera` → CORINE 323 (sclerophyllous vegetation)
-  - Rasos zones → CORINE 311 (broadleaf), not the expected pine; re-check.
-  This step is **blocked** until every centroid sits on 311/312/313/324 and the
-  dominant tree matches the zone's `forest.dominant`.
-- Next step: 2.2 re-verification and re-curation, not 2.3.
+- **Altitude audit (all 22 stations, DEM vs claimed `alt_m`):** 8 stations are
+  off by >250 m. Fixed here (Berguedà): Rasos +733, Coll de Pal +783, Vallcebre
+  +289, plus Sant Jaume/Fígols (minor). **Recorded for later steps:**
+  - Planoles −595 m, Queralbs–Núria +318 m, Setcases −272 m (step 2.3)
+  - Bagà – carena −319 m (step 2.4)
+  - Montseny – El Brull −258 m (step 2.5)
+  These steps must re-source their station coordinates with the same DEM+CORINE
+  method before curating zones.
+- Next step: 2.3 (curate Ripollès zones, after re-sourcing the three Ripollès
+  stations above).
 
 ### Step 2.3 — Curate Ripollès zones
 
