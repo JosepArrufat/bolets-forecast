@@ -7,8 +7,10 @@ Read `PHASES.md` and report, without editing any file:
 
 1. Completed steps and their evidence.
 2. The step currently marked `in progress`, if any.
-3. The first step with status `todo`.
+3. The first step with status `todo` (skipping `optional` steps, which are
+   deferred extras).
 4. Any `blocked` steps and the blocker.
-5. The exact next command to run (`/phase <step>`).
+5. Any `optional` steps, listed separately as deferred extras.
+6. The exact next command to run (`/phase <step>`).
 
 Keep it short: a status table plus the next command.

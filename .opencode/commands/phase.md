@@ -10,8 +10,9 @@ You have not seen the parent conversation; rely on the repository files.
 Requested phase or step: **$ARGUMENTS**
 
 If the request is empty or says `next`, read `PHASES.md` and run the first step
-whose status is not `done`. If the request names a phase with substeps (for
-example `2`), run only the first not-done substep and stop. One step per session.
+whose status is `todo`. Steps marked `optional` are deferred extra services —
+skip them; they are not "next". If the request names a phase with substeps (for
+example `2`), run only the first `todo` substep and stop. One step per session.
 
 ## Before editing
 
@@ -25,6 +26,9 @@ example `2`), run only the first not-done substep and stop. One step per session
      changes, stop and report a blocker. Only one writer at a time.
 3. Read the matching step's Goal, Files, Acceptance, Verification, and Blocked-if.
 4. If the step is already `done`, report that and stop.
+   If the step is `optional`, report that it is a deferred extra service and
+   stop — unless the requester explicitly asked to build that specific extra,
+   in which case you may proceed (and note the step stays `optional` in scope).
 5. Immediately mark the step `in progress` in `PHASES.md` with the date before
    changing code. This is the lock that prevents two parallel writers.
 6. Write a 3–5 bullet plan before changing anything.

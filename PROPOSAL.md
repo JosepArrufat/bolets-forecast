@@ -2,7 +2,7 @@
 
 _Audit of boletradar.cat, audit of the current Bolets app, and a phased implementation plan._
 
-> **Status:** Phase 1 (map navigation and free features) is implemented in `app.py`: search, filters, sorting, map↔list sync, clustering, URL state, free best-zones leaderboard, route links, nearby parking, geolocation, legend and data-quality indicator. Phase 2 (micro-zones) is next.
+> **Status:** Phase 1 (map navigation and free features), Phase 2 (micro-zones) and Phase 3 (terrain and canopy science) are implemented. Phase 1 shipped search, filters, sorting, map↔list sync, clustering, URL state, the free best-zones leaderboard, route links, nearby parking, geolocation, legend and the data-quality indicator. Phase 2 added the `zones.json` micro-zone model: 66 independently scored zones across the 22 stations (massís → obaga/solana/carena stands), the zone comparison strip, the zone detail panel, and zone circles on the map. Phase 3 added the full enrichment pipeline (`enrich_zones.py` → `zones_enriched.json`: ICGC 5m DEM aspect/slope/solar/TPI/cold-air, ICGC LiDAR canopy/undergrowth, IGME/SoilGrids soil, CORINE habitat) and integrated those factors into the zone score and the "why this score" explainer as a five-factor H·M·W·P·C breakdown. Phase 4 is complete (4.1–4.6): 4.1 shipped batched Open-Meteo weather with lapse-rate elevation correction per zone; 4.2 shipped the optional Meteocat XEMA integration (observed station data interpolated to each zone with distance/data-age recorded; Open-Meteo stays the fallback and the score source; radar deferred — the API has no XRAD product, rain accumulation uses XEMA gauges); 4.3 shipped the soil water balance and drought index (per-zone P−ET0 14/30/60/90-day windows from the 92-day Open-Meteo ET0 series, a bounded FAO-56-style recharge index with a documented 100 mm storage cap, a documented XEMA observed-rain blend, and a per-species drought/recharge modifier on the zone rain term — station scores byte-identical). 4.4 added per-zone data confidence (completeness + deterministic prediction-confidence score with reasons, per zone and per species, reporting-only). 4.5 shipped phenology and the altitude-lag wave: per-species growing-degree-day states (GDD = Σ max(0, T − `temperature_c.min`) over the stored 14-day temperature series, lapse-corrected 6.5 °C/km to each zone's altitude), window open/close thresholds derived from the documented temperature band, `P` wired into the zone score (stations byte-identical), `altitude_lag_days` vs the warmest zone of each species, and the "rovelló wave" visual (altitude strip + 7-day forecast strip, CA/EN) in the zone detail and explainer. 4.6 verified the phase end to end (known-station-day temperature deltas, 66/66 lapse formula, day-rollover cache stamps, sources/timestamps audit, 4.5-identical regression and script) and recorded the honest limitations in README "Phase 4 verification (4.6)". Phase 5 is implemented (5.1 report model + API, 5.6 calibration + published AUC/Brier, 5.7 privacy/rate-limit/deletion verification and docs; the report UI, logbook, photos and alerts are deferred optional extras). Phases 1–5 are implemented. Next: Phase 6 (PWA and expansion, step 6.1).
 >
 > **Execution:** `PHASES.md` is the step-by-step ledger. Run `/phase next` or `/phase 2.1` to execute one step in a fresh child session.
 
@@ -311,6 +311,12 @@ pwa/                       # manifest, service worker, icons
 
 **Outcome:** a scientific edge BoletRadar cannot match with coarse land cover.
 
+> **Status: done** (steps 3.1–3.6 in `PHASES.md`). The 1:25k soil-texture and
+> CHC50 habitat sources were unavailable, so soil/habitat use the IGME 1:1M +
+> SoilGrids + CORINE fallbacks (flagged `pending`). The "rain and soil overlay
+> layers" item was descoped to Phase 4 (weather quality); it is not part of the
+> shipped Phase 3 scoring.
+
 ### Phase 4 — Weather quality (3–5 days)
 
 - Batch weather, elevation correction, Meteocat key.
@@ -318,12 +324,64 @@ pwa/                       # manifest, service worker, icons
 - Confidence per zone.
 - Phenology and altitude-lag wave.
 
+> **Status: done (4.1–4.6).** 4.1 batches
+> Open-Meteo weather for all stations and zones and lapse-corrects temperatures
+> to each zone's verified altitude. 4.2 adds the optional Meteocat XEMA
+> integration (`METEOCAT_API_KEY`): observed temperature/precipitation from the
+> official station network, IDW-interpolated to each zone with nearest-station
+> distance and data age recorded; Open-Meteo remains the fallback and the
+> source of every score. Radar (XRAD) is deferred — the Meteocat API exposes no
+> radar product — and rain accumulation uses XEMA gauges (variable 1300).
+> Live-verified with a real key on 2026-11-08 (see `PHASES.md` step 4.2): three
+> live-data fixes landed (station-state filtering, blank-state readings,
+> daily-stats shape), 188 operative stations, 66/66 zones with an `xema`
+> block, 0 errors. 4.3 adds the soil water balance and drought index: per-zone
+> `water` blocks with 14/30/60/90-day P−ET0 balances (Open-Meteo
+> `et0_fao_evapotranspiration`, 92 past days), a bounded recharge index
+> (documented 100 mm storage cap, FAO-56 bucket concept), an explicit XEMA
+> observed-rain blend for the published days, and a per-species
+> drought/recharge modifier on the zone rain term (drought damps, recharge
+> boosts; sensitivity from the documented `rain_trigger_mm`; station scores
+> byte-identical). 4.4 adds per-zone data confidence: `data_completeness`
+> (fraction of the score's inputs present, degrading gracefully without a
+> Meteocat key) and a deterministic `prediction_confidence` score + reasons
+> (XEMA station distance/data age, Open-Meteo ~11 km grid, DEM/LiDAR/soil/
+> habitat source resolutions, curated zone confidence, field reports honestly
+> 0 until Phase 5), shown per zone and per species, never multiplied into
+> scores. 4.5 adds phenology and the altitude-lag wave (see README "Phenology
+> and altitude lag"): per-species growing-degree days over the stored 14-day
+> temperature series with `temperature_c.min` as the documented base,
+> lapse-corrected to each zone's altitude, window open/close derived from the
+> documented temperature band, `P` multiplied into the zone score only
+> (station scores byte-identical), `altitude_lag_days` vs the species' wave
+> front, and the "rovelló wave" strips in the zone detail/explainer (CA/EN).
+> See `PHASES.md` steps 4.3–4.5 for the evidence.
+
 ### Phase 5 — Field loop (1–2 weeks)
 
 - Trip reports, photos, zone notes.
 - Logbook.
 - Alerts (web push / Telegram).
 - Calibration pipeline and published accuracy.
+
+> **Status: Phase 5 complete (5.1 + 5.6 + 5.7, 2026-11-10); the user-facing
+> extras deferred.** The core of this phase is the calibration loop: the report
+> model + API (5.1), published AUC/Brier metrics (5.6), and the privacy /
+> rate-limit / deletion verification and docs (5.7). Step 5.1 shipped a SQLite
+> trip-report store and the `POST /api/reports` / `GET /api/reports` endpoints,
+> with 1 km location rounding, salted device/IP hashes (no raw identity or
+> exact coordinates stored or exposed), input validation and rolling abuse
+> limits. Step 5.6 shipped `calibrate.py` (AUC / Brier / calibration curve,
+> held-out split) and published the first metrics: field reports are still
+> `n = 0` (no recalibration applied — nothing to overfit), and a per-species
+> occurrence AUC against GBIF + iNaturalist data (e.g. trompeta 0.75, cep 0.67,
+> rovelló 0.65; camagroc 0.32 and bolet de tinta 0.42 are published as honest
+> negative results — see `calibration_report.json`). Step 5.7 added the
+> `DELETE /api/reports` right-to-erasure path (delete all, or one `id` owned by
+> the same salted device hash), and re-verified the privacy design and abuse
+> limits end-to-end. The user-facing extras — report UI (5.2), logbook (5.3),
+> photos (5.4) and alerts (5.5) — are marked `optional` in `PHASES.md`: outside
+> the core mushroom map, deferred.
 
 ### Phase 6 — PWA and scale (1 week)
 

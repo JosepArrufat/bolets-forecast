@@ -1,6 +1,11 @@
 __pycache__/
 *.pyc
 geo_cache.json
+weather_cache.json
+terrain_cache.json
+reports.db
+reports.db-wal
+reports.db-shm
 youtubetranscript.md
 forecast.py
 data/

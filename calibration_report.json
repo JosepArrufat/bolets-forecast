@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-11-10T11:00:17Z",
+  "date": "2026-11-10",
+  "methodology": "Field reports (found/not-found vs score_at_time) → AUC/Brier/calibration curve on a held-out split. GBIF + iNaturalist occurrences (presence-only, deduped) vs random Catalonia background points → per-species AUC of the model's current score, each point scored by its nearest curated zone (≤ 20 km). No recalibration is applied — the numbers are descriptive/validation, to avoid overfitting a tiny sample.",
+  "field_reports": {
+    "n": 0,
+    "n_found": 0,
+    "n_not_found": 0,
+    "heldout": null,
+    "calibration_curve": [],
+    "note": "insufficient data (0 reports) — no recalibration applied"
+  },
+  "occurrence_auc": {
+    "rovelló": {
+      "scientific_name": "Lactarius sanguifluus",
+      "auc": 0.653,
+      "n_presence": 55,
+      "n_occurrences_raw": 119,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "cep": {
+      "scientific_name": "Boletus edulis",
+      "auc": 0.668,
+      "n_presence": 55,
+      "n_occurrences_raw": 127,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "fredolic": {
+      "scientific_name": "Tricholoma terreum",
+      "auc": 0.533,
+      "n_presence": 56,
+      "n_occurrences_raw": 164,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "rossinyol": {
+      "scientific_name": "Cantharellus cibarius",
+      "auc": 0.599,
+      "n_presence": 20,
+      "n_occurrences_raw": 67,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "trompeta-de-la-mort": {
+      "scientific_name": "Craterellus cornucopioides",
+      "auc": 0.745,
+      "n_presence": 46,
+      "n_occurrences_raw": 103,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "llenega-negra": {
+      "scientific_name": "Hygrophorus olivaceoalbus",
+      "auc": 0.577,
+      "n_presence": 18,
+      "n_occurrences_raw": 40,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "llenega-blanca": {
+      "scientific_name": "Hygrophorus eburneus",
+      "auc": 0.514,
+      "n_presence": 36,
+      "n_occurrences_raw": 78,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "camagroc": {
+      "scientific_name": "Cantharellus lutescens",
+      "auc": 0.321,
+      "n_presence": 47,
+      "n_occurrences_raw": 92,
+      "n_background": 200,
+      "gbif_status": "SYNONYM"
+    },
+    "ou-de-reig": {
+      "scientific_name": "Amanita caesarea",
+      "auc": 0.664,
+      "n_presence": 58,
+      "n_occurrences_raw": 115,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "bolet-de-tinta": {
+      "scientific_name": "Coprinus comatus",
+      "auc": 0.421,
+      "n_presence": 70,
+      "n_occurrences_raw": 190,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "orella-de-llebre": {
+      "scientific_name": "Otidea onotica",
+      "auc": 0.653,
+      "n_presence": 29,
+      "n_occurrences_raw": 60,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "murgola": {
+      "scientific_name": "Morchella esculenta",
+      "auc": null,
+      "n_presence": 0,
+      "n_occurrences_raw": 73,
+      "n_background": 0,
+      "gbif_status": "ACCEPTED"
+    },
+    "picornell": {
+      "scientific_name": "Macrolepiota procera",
+      "auc": 0.623,
+      "n_presence": 104,
+      "n_occurrences_raw": 228,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    }
+  },
+  "caveats": [
+    "Occurrence data is presence-only: no true absences, so the occurrence AUC is rank-discrimination against random background, not a calibrated probability.",
+    "Occurrence AUC uses the model's current (seasonal, weather-based) score; historical occurrences cannot be scored with historical weather, so the discrimination is confounded by the present season.",
+    "Both presence and background points are scored via their nearest zone, so the metric is at the model's zone resolution.",
+    "The field-report sample is the only true binary calibration signal; until enough reports accumulate, no score recalibration is justified (avoid overfitting)."
+  ]
+}
