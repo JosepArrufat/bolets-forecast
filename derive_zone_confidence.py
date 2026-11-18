@@ -16,9 +16,8 @@ confidence from evidence that already exists, without inventing anything:
 - the DEM resolution actually used (ICGC 5 m LiDAR vs Copernicus ~90 m),
 - the LiDAR canopy sample coverage,
 - whether the 7.1 CORINE forest gate passed for the zone,
-- whether access facts are present (`drive_min` + `difficulty`; parking/trailhead
-  add evidence but their absence is not a failure — Phase 7.2 is blocked on
-  Overpass),
+- whether access facts are present (`drive_min` + `difficulty`); a trailhead
+  name adds evidence but its absence is not a failure,
 - whether `water_m` is known. A null `water_m` means "unknown", **never**
   "no water": it earns no bonus but is not penalised.
 
@@ -70,7 +69,6 @@ B_CANOPY_GOOD = 0.03                 # LiDAR sample coverage ≥ 0.90
 B_CANOPY_OK = 0.015                  # LiDAR sample coverage ≥ 0.75
 B_FOREST_GATE = 0.04                 # 7.1 CORINE gate passed
 B_ACCESS_ROUTE = 0.04                # drive_min + difficulty present
-B_ACCESS_PARKING = 0.03              # parking coordinates + trailhead
 B_WATER_KNOWN = 0.03                 # water_m sourced; null = unknown, no bonus
 
 # Confidence labels are the existing schema values (baixa / medium / alta).
@@ -158,9 +156,7 @@ def evidence_for(zone, enriched, gate_ok):
 
     has_route = (access.get("drive_min") is not None
                  and access.get("difficulty") is not None)
-    has_parking = (access.get("parking_lat") is not None
-                   and access.get("parking_lon") is not None
-                   and bool(access.get("trailhead")))
+    has_trailhead = bool(access.get("trailhead"))
 
     components = {
         "sources": {
@@ -199,12 +195,11 @@ def evidence_for(zone, enriched, gate_ok):
             "detail": "CORINE forest gate (step 7.1)",
         },
         "access": {
-            "route": has_route, "parking": has_parking,
-            "bonus": (B_ACCESS_ROUTE if has_route else 0.0)
-                     + (B_ACCESS_PARKING if has_parking else 0.0),
+            "route": has_route, "trailhead": has_trailhead,
+            "bonus": B_ACCESS_ROUTE if has_route else 0.0,
             "detail": ("drive time + difficulty" if has_route else "no route facts")
-                      + ("; parking + trailhead" if has_parking
-                         else "; parking/trailhead unknown"),
+                      + ("; named trailhead" if has_trailhead
+                         else "; no named trailhead (not a failure)"),
         },
         "water": {
             "known": zone.get("water_m") is not None,
@@ -322,11 +317,11 @@ def build_report(rows, old_vals, new_vals, old_labels, new_labels):
                 "terrain_copernicus": B_TERRAIN_COPERNICUS,
                 "canopy_good": B_CANOPY_GOOD, "canopy_ok": B_CANOPY_OK,
                 "forest_gate": B_FOREST_GATE, "access_route": B_ACCESS_ROUTE,
-                "access_parking": B_ACCESS_PARKING, "water_known": B_WATER_KNOWN,
+                "water_known": B_WATER_KNOWN,
             },
             "label_thresholds": {str(t): l for t, l in LABEL_THRESHOLDS},
             "note": ("water_m null = unknown (no bonus, never a failure); "
-                     "parking/trailhead absence is not a failure (7.2 blocked); "
+                     "no named trailhead is not a failure; "
                      "1:25k/MAGNA 50 anchors activate when 7.4/7.6 land"),
         },
         "distribution": {
@@ -423,11 +418,10 @@ def self_test():
     check("1:25k soil/habitat anchors raise confidence", v_25 > v, (v_25, v))
     check("1:25k cap respected", v_25 <= CAP)
 
-    z_park = _fixture_zone(access={"drive_min": 30, "difficulty": "fàcil",
-                                   "parking_lat": 42.0, "parking_lon": 2.0,
+    z_head = _fixture_zone(access={"drive_min": 30, "difficulty": "fàcil",
                                    "trailhead": "pista"})
-    check("parking adds evidence (absence not a failure)",
-          evidence_for(z_park, _fixture_enriched(), True)[0] > v)
+    check("an optional trailhead name neither adds nor subtracts evidence",
+          evidence_for(z_head, _fixture_enriched(), True)[0] == v)
     z_noacc = _fixture_zone(access={"drive_min": None, "difficulty": None})
     check("missing access reduces, not zeroes",
           FLOOR <= evidence_for(z_noacc, _fixture_enriched(), True)[0] < v)

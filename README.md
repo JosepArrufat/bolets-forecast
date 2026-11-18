@@ -57,7 +57,7 @@ model is unavailable, change the `model:` line in
 - **Left sidebar** — all stations grouped by comarca. Each card shows altitude, last 7 days of rain, average temperature, max wind, the top 4 species by score, the best day in the 7-day window, and a route button.
 - **Map** — Leaflet map with clustered markers, numbered and colored by the selected species' score. Click a marker to open the detail panel. Hover syncs the marker with its card. A legend is always visible.
 - **Right panel** — opens on station click. Shows a data-quality bar (meteo + soil + forest completeness), 7-day score strip, soil type badge (calcareous/siliceous/mixed), forest type badge (from CORINE), raw lithology, weather summary, and the full ranked species list. Click any species row to expand its score breakdown and notes.
-- **Trip planning** — free "Com arribar-hi" (Google Maps), OpenStreetMap link, nearby parking from OpenStreetMap/Overpass, and a shareable zone link.
+- **Trip planning** — free "Com arribar-hi" (Google Maps), OpenStreetMap link, drive time and difficulty, and a shareable zone link.
 - **Shareable URL state** — species, day, comarca, search, sort, active zone and map view are encoded in the URL. Back/forward and deep links work.
 - **Topo ICGC toggle** — top-right map button overlays the official ICGC topographic tiles for terrain context.
 - **Geolocate** — "Situa'm" centres the map and reorders zones by distance from you.
@@ -280,7 +280,7 @@ the CORINE group (`frondós`, `conífera`, `mixt`) rather than a tree species;
 lithology is IGME MAGNA 50 (1:50k) where it answers, else 1:1M; 52 of the 69 new
 zones have no pH because SoilGrids timed out, and that field is left empty
 instead of invented. Their confidence is derived from that evidence by Phase 7.3
-(no pH and no parking mean a lower value, not a fabricated one).
+(no pH means a lower value, not a fabricated one).
 
 ### Forest-offset integrity gate (Phase 7.1)
 
@@ -319,25 +319,20 @@ in agreement — checked by `python3 complete_zone_facts.py --check-schema`):
 
 - **`access.drive_min`** — OSRM driving time in whole minutes from the
   **comarca capital** (the documented reference point; Wikipedia / OSM Nominatim)
-  to the zone's parking point, or to the zone centroid when no parking is mapped.
-  The origin/destination are recorded in `access.drive_min_source`, and the trip
-  card labels the time with that origin (`25 min · des de Ripoll`).
+  to the zone centroid (OSRM snaps to the nearest drivable road). The
+  origin/destination are recorded in `access.drive_min_source`, and the trip card
+  labels the time with that origin (`25 min · des de Ripoll`).
 - **`access.difficulty`** — a written rule from slope + walk distance. Walk
-  distance is the straight-line parking → centroid, or the station's documented
-  forest point → centroid when no parking is mapped; slope alone is used only
-  when neither origin exists. Rule: `fàcil` = walk ≤ 1500 m and slope < 20°
-  (slope < 15° without a walk origin); `moderada` = walk ≤ 4000 m and slope
-  < 30° (slope < 25°); otherwise `exigent`. Recorded in
+  distance is the straight-line station forest point → centroid; slope alone is
+  used only when there is no station point. Rule: `fàcil` = walk ≤ 1500 m and
+  slope < 20° (slope < 15° without a walk origin); `moderada` = walk ≤ 4000 m and
+  slope < 30° (slope < 25°); otherwise `exigent`. Recorded in
   `access.difficulty_source`.
 - **`water_m`** — distance to the nearest OSM `waterway` / `natural=water` /
   `water` feature, computed from Overpass geometry and cached in
   `water_cache.json`. When Overpass answers but no feature is mapped, `water_m`
   is null and `water_source` says "no mapped feature (unknown, not 'no water')";
   when Overpass is unavailable the fields are left untouched, never faked.
-- **`access.parking_lat`/`parking_lon`** — for the 69 zones added in 6.2 whose
-  parking was null, the nearest OSM `amenity=parking` within 2.5 km (same
-  Overpass query). 53 of the 69 got a mapped point; 16 stay null because OSM has
-  no parking feature within the radius (unknown, not "no parking").
 - **`forest.canopy_pct` / `forest.undergrowth` removed** — these null placeholders
   duplicated the LiDAR `enrichment.canopy` block; the enrichment is now the only
   source (the UI reads `enrichment.canopy` directly).
@@ -349,17 +344,24 @@ French world mirror first (`overpass.openstreetmap.fr`), then
 flapping between HTTP 502 "at capacity" and multi-second queues while the French
 mirror answered a Catalan station bbox in ~2 s with full coverage.
 
-> **Status (2026-11-16): complete.** `drive_min` 135/135, `difficulty` 135/135,
-> `water_m` **135/135**, parking **119/135** (53 of the 69 6.2 zones got a
-> mapped point; 16 have none within 2.5 km and stay null). All 46 stations
-> answered Overpass in one run; `--check-schema` passes. Re-deriving confidence
-> (7.3) now gives **110 `alta` / 25 `medium`** (water and parking are evidence
-> bonuses), up from 82/53. Three zones were
-> re-checked against independent `around:` queries — a waterway exists just
-> outside `water_m` and none inside, so the distances are real geometry. Drive
-> times changed on 44 zones and difficulty on 14 because the walk origin is now
-> the mapped parking instead of the zone centroid/station point (the documented
-> method). Water and access are display-only: the score is unchanged.
+> **Status (2026-11-18): complete.** `drive_min` 135/135, `difficulty` 135/135,
+> `water_m` **135/135**. All 46 stations answered Overpass; `--check-schema`
+> passes. Three zones were re-checked against independent `around:` queries — a
+> waterway exists just outside `water_m` and none inside, so the distances are
+> real geometry. Water and access are display-only: the score is unchanged.
+>
+> **Parking was removed on 2026-11-18.** The Phase 7.2 attempt to fill
+> `access.parking_*` with the nearest OSM `amenity=parking` produced points that
+> were often a village square rather than a trailhead (the curated Phase-2
+> parkings had a median 4 km straight-line walk to the zone), and drive time and
+> difficulty were then computed *to that point* — which made both look better
+> than reality. Rather than ship an unverifiable access point, the whole parking
+> feature was retired: the zone-detail parking box, the `/api/parking` proxy, the
+> `parking_cache.json` seed, `warm_parking.py`, the `access.parking_*` fields and
+> the 7.3 confidence bonus. Drive time is now to the zone, difficulty is from the
+> station forest point, and `complete_zone_facts.py` strips any leftover
+> `access.parking_*` on every run. Confidence re-derives to **99 `alta` / 36
+> `medium`**.
 
 ### Confidence that discriminates (Phase 7.3)
 
@@ -383,7 +385,6 @@ confidence = clamp(0.30, 0.45 + Σ evidence bonuses, 0.80)
 | LiDAR canopy coverage ≥ 0.90 / ≥ 0.75 | +0.03 / +0.015 | `enrichment.canopy.sample_coverage` |
 | CORINE forest gate passed | +0.04 | `forest_offset_report.json` `zone_gate` (step 7.1) |
 | drive time + difficulty present | +0.04 | `access.drive_min` + `access.difficulty` |
-| parking coordinates + trailhead present | +0.03 | `access` (absence is **not** a failure) |
 | `water_m` known | +0.03 | `water_m`; null means **unknown**, no bonus, never a penalty |
 
 Labels: `alta ≥ 0.75 > medium ≥ 0.55 > baixa`. “Alta” means every available
@@ -409,8 +410,8 @@ evidence.
 **Live result (2026-11-12):** 135/135 zones changed from `0.6` to a range of
 **0.62–0.77**; labels **44 alta / 91 medium**; the 4.4 prediction-confidence
 score now spans 0.631–0.678 (was 0.577–0.624), and completeness stays 100 %.
-`water_m`/parking nulls are treated as unknown, so the 7.2 Overpass blocker does
-not lower any zone's confidence.
+A null `water_m` is treated as unknown, so the 7.2 Overpass blocker does not
+lower any zone's confidence.
 
 **After step 7.4 (2026-11-15):** re-derived with the MAGNA 50 anchor active,
 `--check` passes and the range is **0.62–0.80** with **63 alta / 72 medium**
@@ -628,13 +629,11 @@ bolets/
 ├── zones_enriched.json — generated: zones.json + per-zone enrichment block
 ├── terrain_cache.json  — generated: enrichment samples by rounded lat/lon (source + timestamp)
 ├── geo_cache.json   — auto-generated, IGME + CORINE cache per lat/lon
-├── parking_cache.json — precomputed nearby parking per station (warm_parking.py)
 ├── reports.db        — auto-generated: SQLite field reports (Phase 5.1), gitignored
 ├── calibrate.py      — calibration + published metrics pipeline (Phase 5.6)
 ├── calibration_report.json — generated: AUC/Brier/calibration results (Phase 5.6)
-├── warm_parking.py  — one-off script to fill parking_cache.json from Overpass
 ├── complete_zone_facts.py — derive water_m/drive_min/difficulty + canopy de-dup (Phase 7.2)
-├── water_cache.json  — generated: OSM water + parking per station (Phase 7.2), gitignored
+├── water_cache.json  — generated: OSM water per station (Phase 7.2), gitignored
 ├── route_cache.json  — generated: OSRM drive times (Phase 7.2), gitignored
 ├── repair_forest_offsets.py — CORINE forest gate for stations + zones (Phase 7.1)
 ├── forest_offset_report.json — generated: last gate result, per-station diff (Phase 7.1)
@@ -713,7 +712,7 @@ Field calibration belongs to Phase 5.
 
 ### Just shipped (Phases 1–6)
 - **Search, filters and sorting** across places, forests, municipalities and species.
-- **Free best-zones leaderboard**, route links and nearby parking — nothing hidden behind a paywall.
+- **Free best-zones leaderboard**, route links and shareable zone links — nothing hidden behind a paywall.
 - **Map ↔ list sync**, marker clustering, always-on legend, geolocation and URL state.
 - **Data-quality indicator** per zone (meteo + soil + forest completeness) and a 7-day score strip.
 - **Micro-zones** — 135 independently scored zones across 46 stations (massís → obaga/solana/carena stands), with a zone comparison strip and zone detail.
@@ -847,14 +846,11 @@ as written in `mushrooms.json`**.
         "water_m": 380,
         "water_source": "OSM waterway/waterbody via Overpass (distància al segment més proper)",
         "access": {
-          "parking_lat": 42.1078,
-          "parking_lon": 1.8851,
           "trailhead": "named trailhead",
           "drive_min": 38,
-          "drive_min_source": "OSRM driving · capital de comarca → l'aparcament",
+          "drive_min_source": "OSRM driving · capital de comarca → la zona",
           "difficulty": "moderada",
-          "difficulty_source": "regla escrita: pendent + distància a peu",
-          "parking_source": "OSM"
+          "difficulty_source": "regla escrita: pendent + distància a peu"
         },
         "confidence": 0.74,
         "confidence_label": "alta",
@@ -876,8 +872,8 @@ for it. Never invent a coordinate, altitude, aspect, soil value or confidence to
 fill the schema — a zone with fewer fields and an honest `sources` list is better
 than a complete-looking invented one.
 
-**Fields that are nullable:** `water_m`, `access.parking_lat`/`parking_lon`,
-`access.drive_min` and `access.difficulty` are `null` when no source was found
+**Fields that are nullable:** `water_m`, `access.drive_min` and
+`access.difficulty` are `null` when no source was found
 (and `water_m` is left null — never "0" — when no water is mapped nearby or
 Overpass is unreachable); the UI hides them rather than showing a made-up
 number. `forest.canopy_pct` / `forest.undergrowth` no longer exist in
@@ -1700,7 +1696,7 @@ Top-level `xema.status: "ok"`, 188 operative stations, all 66 zones got an
 
 ### Regression evidence (2026-11-09)
 
-- `python3 -m py_compile app.py forecast.py warm_parking.py enrich_zones.py`
+- `python3 -m py_compile app.py forecast.py enrich_zones.py`
   → OK.
 - Real `build_forecast()` fixture with network fetchers monkeypatched:
   22 stations, 66 zones, 0 errors; `weather`/`water`/`confidence`/`phenology`

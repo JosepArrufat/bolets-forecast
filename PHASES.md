@@ -164,7 +164,7 @@ accuracy upgrades (7.4, 7.6, 7.7), then validation (7.5), then radar (7.8).
 | 6.3 | Expand species and add lookalike warnings | done | 2026-11-11 | `mushrooms.json` (+8 → 21 species, `season` + `lookalikes` on all), `app.py` (season gating + lookalikes/season payload + lookalike UI CA/EN), `README.md`, `PROPOSAL.md`; py_compile + node --check + 14 season/lookalike unit checks + fixture (46 stn/135 zones, 16 species in Nov, 16/16 lookalikes) + live API 200 (0 errors) + headless screenshots 1440/500px |
 | 6.4 | Performance, caching, final verification | done | 2026-11-11 | `app.py`, `README.md`, `PROPOSAL.md`, `PHASES.md`; payload 48.7 MB → 29.7 MB raw / 1.08 MB gzip; repeat request 3.07 s → 1.8 ms; 46 stn / 135 zones / 0 errors; score-equivalence fixture; headless 1440×900 + 500×900; keyboard/ARIA/contrast fixes |
 | 7.1 | Forest-offset repair | done | 2026-11-12 | `repair_forest_offsets.py` (new), `forest_offset_report.json` (generated), `README.md`, `PROPOSAL.md`, `PHASES.md`; CORINE live gate 46/46 stations + 135/135 zones, self-test, py_compile, `build_forecast` 46 stn/135 zones/0 errors, 0 moves |
-| 7.2 | Complete the zone facts (access, water, canopy) | done | 2026-11-16 | `complete_zone_facts.py` (French Overpass mirror first + 60 s timeout + keep `drive_min` on OSRM failure); `zones.json` (water_m 135/135 with source, parking 119/135, drive_min 135/135, difficulty 135/135), `zones_enriched.json` (regenerated), `README.md`, `PROPOSAL.md`, `PHASES.md`; py_compile + self-test + node --check + `--check-schema` OK + live `/api/forecast` 200 (46 stn/135 zones/0 errors, water null 0, parking null 16) + independent `around:` water verification (3 zones) + headless trip card 1440/500. 16 zones keep parking null (no OSM parking in 2.5 km); confidence re-derived to 110 alta/25 medium |
+| 7.2 | Complete the zone facts (access, water, canopy) | done | 2026-11-18 | `complete_zone_facts.py` (French Overpass mirror first + 60 s timeout + keep `drive_min` on OSRM failure + parking stripped); `zones.json` (water_m 135/135 with source, drive_min 135/135, difficulty 135/135; parking fields removed), `zones_enriched.json`, `derive_zone_confidence.py` (no parking bonus → 99 alta/36 medium), `Dockerfile`, `README.md`, `PROPOSAL.md`; py_compile + self-tests + node --check + `--check-schema` OK + `/api/parking` 404 + live 46 stn/135 zones/0 errors + independent `around:` water check (3 zones) + headless trip card with 0 parking mentions 1440/500. **Parking feature removed 2026-11-18** |
 | 7.3 | Confidence that discriminates | done | 2026-11-12 | `derive_zone_confidence.py` (new), `confidence_report.json` (new), `zones.json` (135 confidence values + evidence), `zones_enriched.json`, `app.py` (7.4/7.6 anchors + badge CSS/labels), `README.md`, `PROPOSAL.md`, `PHASES.md`; py_compile + `--self-test` + `--check` + schema OK + shadow 0.62–0.77 (44 alta/91 medium) + byte-identical score fixture + live API 200 (46 stn/135 zones/0 errors) + DOM/screenshots 1440/500 |
 | 7.4 | IGME MAGNA 50 soil | done | 2026-11-15 | `enrich_zones.py` (`_igme_magna50`, legend tables, fallback reasons, review hold, self-test), `app.py` (`_apply_magna50_soil`, `Q_SOIL_MAGNA50`, 1:50k labels), `zones_enriched.json` (56 × 1:50k / 79 × 1:1M, incl. 2 held), `zones.json` (confidence re-derived), `README.md`, `PHASES.md`; py_compile + self-test + 58/58 live re-query match + per-zone audit (0 fallback class changes, 15 promotions, 2 held at 1:1M) + `derive_zone_confidence --check` + live API 200 (46 stn/135 zones/0 errors, 56 served at 1:50k) |
 | 7.5 | Backtest and validate the assumptions | done | 2026-11-15 | `calibrate.py` (weighted AUC, target-group background + effort weighting, temporal split, permutation importance, weight refit + bootstrap CI), `calibration_report.json` (v2), `PROPOSAL.md`, `PHASES.md`; py_compile + `--self-test` + offline fixture + live run (3216 pooled rows, H dominant drop 0.0822, weight refit `no_change`, gain −0.001 CI [−0.008,+0.0043], temporal habitat AUC 0.5334 older / 0.5929 newer) |
@@ -2434,6 +2434,22 @@ documented "no invented data" audit.
     verified trailhead (`parking_source` says so); 16 zones remain null rather
     than "no parking"; `water_m` is straight-line distance to the mapped
     drainage, not a walking distance.
+- Removal (2026-11-18, user request): the **parking feature was taken out of the
+  app**. The nearest-OSM-lot points filled on 2026-11-16 were often a village
+  square rather than a trailhead (curated Phase-2 parkings already had a median
+  4 km straight-line walk to the zone), and `drive_min`/`difficulty` were
+  computed *to that point*, which understated real access. Removed:
+  zone-detail parking box + `loadParking`, `/api/parking`, `find_parking`,
+  `parking_cache.json` + `warm_parking.py` (deleted), `access.parking_lat/lon/
+  source` (stripped from all 135 zones), the Dockerfile COPY entry and the 7.3
+  `access_parking` confidence bonus (0.03). Drive time is now to the zone
+  centroid (OSRM snaps to the nearest road) and difficulty walks from the
+  station forest point; `complete_zone_facts.py` strips any leftover
+  `access.parking_*` on every run and its self-test asserts it. Verification:
+  py_compile + self-tests + node --check OK, `--check-schema` OK, `/api/parking`
+  → 404, live API 46/135/0 errors, headless DOM with **0** parking mentions and
+  the trip card still showing drive/difficulty/water; confidence re-derived to
+  99 alta / 36 medium. Score unchanged (access is display-only).
 - Next step: 7.8 review (radar) — the last open step of Phase 7.
 
 ### Step 7.3 — Confidence that discriminates

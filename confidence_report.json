@@ -1,6 +1,6 @@
 {
  "step": "7.3",
- "generated_at": "2026-11-16T00:00:00Z",
+ "generated_at": "2026-11-18T00:00:00Z",
  "formula": {
   "base": 0.45,
   "cap": 0.8,
@@ -21,7 +21,6 @@
    "canopy_ok": 0.015,
    "forest_gate": 0.04,
    "access_route": 0.04,
-   "access_parking": 0.03,
    "water_known": 0.03
   },
   "label_thresholds": {
@@ -29,21 +28,10 @@
    "0.55": "medium",
    "0.0": "baixa"
   },
-  "note": "water_m null = unknown (no bonus, never a failure); parking/trailhead absence is not a failure (7.2 blocked); 1:25k/MAGNA 50 anchors activate when 7.4/7.6 land"
+  "note": "water_m null = unknown (no bonus, never a failure); no named trailhead is not a failure; 1:25k/MAGNA 50 anchors activate when 7.4/7.6 land"
  },
  "distribution": {
   "old_values": {
-   "0.62": 4,
-   "0.67": 19,
-   "0.69": 2,
-   "0.72": 14,
-   "0.74": 14,
-   "0.76": 1,
-   "0.77": 21,
-   "0.79": 1,
-   "0.8": 59
-  },
-  "new_values": {
    "0.65": 4,
    "0.7": 19,
    "0.72": 2,
@@ -52,13 +40,22 @@
    "0.79": 1,
    "0.8": 81
   },
-  "old_labels": {
-   "alta": 82,
-   "medium": 53
+  "new_values": {
+   "0.65": 4,
+   "0.7": 19,
+   "0.72": 13,
+   "0.75": 3,
+   "0.76": 1,
+   "0.77": 26,
+   "0.8": 69
   },
-  "new_labels": {
+  "old_labels": {
    "alta": 110,
    "medium": 25
+  },
+  "new_labels": {
+   "alta": 99,
+   "medium": 36
   }
  },
  "zones": [
@@ -75,9 +72,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -123,9 +120,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -148,9 +145,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -196,9 +193,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -221,9 +218,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -269,9 +266,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -294,9 +291,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -342,9 +339,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -367,9 +364,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -415,9 +412,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -440,9 +437,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -488,9 +485,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -513,9 +510,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -561,9 +558,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -586,9 +583,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -634,9 +631,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -659,9 +656,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -707,9 +704,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -732,9 +729,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -780,9 +777,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -805,9 +802,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -853,9 +850,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -878,9 +875,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -926,9 +923,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -951,9 +948,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -999,9 +996,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1024,9 +1021,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1072,9 +1069,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1097,9 +1094,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1145,9 +1142,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1170,9 +1167,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1218,9 +1215,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1234,18 +1231,18 @@
    "station": "Ogassa – Ripoll",
    "id": "ogassa-obaga-nord",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1291,9 +1288,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1316,9 +1313,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1364,9 +1361,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1389,9 +1386,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1437,9 +1434,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1462,9 +1459,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1510,9 +1507,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1535,9 +1532,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1583,9 +1580,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1608,9 +1605,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1656,9 +1653,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1672,18 +1669,18 @@
    "station": "Queralbs – Núria",
    "id": "queralbs-obaga-nord",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1729,9 +1726,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1745,18 +1742,18 @@
    "station": "Queralbs – Núria",
    "id": "queralbs-carena-alta",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1802,9 +1799,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1818,18 +1815,18 @@
    "station": "Setcases",
    "id": "setcases-solana-sudoest",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1875,9 +1872,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1891,18 +1888,18 @@
    "station": "Setcases",
    "id": "setcases-obaga-nordest",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -1948,9 +1945,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -1973,9 +1970,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2021,9 +2018,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2037,18 +2034,18 @@
    "station": "Camprodon",
    "id": "camprodon-solana-sud",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2094,9 +2091,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2119,9 +2116,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2167,9 +2164,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2183,18 +2180,18 @@
    "station": "Camprodon",
    "id": "camprodon-carena-est",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2240,9 +2237,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2265,9 +2262,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.405,
+    "bonus": 0.375,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2313,9 +2310,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2338,9 +2335,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.49,
+    "bonus": 0.46,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2386,9 +2383,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2402,18 +2399,18 @@
    "station": "Tossa d'Alp – vessants",
    "id": "tossa-carena-alta",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2459,9 +2456,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2484,9 +2481,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.505,
+    "bonus": 0.475,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2532,9 +2529,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2557,9 +2554,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2605,9 +2602,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2630,9 +2627,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.505,
+    "bonus": 0.475,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2678,9 +2675,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2694,18 +2691,18 @@
    "station": "La Canya – Ripollès/Cerdanya",
    "id": "canya-solana-roure",
    "old": {
-    "value": 0.76,
+    "value": 0.79,
     "label": "alta"
    },
    "new": {
-    "value": 0.79,
+    "value": 0.76,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.335,
+    "bonus": 0.305,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2751,9 +2748,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2767,18 +2764,18 @@
    "station": "La Canya – Ripollès/Cerdanya",
    "id": "canya-obaga-pi",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2824,9 +2821,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2840,18 +2837,18 @@
    "station": "La Canya – Ripollès/Cerdanya",
    "id": "canya-carena-roure",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2897,9 +2894,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2922,9 +2919,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -2970,9 +2967,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -2995,9 +2992,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3043,9 +3040,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3068,9 +3065,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3116,9 +3113,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3141,9 +3138,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3189,9 +3186,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3214,9 +3211,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3262,9 +3259,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3287,9 +3284,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3335,9 +3332,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3360,9 +3357,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3408,9 +3405,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3433,9 +3430,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.52,
+    "bonus": 0.49,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3481,9 +3478,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3506,9 +3503,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.505,
+    "bonus": 0.475,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3554,9 +3551,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3570,18 +3567,18 @@
    "station": "Garrotxa – Santa Pau",
    "id": "santapau-obaga-no",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3627,9 +3624,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3643,18 +3640,18 @@
    "station": "Garrotxa – Santa Pau",
    "id": "santapau-solana-sud",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3700,9 +3697,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3716,18 +3713,18 @@
    "station": "Garrotxa – Santa Pau",
    "id": "santapau-vessant-so",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3773,9 +3770,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3798,9 +3795,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3846,9 +3843,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3871,9 +3868,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3919,9 +3916,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -3944,9 +3941,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.45,
+    "bonus": 0.42,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -3992,9 +3989,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4008,18 +4005,18 @@
    "station": "Garrotxa – Sales de Llierca",
    "id": "llierca-obaga-nord",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4065,9 +4062,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4081,18 +4078,18 @@
    "station": "Garrotxa – Sales de Llierca",
    "id": "llierca-carena-est",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4138,9 +4135,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4154,18 +4151,18 @@
    "station": "Garrotxa – Sales de Llierca",
    "id": "llierca-solana-sud",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4211,9 +4208,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4227,18 +4224,18 @@
    "station": "Pallars – Espot",
    "id": "espot-carena-alta",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4284,9 +4281,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4300,18 +4297,18 @@
    "station": "Pallars – Espot",
    "id": "espot-obaga-nord",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4357,9 +4354,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4373,18 +4370,18 @@
    "station": "Pallars – Espot",
    "id": "espot-solana-baixa",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4430,9 +4427,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4455,9 +4452,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4503,9 +4500,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4528,9 +4525,9 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.42,
+    "bonus": 0.39,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4576,9 +4573,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4592,18 +4589,18 @@
    "station": "Pallars – Vall Fosca",
    "id": "valfosca-obaga-ne",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4649,9 +4646,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4665,18 +4662,18 @@
    "station": "Pallars – Sort",
    "id": "sort-obaga-no",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4722,9 +4719,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4738,18 +4735,18 @@
    "station": "Pallars – Sort",
    "id": "sort-solana-so",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
-    "value": 0.8,
+    "value": 0.77,
     "label": "alta"
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.35,
+    "bonus": 0.32,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4795,9 +4792,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4811,18 +4808,18 @@
    "station": "Pallars – Sort",
    "id": "sort-carena-alta",
    "old": {
-    "value": 0.72,
-    "label": "medium"
-   },
-   "new": {
     "value": 0.75,
     "label": "alta"
    },
+   "new": {
+    "value": 0.72,
+    "label": "medium"
+   },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
-    "bonus": 0.3,
+    "bonus": 0.27,
     "cap": 0.8,
     "floor": 0.3,
     "components": {
@@ -4868,9 +4865,9 @@
      },
      "access": {
       "route": true,
-      "parking": true,
-      "bonus": 0.07,
-      "detail": "drive time + difficulty; parking + trailhead"
+      "trailhead": true,
+      "bonus": 0.04,
+      "detail": "drive time + difficulty; named trailhead"
      },
      "water": {
       "known": true,
@@ -4884,7 +4881,7 @@
    "station": "Serra del Cadí",
    "id": "serra-del-cadi-obaga",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -4893,7 +4890,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -4941,9 +4938,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -4957,8 +4954,8 @@
    "station": "Serra del Cadí",
    "id": "serra-del-cadi-vessant-est",
    "old": {
-    "value": 0.72,
-    "label": "medium"
+    "value": 0.75,
+    "label": "alta"
    },
    "new": {
     "value": 0.75,
@@ -4966,7 +4963,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.3,
     "cap": 0.8,
@@ -5014,9 +5011,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5030,7 +5027,7 @@
    "station": "Serra del Cadí",
    "id": "serra-del-cadi-obaga-nord-est",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5039,7 +5036,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5087,9 +5084,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5103,7 +5100,7 @@
    "station": "Serra d'Aubenç",
    "id": "serra-d-aubenc-obaga-nord-est",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5112,7 +5109,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5160,9 +5157,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5176,7 +5173,7 @@
    "station": "Serra d'Aubenç",
    "id": "serra-d-aubenc-solana",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5185,7 +5182,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5233,9 +5230,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5249,7 +5246,7 @@
    "station": "Serra d'Aubenç",
    "id": "serra-d-aubenc-solana-sud-oest",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5258,7 +5255,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5306,9 +5303,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5322,7 +5319,7 @@
    "station": "Serra de Turp",
    "id": "serra-de-turp-obaga",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5331,7 +5328,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5379,9 +5376,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5395,7 +5392,7 @@
    "station": "Serra de Turp",
    "id": "serra-de-turp-solana",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5404,7 +5401,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5452,9 +5449,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5468,7 +5465,7 @@
    "station": "Serra de Turp",
    "id": "serra-de-turp-solana-sud-est",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5477,7 +5474,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5525,9 +5522,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5541,7 +5538,7 @@
    "station": "Serra de Busa",
    "id": "serra-de-busa-obaga-1226",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5550,7 +5547,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5598,9 +5595,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5614,7 +5611,7 @@
    "station": "Serra de Busa",
    "id": "serra-de-busa-solana",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5623,7 +5620,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5671,9 +5668,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5687,7 +5684,7 @@
    "station": "Serra de Busa",
    "id": "serra-de-busa-obaga-1298-2",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -5696,7 +5693,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -5744,9 +5741,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5760,7 +5757,7 @@
    "station": "Serra de Pinós",
    "id": "serra-de-pinos-obaga-806",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5769,7 +5766,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5817,9 +5814,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5833,7 +5830,7 @@
    "station": "Serra de Pinós",
    "id": "serra-de-pinos-obaga-885-2",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -5842,7 +5839,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -5890,9 +5887,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5906,7 +5903,7 @@
    "station": "Collsacabra",
    "id": "collsacabra-obaga-nord-oest",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -5915,7 +5912,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -5963,9 +5960,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -5979,7 +5976,7 @@
    "station": "Collsacabra",
    "id": "collsacabra-solana",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -5988,7 +5985,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -6036,9 +6033,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6052,7 +6049,7 @@
    "station": "Collsacabra",
    "id": "collsacabra-vessant-oest",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -6061,7 +6058,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -6109,9 +6106,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6125,7 +6122,7 @@
    "station": "Serra de Curull",
    "id": "serra-de-curull-obaga",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -6134,7 +6131,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -6182,9 +6179,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6198,7 +6195,7 @@
    "station": "Serra de Curull",
    "id": "serra-de-curull-solana",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -6207,7 +6204,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -6255,9 +6252,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6271,7 +6268,7 @@
    "station": "Serra de Curull",
    "id": "serra-de-curull-solana-sud-oest",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -6280,7 +6277,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -6328,9 +6325,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6344,8 +6341,8 @@
    "station": "Les Guilleries",
    "id": "les-guilleries-obaga",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -6353,7 +6350,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -6401,9 +6398,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6417,8 +6414,8 @@
    "station": "Les Guilleries",
    "id": "les-guilleries-solana",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -6426,7 +6423,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -6474,9 +6471,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6499,7 +6496,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -6547,9 +6544,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6563,8 +6560,8 @@
    "station": "Aigüestortes",
    "id": "aiguestortes-obaga-2031",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -6572,7 +6569,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -6620,9 +6617,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6636,8 +6633,8 @@
    "station": "Aigüestortes",
    "id": "aiguestortes-solana-sud-est",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -6645,7 +6642,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -6693,9 +6690,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6718,7 +6715,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -6766,9 +6763,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6782,7 +6779,7 @@
    "station": "Vall de Boí",
    "id": "vall-de-boi-obaga",
    "old": {
-    "value": 0.62,
+    "value": 0.65,
     "label": "medium"
    },
    "new": {
@@ -6791,7 +6788,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.2,
     "cap": 0.8,
@@ -6839,9 +6836,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6855,7 +6852,7 @@
    "station": "Vall de Boí",
    "id": "vall-de-boi-solana",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -6864,7 +6861,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -6912,9 +6909,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -6928,7 +6925,7 @@
    "station": "Vall de Boí",
    "id": "vall-de-boi-vessant-oest",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -6937,7 +6934,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -6985,9 +6982,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7001,7 +6998,7 @@
    "station": "Artiga de Lin",
    "id": "artiga-de-lin-obaga",
    "old": {
-    "value": 0.69,
+    "value": 0.72,
     "label": "medium"
    },
    "new": {
@@ -7010,7 +7007,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.27,
     "cap": 0.8,
@@ -7058,9 +7055,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7074,7 +7071,7 @@
    "station": "Artiga de Lin",
    "id": "artiga-de-lin-solana-sud-est",
    "old": {
-    "value": 0.69,
+    "value": 0.72,
     "label": "medium"
    },
    "new": {
@@ -7083,7 +7080,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.27,
     "cap": 0.8,
@@ -7131,9 +7128,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7147,7 +7144,7 @@
    "station": "Artiga de Lin",
    "id": "artiga-de-lin-obaga-nord-oest",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -7156,7 +7153,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -7204,9 +7201,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7220,8 +7217,8 @@
    "station": "Montardo",
    "id": "montardo-obaga",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7229,7 +7226,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -7277,9 +7274,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7293,8 +7290,8 @@
    "station": "Montardo",
    "id": "montardo-solana-sud-est",
    "old": {
-    "value": 0.72,
-    "label": "medium"
+    "value": 0.75,
+    "label": "alta"
    },
    "new": {
     "value": 0.75,
@@ -7302,7 +7299,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.3,
     "cap": 0.8,
@@ -7350,9 +7347,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7366,8 +7363,8 @@
    "station": "Montardo",
    "id": "montardo-obaga-nord-oest",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7375,7 +7372,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -7423,9 +7420,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7448,7 +7445,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -7496,9 +7493,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7512,8 +7509,8 @@
    "station": "Serra de la Figuera",
    "id": "serra-de-la-figuera-solana",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7521,7 +7518,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -7569,9 +7566,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7594,7 +7591,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -7642,9 +7639,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7658,8 +7655,8 @@
    "station": "Comiols",
    "id": "comiols-obaga-nord-est",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7667,7 +7664,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -7715,9 +7712,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7731,7 +7728,7 @@
    "station": "Comiols",
    "id": "comiols-solana",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -7740,7 +7737,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -7788,9 +7785,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7804,7 +7801,7 @@
    "station": "Comiols",
    "id": "comiols-solana-sud-oest",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -7813,7 +7810,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -7861,9 +7858,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7877,8 +7874,8 @@
    "station": "Serra de Montsant",
    "id": "serra-de-montsant-obaga",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7886,7 +7883,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -7934,9 +7931,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -7950,8 +7947,8 @@
    "station": "Serra de Montsant",
    "id": "serra-de-montsant-solana",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -7959,7 +7956,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -8007,9 +8004,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8023,8 +8020,8 @@
    "station": "Serra de Montsant",
    "id": "serra-de-montsant-vessant-oest",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -8032,7 +8029,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -8080,9 +8077,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8096,8 +8093,8 @@
    "station": "Serra de Pàndols",
    "id": "serra-de-pandols-obaga-nord-oest",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -8105,7 +8102,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -8153,9 +8150,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8169,8 +8166,8 @@
    "station": "Serra de Pàndols",
    "id": "serra-de-pandols-solana",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -8178,7 +8175,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -8226,9 +8223,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8251,7 +8248,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -8299,9 +8296,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8315,7 +8312,7 @@
    "station": "Serra de Cavalls",
    "id": "serra-de-cavalls-vessant-est",
    "old": {
-    "value": 0.62,
+    "value": 0.65,
     "label": "medium"
    },
    "new": {
@@ -8324,7 +8321,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.2,
     "cap": 0.8,
@@ -8372,9 +8369,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8388,8 +8385,8 @@
    "station": "Serra de Cavalls",
    "id": "serra-de-cavalls-solana",
    "old": {
-    "value": 0.74,
-    "label": "medium"
+    "value": 0.77,
+    "label": "alta"
    },
    "new": {
     "value": 0.77,
@@ -8397,7 +8394,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.32,
     "cap": 0.8,
@@ -8445,9 +8442,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8461,7 +8458,7 @@
    "station": "Serra del Montsià",
    "id": "serra-del-montsia-obaga-nord-oest-389",
    "old": {
-    "value": 0.79,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -8470,7 +8467,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.37,
     "cap": 0.8,
@@ -8518,9 +8515,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8543,7 +8540,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -8591,9 +8588,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8616,7 +8613,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.39,
     "cap": 0.8,
@@ -8664,9 +8661,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8680,7 +8677,7 @@
    "station": "Les Gavarres",
    "id": "les-gavarres-obaga",
    "old": {
-    "value": 0.62,
+    "value": 0.65,
     "label": "medium"
    },
    "new": {
@@ -8689,7 +8686,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.2,
     "cap": 0.8,
@@ -8737,9 +8734,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8753,7 +8750,7 @@
    "station": "Les Gavarres",
    "id": "les-gavarres-solana-388",
    "old": {
-    "value": 0.62,
+    "value": 0.65,
     "label": "medium"
    },
    "new": {
@@ -8762,7 +8759,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.2,
     "cap": 0.8,
@@ -8810,9 +8807,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8826,7 +8823,7 @@
    "station": "Les Gavarres",
    "id": "les-gavarres-solana-390-2",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -8835,7 +8832,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -8883,9 +8880,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8899,8 +8896,8 @@
    "station": "Montnegre",
    "id": "montnegre-obaga",
    "old": {
-    "value": 0.72,
-    "label": "medium"
+    "value": 0.75,
+    "label": "alta"
    },
    "new": {
     "value": 0.75,
@@ -8908,7 +8905,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.3,
     "cap": 0.8,
@@ -8956,9 +8953,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -8981,7 +8978,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -9029,9 +9026,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9054,7 +9051,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -9102,9 +9099,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9127,7 +9124,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -9175,9 +9172,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9200,7 +9197,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -9248,9 +9245,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9273,7 +9270,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.42,
     "cap": 0.8,
@@ -9321,9 +9318,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9346,7 +9343,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.52,
     "cap": 0.8,
@@ -9394,9 +9391,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9419,7 +9416,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.45,
     "cap": 0.8,
@@ -9467,9 +9464,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9492,7 +9489,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.45,
     "cap": 0.8,
@@ -9540,9 +9537,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9556,7 +9553,7 @@
    "station": "Massís del Montgrí",
    "id": "massis-del-montgri-obaga",
    "old": {
-    "value": 0.67,
+    "value": 0.7,
     "label": "medium"
    },
    "new": {
@@ -9565,7 +9562,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.25,
     "cap": 0.8,
@@ -9613,9 +9610,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9629,7 +9626,7 @@
    "station": "Massís del Montgrí",
    "id": "massis-del-montgri-solana-sud-est",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -9638,7 +9635,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -9686,9 +9683,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9702,7 +9699,7 @@
    "station": "Massís del Montgrí",
    "id": "massis-del-montgri-vessant-oest",
    "old": {
-    "value": 0.77,
+    "value": 0.8,
     "label": "alta"
    },
    "new": {
@@ -9711,7 +9708,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.35,
     "cap": 0.8,
@@ -9759,9 +9756,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9784,7 +9781,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.45,
     "cap": 0.8,
@@ -9832,9 +9829,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,
@@ -9857,7 +9854,7 @@
    },
    "evidence": {
     "version": 1,
-    "computed_at": "2026-11-16",
+    "computed_at": "2026-11-18",
     "base": 0.45,
     "bonus": 0.52,
     "cap": 0.8,
@@ -9905,9 +9902,9 @@
      },
      "access": {
       "route": true,
-      "parking": false,
+      "trailhead": false,
       "bonus": 0.04,
-      "detail": "drive time + difficulty; parking/trailhead unknown"
+      "detail": "drive time + difficulty; no named trailhead (not a failure)"
      },
      "water": {
       "known": true,

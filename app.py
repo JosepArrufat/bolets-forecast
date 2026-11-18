@@ -32,8 +32,6 @@ ZONES_ENRICHED_FILE = os.environ.get("ZONES_ENRICHED_FILE") or os.path.join(BASE
 FIELD_OBS_FILE = os.environ.get("FIELD_OBS_FILE") or os.path.join(BASE_DIR, "field_observations.json")
 _data_dir  = os.environ.get("DATA_DIR", BASE_DIR)
 CACHE_FILE = os.path.join(_data_dir, "geo_cache.json")
-PARKING_CACHE_FILE = os.path.join(_data_dir, "parking_cache.json")
-PARKING_SEED_FILE = os.path.join(BASE_DIR, "parking_cache.json")
 WEATHER_CACHE_FILE = os.environ.get("WEATHER_CACHE_FILE") or os.path.join(_data_dir, "weather_cache.json")
 WEATHER_TTL = 3 * 3600  # serve fresh cache for 3 h, then stale-on-error
 # Phase 6.4: rebuilt-forecast cache. The payload only changes when the input
@@ -218,27 +216,6 @@ def save_cache(cache):
         json.dump(cache, f, ensure_ascii=False, indent=2)
 
 GEO_CACHE = load_cache()
-
-# Parking is precomputed for the known stations because public Overpass can take
-# tens of seconds. `warm_parking.py` fills this file; unknown points fall back
-# to a live query with a short timeout.
-def load_parking_cache():
-    # Prefer the writable data dir; fall back to the seed shipped in the image.
-    for path in (PARKING_CACHE_FILE, PARKING_SEED_FILE):
-        if os.path.exists(path):
-            try:
-                with open(path) as f:
-                    return json.load(f)
-            except (ValueError, OSError):
-                continue
-    return {}
-
-def save_parking_cache(cache):
-    with open(PARKING_CACHE_FILE, "w") as f:
-        json.dump(cache, f, ensure_ascii=False, indent=2)
-
-_parking_lock = threading.Lock()
-PARKING_CACHE = load_parking_cache()
 
 def cache_key(lat, lon):
     return f"{lat:.4f},{lon:.4f}"
@@ -1693,7 +1670,7 @@ def geocode_place(query):
             continue
     return out
 
-# ── Nearby parking (OpenStreetMap / Overpass, proxied server-side) ────────────
+# ── Distance helper ───────────────────────────────────────────────────────────
 
 def haversine_m(lat1, lon1, lat2, lon2):
     R = 6371000
@@ -1702,73 +1679,6 @@ def haversine_m(lat1, lon1, lat2, lon2):
     dl = math.radians(lon2 - lon1)
     h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
     return 2 * R * math.asin(math.sqrt(h))
-
-def find_parking(lat, lon, radius_m=2500):
-    """Return the nearest mapped parking places around a zone.
-
-    Results are precomputed in `parking_cache.json` for the known stations.
-    Unknown points fall back to a live Overpass query. Overpass rejects requests
-    without a descriptive User-Agent (HTTP 406), so this stays server-side.
-    """
-    key = f"{lat:.4f},{lon:.4f}"
-    with _parking_lock:
-        cached = PARKING_CACHE.get(key)
-    if cached is not None:
-        return cached
-
-    query = (
-        f'[out:json][timeout:20];'
-        f'(node["amenity"="parking"](around:{int(radius_m)},{lat},{lon});'
-        f'way["amenity"="parking"](around:{int(radius_m)},{lat},{lon}););'
-        f'out center 12;'
-    )
-    body = urllib.parse.urlencode({"data": query}).encode()
-
-    data = None
-    last_err = None
-    for endpoint in ("https://overpass-api.de/api/interpreter",):
-        try:
-            req = urllib.request.Request(
-                endpoint,
-                data=body,
-                headers={
-                    "User-Agent": "BoletsForecast/1.0 (mushroom forecast; local app)",
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-            )
-            with urllib.request.urlopen(req, timeout=12) as r:
-                data = json.loads(r.read())
-            break
-        except Exception as e:
-            last_err = e
-    if data is None:
-        raise last_err or RuntimeError("Overpass unavailable")
-
-    rows = []
-    for el in data.get("elements", []):
-        center = el.get("center") or {}
-        plat = el.get("lat", center.get("lat"))
-        plon = el.get("lon", center.get("lon"))
-        if plat is None or plon is None:
-            continue
-        tags = el.get("tags") or {}
-        rows.append({
-            "name": tags.get("name") or "Aparcament",
-            "lat": plat,
-            "lon": plon,
-            "distance_m": round(haversine_m(lat, lon, plat, plon)),
-            "capacity": tags.get("capacity"),
-        })
-    rows.sort(key=lambda x: x["distance_m"])
-    rows = rows[:5]
-
-    with _parking_lock:
-        PARKING_CACHE[key] = rows
-        try:
-            save_parking_cache(PARKING_CACHE)
-        except OSError:
-            pass
-    return rows
 
 # ── Data quality (not prediction confidence) ───────────────────────────────────
 
@@ -3188,14 +3098,14 @@ HTML = r"""<!DOCTYPE html>
     color: #fff;
   }
   .trip-btn.primary:hover { background: #5f3a20; }
-  .parking-list {
+  .trip-notice {
     padding: 0 16px 10px;
     font-size: 0.7rem;
     color: #5a4a38;
     line-height: 1.6;
   }
-  .parking-list a { color: #7a4c2a; }
-  .parking-list .muted { color: #7a6e62; }
+  .trip-notice a { color: #7a4c2a; }
+  .trip-notice .muted { color: #7a6e62; }
 
   /* ── Data quality ── */
   .quality-row {
@@ -4636,16 +4546,12 @@ const TRANSLATIONS = {
       route: 'ruta',
       routeLong: 'Com arribar-hi',
       osm: 'OSM',
-      parkingNear: 'Parking a prop',
       driveFrom: 'des de',
       share: 'Comparteix',
       quality: 'Qualitat de dades',
       qualityHigh: 'alta',
       qualityMedium: 'mitjana',
       qualityLow: 'baixa',
-      searchingParking: 'Buscant aparcaments a prop…',
-      noParking: 'No hi ha aparcaments mapejats a 2,5 km. Fes servir la pista forestal i no bloquegis el pas.',
-      parkingError: "No s'ha pogut consultar Overpass. Obre OSM per veure la zona.",
       linkCopied: 'Enllaç copiat:',
       searchingPlace: 'Cercant',
       noPlace: 'Cap lloc trobat',
@@ -4900,16 +4806,12 @@ const TRANSLATIONS = {
       route: 'route',
       routeLong: 'Get directions',
       osm: 'OSM',
-      parkingNear: 'Nearby parking',
       driveFrom: 'from',
       share: 'Share',
       quality: 'Data quality',
       qualityHigh: 'high',
       qualityMedium: 'medium',
       qualityLow: 'low',
-      searchingParking: 'Looking for nearby parking…',
-      noParking: 'No mapped parking within 2.5 km. Use the forest track and do not block it.',
-      parkingError: 'Could not reach Overpass. Open OSM to inspect the area.',
       linkCopied: 'Link copied:',
       searchingPlace: 'Searching',
       noPlace: 'No place found',
@@ -5026,7 +4928,6 @@ let filterSort = 'score';  // score | distance | altitude | name | comarca
 let filterMin = false;     // only >= 55
 let searchQuery = '';      // free text
 let userPos = null;        // {lat, lon} once geolocation is granted
-let parkingCache = {};     // station name -> parking rows
 let restoredFromUrl = false;
 
 const isMobile = () => window.innerWidth <= 700;
@@ -5821,11 +5722,10 @@ function renderDetail(stn) {
     <div class="trip-actions">
       <a class="trip-btn primary" href="${routeUrl(stn)}" target="_blank" rel="noopener">↗ ${U('routeLong')}</a>
       <a class="trip-btn" href="${osmUrl(stn)}" target="_blank" rel="noopener">🗺 ${U('osm')}</a>
-      <button class="trip-btn" onclick="loadParking('${jsq(stn.name)}')">🅿️ ${U('parkingNear')}</button>
       <button class="trip-btn" onclick="copyZoneLink('${jsq(stn.name)}')">🔗 ${U('share')}</button>
       <button class="trip-btn" onclick="saveActiveForOffline()">${T('saveStation')}</button>
     </div>
-    <div class="parking-list" id="parking-box" style="display:none"></div>
+    <div class="trip-notice" id="notice-box" style="display:none"></div>
 
     <div class="day-strip-wrap">${dayStrip(stn)}</div>
 
@@ -5990,10 +5890,8 @@ function renderZoneDetail(stn, zone) {
   // Trip card: render whenever any access/water fact is present (not only when
   // a trailhead name exists, which would hide drive time and difficulty on the
   // 6.2 zones that have no named trailhead).
-  const hasParking = access.parking_lat != null && access.parking_lon != null;
   const accessParts = [];
   if (access.trailhead) accessParts.push(`<b>${U('trailhead')}:</b> ${escHtml(access.trailhead)}`);
-  if (hasParking) accessParts.push(`🅿️ <a href="https://www.openstreetmap.org/?mlat=${access.parking_lat}&mlon=${access.parking_lon}#map=17/${access.parking_lat}/${access.parking_lon}" target="_blank" rel="noopener">parking</a>`);
   const driveRefMatch = (access.drive_min_source || '').match(/OSRM driving · (.*?) →/);
   const driveRef = driveRefMatch ? driveRefMatch[1] : null;
   if (access.drive_min != null) accessParts.push(`${access.drive_min} min${driveRef ? ` · ${U('driveFrom')} ${driveRef}` : ''}`);
@@ -6147,45 +6045,6 @@ function fieldObservationHtml(zone) {
   </div>`;
 }
 
-// ── Parking near a zone (Overpass, free, cached per session) ──────────────────
-async function loadParking(name) {
-  const stn = findStation(name);
-  const box = document.getElementById('parking-box');
-  if (!stn || !box) return;
-  box.style.display = 'block';
-
-  if (parkingCache[name]) {
-    box.innerHTML = parkingCache[name];
-    return;
-  }
-
-  box.innerHTML = `<span class="muted">${U('searchingParking')}</span>`;
-  try {
-    const res = await fetch(`/api/parking?lat=${stn.lat}&lon=${stn.lon}`);
-    if (!res.ok) throw new Error('Parking ' + res.status);
-    const data = await res.json();
-    const rows = (data.results || []).map(p => ({
-      lat: p.lat,
-      lon: p.lon,
-      name: p.name || 'Aparcament',
-      km: Math.max(0, p.distance_m / 1000),
-    })).slice(0, 3);
-
-    if (!rows.length) {
-      box.innerHTML = `<span class="muted">${U('noParking')}</span>`;
-    } else {
-      box.innerHTML = rows.map(p =>
-        `🅿️ <a href="https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lon}#map=17/${p.lat}/${p.lon}"
-             target="_blank" rel="noopener">${escHtml(p.name)}</a>
-         <span class="muted">· ${p.km.toFixed(1)} km</span>`
-      ).join('<br>');
-    }
-  } catch (e) {
-    box.innerHTML = `<span class="muted">${U('parkingError')}</span>`;
-  }
-  parkingCache[name] = box.innerHTML;
-}
-
 function copyZoneLink(name) {
   const stn = findStation(name);
   if (!stn) return;
@@ -6195,7 +6054,7 @@ function copyZoneLink(name) {
   if (navigator.clipboard?.writeText) {
     navigator.clipboard.writeText(text).catch(() => {});
   }
-  const box = document.getElementById('parking-box');
+  const box = document.getElementById('notice-box');
   if (box) {
     box.style.display = 'block';
     box.innerHTML = `<span class="muted">${U('linkCopied')} ${escHtml(text)}</span>`;
@@ -7963,15 +7822,6 @@ class Handler(BaseHTTPRequestHandler):
                 qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
                 results = geocode_place(qs.get("q", [""])[0])
                 self.send_json({"query": qs.get("q", [""])[0], "results": results})
-            except Exception as e:
-                self.send_json({"results": [], "error": str(e)}, 502)
-
-        elif path == "/api/parking":
-            try:
-                qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-                lat = float(qs.get("lat", [""])[0])
-                lon = float(qs.get("lon", [""])[0])
-                self.send_json({"results": find_parking(lat, lon)})
             except Exception as e:
                 self.send_json({"results": [], "error": str(e)}, 502)
 

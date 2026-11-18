@@ -9,18 +9,17 @@ layer:
                          A missing feature reads "unknown" (water_m stays null;
                          when Overpass answered, `water_source` says no feature was
                          mapped within the radius), never "no water".
-- `access.parking_*`   — for the 69 zones added in Phase 6.2 whose parking is null,
-                         the nearest OSM `amenity=parking` (same Overpass query as
-                         water). Existing curated Phase-2 parking points are kept.
 - `access.drive_min`   — OSRM driving time (minutes) from the comarca capital (a
-                         documented reference point) to the zone's parking point,
-                         or to the zone centroid when no parking is mapped.
+                         documented reference point) to the zone centroid.
 - `access.difficulty`  — a written rule from slope + walk distance (straight-line
-                         parking → centroid, or station forest point → centroid
-                         when no parking is mapped).
+                         station forest point → centroid).
 - removes `forest.canopy_pct` / `forest.undergrowth` from `zones.json`: these are
   duplicated null placeholders — the real LiDAR canopy lives in
   `zones_enriched.json` under `enrichment.canopy` (Phase 3.3).
+
+Parking was removed from the app on 2026-11-18 (UI, `/api/parking`, seed cache
+and `warm_parking.py`). Any `access.parking_*` left in a zone is stripped here so
+a re-run converges to the parking-free schema.
 
 Nothing here invents a distance, coordinate or difficulty: every value is either
 computed (OSRM route, Overpass geometry, slope/walk rule) or explicitly "unknown"
@@ -28,10 +27,9 @@ with a source label. External results are cached in `water_cache.json` and
 `route_cache.json` (both gitignored), so a re-run never re-queries a point it has
 already answered.
 
-The water/parking derivation degrades gracefully: when Overpass is unreachable,
-water_m/parking stay null (unknown) and nothing is written that implies "no
-water" or "no parking"; the OSRM/slope/rule derivations still run, so a partial
-run never fabricates.
+The water derivation degrades gracefully: when Overpass is unreachable, `water_m`
+stays null (unknown) and nothing is written that implies "no water"; the
+OSRM/slope/rule derivations still run, so a partial run never fabricates.
 
 Usage:
     python3 complete_zone_facts.py              # derive + write zones.json
@@ -59,18 +57,17 @@ MUSHROOMS = os.path.join(BASE_DIR, "mushrooms.json")
 WATER_CACHE = os.path.join(BASE_DIR, "water_cache.json")
 ROUTE_CACHE = os.path.join(BASE_DIR, "route_cache.json")
 
-UA = "BoletsForecast/1.0 (zone facts; water/parking + drive time)"
+UA = "BoletsForecast/1.0 (zone facts; water + drive time)"
 
-# Radii (metres). Water uses a tighter radius than parking (a stand's drainage
-# is a local feature; parking is a road feature reached by car).
+# Radius (metres) for the nearest mapped water feature: a stand's drainage is a
+# local feature.
 WATER_RADIUS_M = 2000.0
-PARKING_RADIUS_M = 2500.0
 
 # World mirrors, tried in order. The French mirror is first because the main
 # instance has been flapping between 502 "at capacity" and multi-second queues
 # (2026-11-16 retry) while overpass.openstreetmap.fr answered a Catalan
-# station bbox in ~2 s with full water/parking coverage. The primary and the
-# kumi mirror stay as fallbacks.
+# station bbox in ~2 s with full water coverage. The primary and the kumi
+# mirror stay as fallbacks.
 OVERPASS_ENDPOINTS = [
     "https://overpass.openstreetmap.fr/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -177,25 +174,13 @@ def nearest_water_m(zone_lat, zone_lon, ways):
     return best
 
 
-def nearest_parking_m(zone_lat, zone_lon, parking):
-    """Nearest parking point (node, or way centroid) within `PARKING_RADIUS_M`."""
-    best = None
-    best_row = None
-    for row in parking:
-        d = haversine_m(zone_lat, zone_lon, row["lat"], row["lon"])
-        if d <= PARKING_RADIUS_M and (best is None or d < best):
-            best = d
-            best_row = row
-    return best, best_row
-
-
 # ── Difficulty rule (written, documented) ─────────────────────────────────────
 
 def difficulty(walk_m, slope_deg):
     """Derive a difficulty label from slope + walk distance.
 
     Written rule (documented in README):
-      with a walk origin (parking, else the station forest point):
+      with a walk origin (the station forest point):
         fàcil    walk ≤ 1500 m and slope < 20°
         moderada walk ≤ 4000 m and slope < 30°
         exigent  otherwise
@@ -219,11 +204,11 @@ def difficulty(walk_m, slope_deg):
     return "exigent"
 
 
-# ── Overpass (water + parking, one bbox query per station) ────────────────────
+# ── Overpass (water, one bbox query per station) ──────────────────────────────
 
 def _bbox_pad(lat):
     mlat, mlon = _metres_per_deg(lat)
-    radius = max(WATER_RADIUS_M, PARKING_RADIUS_M)
+    radius = WATER_RADIUS_M
     return radius / mlat, radius / mlon
 
 
@@ -238,15 +223,13 @@ def station_bbox(zones):
 
 
 def overpass_query(south, west, north, east):
-    """Fetch water ways + parking nodes/ways in a bbox. Returns raw elements."""
+    """Fetch water ways in a bbox. Returns raw elements."""
     query = (
         "[out:json][timeout:60];"
         "("
         f'way["waterway"]({south},{west},{north},{east});'
         f'way["natural"="water"]({south},{west},{north},{east});'
         f'way["water"]({south},{west},{north},{east});'
-        f'node["amenity"="parking"]({south},{west},{north},{east});'
-        f'way["amenity"="parking"]({south},{west},{north},{east});'
         ");"
         "out geom;"
     )
@@ -267,30 +250,20 @@ def overpass_query(south, west, north, east):
 
 
 def parse_overpass(data):
-    """Return (water_ways, parking) from an Overpass `out geom` response."""
+    """Return the water ways from an Overpass `out geom` response."""
     water_ways = []
-    parking = []
     for el in data.get("elements", []):
-        eltype = el.get("type")
+        if el.get("type") != "way":
+            continue
         tags = el.get("tags") or {}
-        if eltype == "way":
-            geom = el.get("geometry") or []
-            pts = [[g["lat"], g["lon"]] for g in geom if "lat" in g and "lon" in g]
-            if not pts:
-                continue
-            is_water = "waterway" in tags or (tags.get("natural") == "water") \
-                or "water" in tags
-            if is_water:
-                water_ways.append(pts)
-            if tags.get("amenity") == "parking":
-                lat = sum(p[0] for p in pts) / len(pts)
-                lon = sum(p[1] for p in pts) / len(pts)
-                parking.append({"lat": lat, "lon": lon,
-                                "name": tags.get("name") or "Aparcament"})
-        elif eltype == "node" and tags.get("amenity") == "parking":
-            parking.append({"lat": el.get("lat"), "lon": el.get("lon"),
-                            "name": tags.get("name") or "Aparcament"})
-    return water_ways, parking
+        geom = el.get("geometry") or []
+        pts = [[g["lat"], g["lon"]] for g in geom if "lat" in g and "lon" in g]
+        if not pts:
+            continue
+        if ("waterway" in tags or tags.get("natural") == "water"
+                or "water" in tags):
+            water_ways.append(pts)
+    return water_ways
 
 
 # ── OSRM drive time ───────────────────────────────────────────────────────────
@@ -374,7 +347,7 @@ def _capital_for(comarca, station_name):
     return CAPITALS.get(comarca)
 
 
-def _derive_zone(zone, water_ways, parking, ref, route_cache, overpass_ok,
+def _derive_zone(zone, water_ways, ref, route_cache, overpass_ok,
                  station_lat, station_lon):
     """Fill one zone's water/access facts and remove canopy placeholders."""
     lat, lon = zone["lat"], zone["lon"]
@@ -392,24 +365,15 @@ def _derive_zone(zone, water_ways, parking, ref, route_cache, overpass_ok,
             zone["water_source"] = ("OSM: cap element d'aigua cartografiat en "
                                     f"{int(WATER_RADIUS_M)} m (desconegut, no 'sense aigua')")
 
-    # parking — only fill when null (keep curated Phase-2 points)
+    # parking was retired (2026-11-18): strip any leftover fields so a re-run
+    # converges to the parking-free schema.
     acc = zone.setdefault("access", {})
-    if acc.get("parking_lat") is None or acc.get("parking_lon") is None:
-        if overpass_ok:
-            _dist, row = nearest_parking_m(lat, lon, parking)
-            if row is not None:
-                acc["parking_lat"] = round(row["lat"], 6)
-                acc["parking_lon"] = round(row["lon"], 6)
-                acc["parking_source"] = "OSM (Overpass, aparcament més proper)"
+    for stale in ("parking_lat", "parking_lon", "parking_source"):
+        acc.pop(stale, None)
 
-    # drive_min (OSRM, documented reference → parking, else centroid)
-    plat = acc.get("parking_lat")
-    plon = acc.get("parking_lon")
-    if plat is None or plon is None:
-        plat, plon = lat, lon
-        dest_note = "la zona (sense aparcament cartografiat)"
-    else:
-        dest_note = "l'aparcament"
+    # drive_min (OSRM, documented reference → the zone)
+    plat, plon = lat, lon
+    dest_note = "la zona"
     if ref is not None:
         mins = osrm_drive_min(route_cache, ref[1], ref[2], plat, plon)
         if mins is not None:
@@ -429,16 +393,14 @@ def _derive_zone(zone, water_ways, parking, ref, route_cache, overpass_ok,
         acc["drive_min"] = None
         acc["drive_min_source"] = "cap capital de comarca documentat"
 
-    # difficulty (slope + walk distance rule). Walk origin is the mapped parking
-    # when present, otherwise the station's documented forest/access point.
-    walk_lat = acc.get("parking_lat") if acc.get("parking_lat") is not None else station_lat
-    walk_lon = acc.get("parking_lon") if acc.get("parking_lon") is not None else station_lon
-    walk = haversine_m(lat, lon, walk_lat, walk_lon) \
-        if walk_lat is not None and walk_lon is not None else None
+    # difficulty (slope + walk distance rule). Walk origin is the station's
+    # documented forest/access point (parking was retired on 2026-11-18).
+    walk = haversine_m(lat, lon, station_lat, station_lon) \
+        if station_lat is not None and station_lon is not None else None
     acc["difficulty"] = difficulty(walk, zone.get("slope_deg"))
     acc["difficulty_source"] = (
-        "regla escrita: pendent + distància a peu en línia recta des de "
-        "l'aparcament (o el punt d'estació si no hi ha aparcament)" if walk is not None else
+        "regla escrita: pendent + distància a peu en línia recta des del "
+        "punt d'estació (sense aparcament)" if walk is not None else
         "regla escrita: pendent (sense punt de partida)")
 
     # remove duplicated null canopy placeholders (real values in enrichment)
@@ -454,31 +416,28 @@ def derive_station(zones, comarca, station_name, station_lat, station_lon,
     ref = _capital_for(comarca, station_name)
     overpass_ok = False
     water_ways = []
-    parking = []
 
     if not skip_overpass:
         cached = water_cache.get(station_name)
         if isinstance(cached, dict) and cached.get("water_ways") is not None:
             water_ways = cached["water_ways"]
-            parking = cached["parking"]
             overpass_ok = True
         else:
             south, west, north, east = station_bbox(zones)
             try:
                 data = overpass_query(south, west, north, east)
-                water_ways, parking = parse_overpass(data)
+                water_ways = parse_overpass(data)
                 water_cache[station_name] = {
                     "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    "source": "Overpass (waterway/natural=water/water + amenity=parking)",
+                    "source": "Overpass (waterway/natural=water/water)",
                     "water_ways": water_ways,
-                    "parking": parking,
                 }
                 overpass_ok = True
             except Exception:
                 overpass_ok = False
 
     for z in zones:
-        _derive_zone(z, water_ways, parking, ref, route_cache, overpass_ok,
+        _derive_zone(z, water_ways, ref, route_cache, overpass_ok,
                      station_lat, station_lon)
     return station_name, overpass_ok
 
@@ -486,7 +445,7 @@ def derive_station(zones, comarca, station_name, station_lat, station_lon,
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def _counts(zones_doc):
-    c = {"water": 0, "water_unknown": 0, "parking": 0, "drive": 0,
+    c = {"water": 0, "water_unknown": 0, "drive": 0,
          "difficulty": 0, "difficulty_null": 0}
     for stn, zs in zones_doc["zones"].items():
         for z in zs:
@@ -495,8 +454,6 @@ def _counts(zones_doc):
             else:
                 c["water_unknown"] += 1
             acc = z.get("access", {})
-            if acc.get("parking_lat") is not None:
-                c["parking"] += 1
             if acc.get("drive_min") is not None:
                 c["drive"] += 1
             if acc.get("difficulty") is not None:
@@ -587,8 +544,10 @@ def _self_test():
         "forest": {"type": "conifer", "canopy_pct": None, "undergrowth": None},
         "access": {"parking_lat": None, "parking_lon": None},
     }
-    _derive_zone(z, [], [], None, {}, overpass_ok=False,
+    _derive_zone(z, [], None, {}, overpass_ok=False,
                  station_lat=42.0, station_lon=1.0)
+    # retired parking fields are stripped on every run
+    assert "parking_lat" not in z["access"] and "parking_lon" not in z["access"]
     assert "canopy_pct" not in z["forest"] and "undergrowth" not in z["forest"]
     assert "water_m" not in z  # overpass down → left untouched, never faked
     assert z["access"]["difficulty"] == "fàcil"  # walk 0 + slope 18 → fàcil
@@ -597,12 +556,11 @@ def _self_test():
     # A retry must not wipe a drive_min that was already derived from a route
     # just because OSRM is momentarily unavailable.
     z2 = {"id": "t2", "lat": 42.0, "lon": 1.0, "slope_deg": 10.0,
-          "access": {"parking_lat": 42.01, "parking_lon": 1.01,
-                     "drive_min": 33, "drive_min_source": "prev"}}
+          "access": {"drive_min": 33, "drive_min_source": "prev"}}
     _orig_osrm = globals()["osrm_drive_min"]
     globals()["osrm_drive_min"] = lambda *a: None
     try:
-        _derive_zone(z2, [], [], ("Ref", 42.0, 1.0), {}, overpass_ok=False,
+        _derive_zone(z2, [], ("Ref", 42.0, 1.0), {}, overpass_ok=False,
                      station_lat=42.0, station_lon=1.0)
     finally:
         globals()["osrm_drive_min"] = _orig_osrm
@@ -653,7 +611,6 @@ def main():
     print(f"  overpass: {counts['overpass_ok']} stations OK / "
           f"{counts['overpass_fail']} unavailable")
     print(f"  water_m: {counts['water']} filled / {counts['water_unknown']} unknown")
-    print(f"  parking: {counts['parking']} zones")
     print(f"  drive_min: {counts['drive']} filled")
     print(f"  difficulty: {counts['difficulty']} filled / "
           f"{counts['difficulty_null']} null")
