@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "observations": {},
+  "_meta": {
+    "purpose": "Manual field observations (Phase 7.7). A trusted person records stand-level facts for a zone by hand. Surfaced as a 'verified by a person' badge; never overwrites a sourced enrichment or curated value.",
+    "required_per_entry": ["source", "verified_at", "observer"],
+    "at_least_one_fact": ["tree_species", "undergrowth", "soil_reaction", "water_m"],
+    "confidence": "alta | medium | baixa (the observer's own confidence in the entry)",
+    "example": {
+      "rasos-solana-baixa": {
+        "tree_species": "Pinus sylvestris",
+        "undergrowth": "low",
+        "soil_reaction": "calcareous",
+        "water_m": 380,
+        "confidence": "alta",
+        "observer": "A. Botànic",
+        "verified_at": "2026-11-15",
+        "source": "field observation (person) — recorded by hand",
+        "notes": "Open Scots pine, no undergrowth; water in the gully ~380 m downslope."
+      }
+    }
+  }
+}

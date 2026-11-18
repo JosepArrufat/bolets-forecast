@@ -6,9 +6,12 @@ Then open: http://localhost:8765
 """
 
 import json
+import gzip
 import math
 import os
 import re
+import struct
+import zlib
 import urllib.request
 import urllib.parse
 import sqlite3
@@ -26,12 +29,18 @@ BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 MUSHROOMS  = os.path.join(BASE_DIR, "mushrooms.json")
 ZONES_FILE = os.environ.get("ZONES_FILE") or os.path.join(BASE_DIR, "zones.json")
 ZONES_ENRICHED_FILE = os.environ.get("ZONES_ENRICHED_FILE") or os.path.join(BASE_DIR, "zones_enriched.json")
+FIELD_OBS_FILE = os.environ.get("FIELD_OBS_FILE") or os.path.join(BASE_DIR, "field_observations.json")
 _data_dir  = os.environ.get("DATA_DIR", BASE_DIR)
 CACHE_FILE = os.path.join(_data_dir, "geo_cache.json")
 PARKING_CACHE_FILE = os.path.join(_data_dir, "parking_cache.json")
 PARKING_SEED_FILE = os.path.join(BASE_DIR, "parking_cache.json")
 WEATHER_CACHE_FILE = os.environ.get("WEATHER_CACHE_FILE") or os.path.join(_data_dir, "weather_cache.json")
 WEATHER_TTL = 3 * 3600  # serve fresh cache for 3 h, then stale-on-error
+# Phase 6.4: rebuilt-forecast cache. The payload only changes when the input
+# files, the weather cache or the calendar day change; a short TTL keeps the
+# optional XEMA annotations honest while collapsing repeated page loads (and
+# the offline-pack refresh) into one build.
+FORECAST_CACHE_TTL = 300
 # Standard environmental lapse rate: tropospheric temperature falls ~6.5 °C per
 # 1000 m of altitude gain (ICAO Standard Atmosphere). Used to move a temperature
 # read at the model/grid altitude up or down to the true zone altitude.
@@ -60,6 +69,29 @@ with open(MUSHROOMS) as f:
 
 SPECIES_LIST = SPECIES_DATA["species"]
 STATIONS     = SPECIES_DATA["target_stations"]
+
+# ── Season gating (Phase 6.3) ─────────────────────────────────────────────────
+# Autumn is the app's default season: autumn species (or those with no `season`)
+# are scored year-round and damped out of peak by `phenology_factor`. Spring,
+# summer and winter species are strictly seasonal and are filtered out in
+# `score_station` outside their months, matching the long-standing spring rule.
+SEASON_MONTHS = {
+    "spring": (3, 4, 5),
+    "summer": (6, 7, 8),
+    "winter": (12, 1, 2),
+}
+
+
+def species_in_season(sp, month):
+    """True when a species should be scored in the given month.
+
+    `season` is one of spring/summer/winter (strictly seasonal) or
+    autumn/unset (the default — always scored, damped out of season).
+    """
+    season = sp.get("season")
+    if season in SEASON_MONTHS:
+        return month in SEASON_MONTHS[season]
+    return True
 
 # ── Re-read stations on each forecast call so edits to mushrooms.json take effect ──
 
@@ -120,6 +152,56 @@ def _enrichment_lookup():
             if zid and isinstance(zone.get("enrichment"), dict):
                 lookup[zid] = zone["enrichment"]
     return lookup
+
+# ── Manual field observations (Phase 7.7) ─────────────────────────────────────
+
+def get_field_observations():
+    """Read the curated manual field-observation file (Phase 7.7).
+
+    Returns {zone_id: observation}. A trusted person can record stand-level facts
+    — tree species, undergrowth, soil reaction, water — for a zone by hand, each
+    with a `source`, `verified_at` date and a `confidence`. The value is surfaced
+    as a "verified by a person" badge and never overwrites a sourced enrichment or
+    curated value.
+
+    Validation (the step's "never silently trust a manual note" rule): an entry
+    is dropped unless it records a `source`, a `verified_at` date, an `observer`,
+    and at least one observed fact. A missing/malformed file is "no observations",
+    not an error.
+    """
+    if not os.path.exists(FIELD_OBS_FILE):
+        return {}
+    try:
+        with open(FIELD_OBS_FILE) as f:
+            data = json.load(f)
+    except (ValueError, OSError):
+        return {}
+    obs = data.get("observations", {}) if isinstance(data, dict) else {}
+    if not isinstance(obs, dict):
+        return {}
+    out = {}
+    for zone_id, o in obs.items():
+        if not isinstance(o, dict):
+            continue
+        if not (o.get("source") and o.get("verified_at") and o.get("observer")):
+            continue
+        if not any(o.get(k) is not None for k in
+                   ("tree_species", "undergrowth", "soil_reaction", "water_m")):
+            continue
+        rec = dict(o)
+        rec["zone_id"] = zone_id
+        out[zone_id] = rec
+    return out
+
+
+_field_obs_map = None
+
+def _field_observation(zone_id):
+    """Return the validated observation for a zone, or None (lazily cached)."""
+    global _field_obs_map
+    if _field_obs_map is None:
+        _field_obs_map = get_field_observations()
+    return _field_obs_map.get(zone_id)
 
 # ── Geo cache (IGME + CORINE, persistent) ────────────────────────────────────
 
@@ -345,6 +427,66 @@ def fetch_geo(lat, lon):
     }
     set_cached_geo(lat, lon, result)
     return result
+
+
+def _apply_magna50_soil(geo, enrichment):
+    """Prefer the finer soil type (1:25k MSC25M → 1:50k MAGNA) over the 1:1M geo.
+
+    When the zone's enrichment soil block recorded a finer answer — resolution
+    "1:25k" (step 7.6, ICGC MSC25M) or "1:50k" (step 7.4, IGME MAGNA 50) — with a
+    clear calcareous/siliceous class, the score uses that finer class. Otherwise
+    the 1:1M + SoilGrids-pH geo sample is kept, so stations and non-promoted zones
+    are byte-identical to before.
+    """
+    soil_e = (enrichment or {}).get("soil") or {}
+    res = soil_e.get("resolution")
+    if (res in ("1:25k", "1:50k")
+            and soil_e.get("type") in ("calcareous", "siliceous")):
+        out = dict(geo)
+        out["soil_type"] = soil_e["type"]
+        out["litho_text"] = soil_e.get("litho_text", out.get("litho_text", ""))
+        out["soil_resolution"] = res
+        out["soil_source"] = (SOIL_SOURCE_1_25K if res == "1:25k"
+                              else "IGME MAGNA 50 (1:50k)")
+        return out
+    return geo
+
+SOIL_SOURCE_1_25K = "ICGC MSC25M (1:25k)"  # step 7.6
+
+def _zone_soil_display(zone, enrichment, geo=None):
+    """Curated soil block, upgraded to the class the zone score actually uses.
+
+    The curated `zones.json` soil type is the Phase 2/3.4 sample. The score uses
+    the 1:25k MSC25M class when step 7.6 promoted the zone, the MAGNA 50 class
+    when step 7.4 did, and otherwise the cached `fetch_geo` sample, which may
+    resolve an ambiguous lithology from SoilGrids pH. The detail card must show
+    that same class or it contradicts the ranking it explains; `class_source`
+    records which route supplied it (`1:25k` / `magna` / `ph` / `litho`).
+    """
+    soil = dict(zone.get("soil") or {})
+    soil_e = (enrichment or {}).get("soil") or {}
+    geo = geo or {}
+    if (soil_e.get("resolution") in ("1:25k", "1:50k")
+            and soil_e.get("type") in ("calcareous", "siliceous")):
+        soil.update({
+            "type": soil_e["type"],
+            "resolution": soil_e["resolution"],
+            "source": soil_e.get("source") or soil.get("source"),
+            "class_source": "1:25k" if soil_e.get("resolution") == "1:25k" else "magna",
+        })
+        if soil_e.get("ph") is not None:
+            soil["ph_approx"] = soil_e["ph"]
+        if soil_e.get("litho_text"):
+            soil["litho_text"] = soil_e["litho_text"]
+    elif geo.get("soil_type") in ("calcareous", "siliceous"):
+        soil["type"] = geo["soil_type"]
+        soil.setdefault("resolution", "1:1M")
+        soil["class_source"] = "ph" if geo.get("ph") is not None else "litho"
+        if geo.get("ph") is not None:
+            soil["ph_approx"] = geo["ph"]
+        if geo.get("litho_text") and geo["litho_text"] != "unknown":
+            soil["litho_text"] = geo["litho_text"]
+    return soil
 
 # ── Open-Meteo weather ────────────────────────────────────────────────────────
 
@@ -1143,11 +1285,30 @@ Q_TERRAIN_COPERNICUS = 0.70   # Copernicus DEM via Open-Meteo (~90 m)
 Q_INPUT_MISSING      = 0.30   # core input absent → its scoring factor is neutral
 Q_SOIL_FULL          = 0.60   # IGME 1:1M lithology + SoilGrids v2 (~250 m) pH
 Q_SOIL_LITHO_ONLY    = 0.50   # IGME 1:1M lithology only
+Q_SOIL_MAGNA50       = 0.75   # IGME MAGNA 50 (1:50k) — Phase 7.4 anchor
+Q_SOIL_1_25K         = 0.90   # real 1:25k soil — Phase 7.6 anchor
 Q_HABITAT_CORINE     = 0.60   # CORINE CLC 2018 (100 m mapping unit)
+Q_HABITAT_1_25K      = 0.85   # CHC50 1:25k habitat — Phase 7.6 anchor
 XEMA_AGE_ZERO_MIN    = 360    # data age (min) beyond which the age quality is 0
 
 # Prediction-confidence label thresholds (documented modelling choice).
 CONF_LEVEL_THRESHOLDS = ((0.70, "alta"), (0.50, "mitjana"), (0.0, "baixa"))
+
+
+def _source_resolution(*values):
+    """Normalise a soil/habitat source or `resolution` string.
+
+    Returns '1:25k', '1:50k' or None. Used by the confidence anchors so
+    steps 7.4 (MAGNA 50) and 7.6 (real 1:25k layers) raise the quality only
+    when they actually answered — never from a "fallback for CHC50" label.
+    """
+    for value in values:
+        t = (value or "").lower().replace(" ", "")
+        if re.search(r"1[:/]25(?!\d)", t):
+            return "1:25k"
+        if re.search(r"1[:/]50(?!\d)", t) or "magna50" in t:
+            return "1:50k"
+    return None
 
 
 def _conf_quality(zone, enrichment, geo, xema_block):
@@ -1185,16 +1346,25 @@ def _conf_quality(zone, enrichment, geo, xema_block):
                    if isinstance(cov, (int, float)) and 0 <= cov <= 1
                    else Q_INPUT_MISSING)
 
-    # Soil: IGME lithology with/without the SoilGrids pH sample.
+    # Soil: real 1:25k > MAGNA 50 (1:50k) > IGME 1:1M with/without pH.
+    # The finer anchors activate only when 7.4/7.6 record the resolution.
+    soil_res = _source_resolution(soil.get("resolution"), soil.get("source"))
     if soil.get("type"):
-        q["soil"] = (Q_SOIL_FULL if soil.get("ph") is not None
-                     else Q_SOIL_LITHO_ONLY)
+        if soil_res == "1:25k":
+            q["soil"] = Q_SOIL_1_25K
+        elif soil_res == "1:50k":
+            q["soil"] = Q_SOIL_MAGNA50
+        else:
+            q["soil"] = (Q_SOIL_FULL if soil.get("ph") is not None
+                         else Q_SOIL_LITHO_ONLY)
     else:
         q["soil"] = Q_INPUT_MISSING
 
-    # Forest/habitat: CORINE CLC 2018 (100 m).
-    if hab.get("corine_code") or (geo or {}).get("forest_code"):
-        q["forest"] = Q_HABITAT_CORINE
+    # Forest/habitat: CHC50 1:25k when 7.6 records it, else CORINE (100 m).
+    hab_res = _source_resolution(hab.get("resolution"))
+    if (hab.get("corine_code") or (geo or {}).get("forest_code")):
+        q["forest"] = (Q_HABITAT_1_25K if hab_res == "1:25k"
+                       else Q_HABITAT_CORINE)
     else:
         q["forest"] = Q_INPUT_MISSING
 
@@ -1292,25 +1462,33 @@ def _conf_reasons(zone, enrich, xema_block, water_block, water_fetched, q):
             "label": "sense dades LiDAR de capçada",
         })
     if soil.get("type"):
-        if soil.get("ph") is not None:
-            reasons.append({
-                "code": "soil", "ph": True, "impact": _conf_impact(q["soil"]),
-                "label": "sòl IGME 1:1M + SoilGrids (250 m)",
-            })
+        soil_res = _source_resolution(soil.get("resolution"), soil.get("source"))
+        if soil_res == "1:25k":
+            soil_label = "sòl ICGC MSC25M (1:25k)"
+        elif soil_res == "1:50k":
+            soil_label = "sòl IGME MAGNA 50 (1:50k)"
+        elif soil.get("ph") is not None:
+            soil_label = "sòl IGME 1:1M + SoilGrids (250 m)"
         else:
-            reasons.append({
-                "code": "soil", "ph": False, "impact": _conf_impact(q["soil"]),
-                "label": "sòl IGME 1:1M (sense pH SoilGrids)",
-            })
+            soil_label = "sòl IGME 1:1M (sense pH SoilGrids)"
+        reasons.append({
+            "code": "soil", "ph": soil.get("ph") is not None,
+            "resolution": soil_res or "1:1M",
+            "impact": _conf_impact(q["soil"]),
+            "label": soil_label,
+        })
     else:
         reasons.append({
             "code": "soil", "src": "none", "impact": "−",
             "label": "sense dades de sòl",
         })
     if hab.get("corine_code"):
+        hab_res = _source_resolution(hab.get("resolution"))
         reasons.append({
-            "code": "habitat", "impact": _conf_impact(q["forest"]),
-            "label": "hàbitat CORINE Land Cover (100 m)",
+            "code": "habitat", "resolution": hab_res or "100m",
+            "impact": _conf_impact(q["forest"]),
+            "label": ("hàbitat CHC3 (1:25k, ombra)" if hab_res == "1:25k"
+                      else "hàbitat CORINE Land Cover (100 m)"),
         })
     else:
         reasons.append({
@@ -1324,6 +1502,18 @@ def _conf_reasons(zone, enrich, xema_block, water_block, water_fetched, q):
             "label_key": zone.get("confidence_label") or "medium",
             "impact": _conf_impact(float(conf)),
             "label": f"curació · {round(conf * 100)}%",
+        })
+    # Phase 7.7: a verified manual field observation is an additional, sourced
+    # data point. It is reported as a reason and a "verified by a person" badge,
+    # never multiplied into the score.
+    obs = _field_observation(zone.get("id"))
+    if obs:
+        reasons.append({
+            "code": "field_observation", "impact": "+",
+            "confidence": obs.get("confidence") or "medium",
+            "observer": obs.get("observer"),
+            "verified_at": obs.get("verified_at"),
+            "label": "observació de camp verificada per una persona",
         })
     reasons.append({
         "code": "field_reports", "count": FIELD_REPORTS_COUNT, "impact": "−",
@@ -1782,9 +1972,16 @@ def phenology_factor(sp, month):
       spring — they are filtered out otherwise — autumn species 1.0 in
       the autumn peak Sep–Nov, a slight reduction in Aug/Dec and a clear
       reduction outside the season).
+
+    Phase 6.3 extends the same pattern to summer and winter species.
     """
-    if sp.get("season") == "spring":
+    season = sp.get("season")
+    if season == "spring":
         return 1.0 if month in (3, 4, 5) else 0.0
+    if season == "summer":
+        return 1.0 if month in (6, 7, 8) else 0.5
+    if season == "winter":
+        return 1.0 if month in (12, 1, 2) else 0.5
     if month in (9, 10, 11):
         return 1.0
     if month in (8, 12):
@@ -2025,7 +2222,7 @@ def score_station(station, weather, geo, day_offset=0, water=None, phenology=Non
     current_month = date.today().month
 
     for sp in SPECIES_LIST:
-        if sp.get("season") == "spring" and current_month not in (3, 4, 5):
+        if not species_in_season(sp, current_month):
             continue
 
         r_sc_raw = rain_score(precip, sp["rain_trigger_mm"],
@@ -2185,6 +2382,8 @@ def score_station(station, weather, geo, day_offset=0, water=None, phenology=Non
             "forest_code":  geo["forest_code"],
             "forest_label": geo["forest_label"],
             "ph":           geo.get("ph"),
+            "season":       sp.get("season"),
+            "lookalikes":   sp.get("lookalikes", []),
             "notes":        sp["notes"],
         }
         if ph is not None:
@@ -2265,6 +2464,7 @@ def score_zone(zone, station, weather, dates, enrichment=None, weather_elevation
         "_confidence_label": zone.get("confidence_label"),
     }
     geo = fetch_geo(lat, lon)
+    geo = _apply_magna50_soil(geo, enrichment)
     water_block = compute_water_block(water_series, xema, lat, lon) \
         if water_series is not None else None
     # Phase 4.5: the same lapse-corrected daily payload feeds the GDD
@@ -2283,13 +2483,16 @@ def score_zone(zone, station, weather, dates, enrichment=None, weather_elevation
         "aspect":           zone.get("aspect"),
         "slope_deg":        zone.get("slope_deg"),
         "forest":           zone.get("forest"),
-        "soil":             zone.get("soil"),
+        "soil":             _zone_soil_display(zone, enrichment, geo),
         "water_m":          zone.get("water_m"),
+        "water_source":     zone.get("water_source"),
         "access":           zone.get("access"),
         "confidence":       zone.get("confidence"),
         "confidence_label": zone.get("confidence_label"),
         "sources":          zone.get("sources", []),
         "notes":            zone.get("notes", ""),
+        "field_observation": _field_observation(zone.get("id")),
+        "verified_by_person": _field_observation(zone.get("id")) is not None,
         "weather": {
             "grid_alt_m":         weather_elevation,
             "zone_alt_m":         alt_m,
@@ -2386,6 +2589,10 @@ def _apply_altitude_lag(output):
 
 def build_forecast():
     """Run full forecast for all stations. Returns structured dict."""
+    # Re-read the manual field observations each build (they are tiny and edited
+    # by hand); the forecast cache signature already invalidates on file change.
+    global _field_obs_map
+    _field_obs_map = None
     output = {
         "date":    date.today().isoformat(),
         "comarques": {}
@@ -2458,13 +2665,17 @@ def build_forecast():
             "aspect":           zone.get("aspect"),
             "slope_deg":        zone.get("slope_deg"),
             "forest":           zone.get("forest"),
-            "soil":             zone.get("soil"),
+            "soil":             _zone_soil_display(
+                zone, enrichment_by_id.get(zone.get("id")), geo),
             "water_m":          zone.get("water_m"),
+            "water_source":     zone.get("water_source"),
             "access":           zone.get("access"),
             "confidence":       zone.get("confidence"),
             "confidence_label": zone.get("confidence_label"),
             "sources":          zone.get("sources", []),
             "notes":            zone.get("notes", ""),
+            "field_observation": _field_observation(zone.get("id")),
+            "verified_by_person": _field_observation(zone.get("id")) is not None,
             "enrichment":       enrichment_by_id.get(zone.get("id")) or {},
             "geo":              geo,
             "quality":          {"pct": 0, "label": "baixa", "reasons": ["meteo no disponible"]},
@@ -2613,7 +2824,52 @@ def build_forecast():
     # species). Mutates the shared per-species phenology blocks in place.
     _apply_altitude_lag(output)
 
+    # Phase 6.4: move the static per-species fields (name, scientific name,
+    # thresholds, lookalikes, field notes, season) into one top-level catalogue.
+    # They were repeated on every species × day × zone entry, which made the
+    # payload ~48 MB. The frontend rehydrates them from `species_meta` on load;
+    # scores and every dynamic value are untouched.
+    output["species_meta"] = _dedupe_species_payload(output)
+
     return output
+
+
+# Static fields that are identical for every occurrence of a species and are
+# therefore sent once in `species_meta` instead of on each score entry.
+SPECIES_STATIC_FIELDS = ("name", "scientific", "thresholds", "lookalikes",
+                         "notes", "season")
+
+
+def _dedupe_species_payload(output):
+    """Strip static per-species fields into a `{species_id: fields}` catalogue.
+
+    Mutates `output` in place (each species entry keeps only dynamic values) and
+    returns the catalogue. Called once at the end of `build_forecast`, after all
+    scoring and altitude-lag mutations, so nothing that affects a score changes.
+    """
+    meta = {}
+
+    def strip(day_list):
+        for sp in day_list or []:
+            sid = sp.get("id")
+            if sid is None:
+                continue
+            entry = meta.setdefault(sid, {})
+            for key in SPECIES_STATIC_FIELDS:
+                if key in sp:
+                    entry[key] = sp[key]
+                    del sp[key]
+
+    for stns in output.get("comarques", {}).values():
+        for stn in stns:
+            for day in stn.get("days", []) or []:
+                strip(day)
+            strip(stn.get("species"))
+            for zone in stn.get("zones", []) or []:
+                for day in zone.get("days", []) or []:
+                    strip(day)
+                strip(zone.get("species"))
+    return meta
 
 # ── HTML page (embedded) ──────────────────────────────────────────────────────
 
@@ -2623,6 +2879,15 @@ HTML = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bolets Forecast — Catalunya</title>
+<meta name="description" content="Previsió de bolets gratuïta, local i explicable per a Catalunya: mapa, zones i previsió meteorològica de 7 dies.">
+<meta name="theme-color" content="#2a2015">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bolets">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -2719,6 +2984,32 @@ HTML = r"""<!DOCTYPE html>
   #search-input:focus {
     outline: 2px solid #7a4c2a;
     outline-offset: 1px;
+  }
+
+  /* ── Phase 6.4 accessibility: visible keyboard focus and touch targets ── */
+  :focus-visible {
+    outline: 2px solid #7a4c2a;
+    outline-offset: 2px;
+  }
+  .tab-bar :focus-visible,
+  .status-bar :focus-visible {
+    outline-color: #f5f0eb;
+  }
+  .detail-panel:focus { outline: none; }
+  @media (max-width: 700px) {
+    .best-zone-route,
+    .route-mini { min-width: 36px; min-height: 32px; }
+    .detail-close,
+    .explain-close { min-width: 44px; min-height: 44px; }
+    .tab-btn { min-height: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   #search-clear {
     position: absolute;
@@ -3073,8 +3364,8 @@ HTML = r"""<!DOCTYPE html>
     overflow: hidden;
   }
   .score-bar-fill { height: 100%; border-radius: 2px; }
-  .score-high   { background: #4a8c3f; }
-  .score-mid    { background: #c08b00; }
+  .score-high   { background: #3d7433; }
+  .score-mid    { background: #946600; }
   .score-low    { background: #a0573a; }
   .score-none   { background: #b0a090; }
 
@@ -3171,6 +3462,12 @@ HTML = r"""<!DOCTYPE html>
   }
   .zone-sources ul { list-style: none; margin-top: 4px; }
   .zone-sources li { margin-bottom: 2px; }
+  .field-obs {
+    padding: 10px 16px 12px;
+    border-bottom: 1px solid #e8e2d8;
+    background: #f3fbf3;
+  }
+  .field-obs-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .zone-conf-badge {
     font-size: 0.7rem;
     font-weight: 700;
@@ -3439,6 +3736,45 @@ HTML = r"""<!DOCTYPE html>
     color: #7a6e62;
     margin-bottom: 6px;
   }
+  .sp-season {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #5a5048;
+    background: #f0ebe4;
+    border-radius: 8px;
+    padding: 1px 8px;
+    margin-bottom: 6px;
+  }
+  .sp-lookalikes { margin-top: 6px; }
+  .sp-lookalike-warn {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #a63a2a;
+    margin-bottom: 4px;
+  }
+  .sp-lookalike-item {
+    font-size: 0.68rem;
+    color: #5a5048;
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+  .sp-danger {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 8px;
+    padding: 0 6px;
+    margin-left: 4px;
+  }
+  .sp-danger.mortal   { background: #fdecea; color: #a63a2a; border: 1px solid #e0a69c; }
+  .sp-danger.toxic    { background: #fdf0e0; color: #a05a00; border: 1px solid #e0b070; }
+  .sp-danger.inedible { background: #f5f5f5; color: #5a5048; border: 1px solid #bbb; }
+  .sp-danger.none     { background: #e8f5e9; color: #2a5a20; border: 1px solid #9cc49a; }
 
   .loading-overlay {
     display: flex;
@@ -3555,6 +3891,10 @@ HTML = r"""<!DOCTYPE html>
     padding: 12px 14px;
     margin-bottom: 8px;
   }
+  .lookalike-card {
+    border-left: 3px solid #a63a2a;
+    background: #fdfaf7;
+  }
   /* Phase 4.5: phenology badge + rovelló wave strips */
   .pheno-line {
     display: flex;
@@ -3572,7 +3912,7 @@ HTML = r"""<!DOCTYPE html>
     color: #fff;
     line-height: 1.4;
   }
-  .pheno-badge.open    { background: #4a8c3f; }
+  .pheno-badge.open    { background: #3d7433; }
   .pheno-badge.opening { background: #c08b00; }
   .pheno-badge.closing { background: #c0392b; }
   .pheno-badge.closed  { background: #8a7f74; }
@@ -3833,6 +4173,83 @@ HTML = r"""<!DOCTYPE html>
     /* Explain overlay already uses min(680px,96vw) - fine on mobile */
     .explain-body { padding: 0 14px 80px; }
   }
+
+  /* ── Offline pack (Phase 6.1) ── */
+  .offline-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9100;
+    background: rgba(30,20,10,0.55);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+  }
+  .offline-overlay.visible { display: flex; }
+  .offline-box {
+    background: #faf7f3;
+    border-radius: 12px;
+    width: min(560px, 96vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  .offline-header {
+    position: sticky;
+    top: 0;
+    background: #2a2015;
+    color: #f5f0eb;
+    padding: 14px 18px;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+  }
+  .offline-header h2 { font-size: 1rem; font-weight: 700; flex: 1; }
+  .offline-close {
+    background: none; border: none; color: #f5f0eb;
+    font-size: 1.2rem; cursor: pointer; line-height: 1;
+    padding: 0; opacity: 0.7;
+  }
+  .offline-note {
+    font-size: 0.72rem; color: #7a6e62;
+    padding: 10px 18px; line-height: 1.5;
+    border-bottom: 1px solid #e8e2d8;
+  }
+  .offline-body { padding: 8px 14px 18px; }
+  .offline-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; margin-top: 8px;
+    background: #fff; border: 1px solid #e8e2d8; border-radius: 8px;
+  }
+  .offline-card .oc-main { flex: 1; min-width: 0; }
+  .offline-card .oc-name { font-weight: 600; font-size: 0.82rem; color: #2a2015; }
+  .offline-card .oc-meta { font-size: 0.7rem; color: #7a6e62; margin-top: 2px; }
+  .offline-card .oc-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .offline-btn {
+    padding: 5px 9px; font-size: 0.7rem; font-weight: 600;
+    background: #f0ebe4; border: 1px solid #cdc4b8; border-radius: 6px;
+    color: #5a4a38; cursor: pointer;
+  }
+  .offline-btn.primary { background: #7a4c2a; border-color: #7a4c2a; color: #fff; }
+  .offline-btn.danger { color: #a94442; border-color: #e0c4bd; }
+  .offline-empty { padding: 24px 18px; text-align: center; color: #7a6e62; font-size: 0.8rem; }
+  .offline-banner {
+    margin: 8px 16px 4px; padding: 10px 12px;
+    background: #fdf3e3; border: 1px solid #f0d9b0; border-radius: 8px;
+    color: #8a5a1f; font-size: 0.74rem; line-height: 1.5;
+  }
+  .save-toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: #2a2015; color: #f5f0eb; padding: 10px 16px;
+    border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35); z-index: 9500;
+    opacity: 0; transition: opacity 0.25s; pointer-events: none;
+  }
+  .save-toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -3845,6 +4262,11 @@ HTML = r"""<!DOCTYPE html>
     style="margin-left:12px;padding:4px 12px;font-size:0.75rem;font-weight:700;
            background:#3d3020;border:1px solid #6a5a40;border-radius:6px;
            color:#f5f0eb;cursor:pointer;letter-spacing:0.05em">EN</button>
+  <button id="offline-btn" onclick="toggleOfflinePanel()" title="Zones desades"
+    aria-label="Zones desades per anar al bosc"
+    style="margin-left:8px;padding:4px 10px;font-size:0.85rem;font-weight:700;
+           background:#3d3020;border:1px solid #6a5a40;border-radius:6px;
+           color:#f5f0eb;cursor:pointer">💾</button>
 </header>
 
 <!-- Day selector -->
@@ -3897,27 +4319,34 @@ HTML = r"""<!DOCTYPE html>
     </div>
   </div>
   <div id="map"></div>
-  <div class="detail-panel" id="detail-panel">
+  <div class="detail-panel" id="detail-panel" role="region" aria-label="Detall de la zona" tabindex="-1">
     <div class="loading-overlay">Selecciona una estació</div>
   </div>
 </div>
 
 <!-- Mobile tab bar -->
-<nav class="tab-bar" id="tab-bar">
-  <button class="tab-btn active" id="tab-map" onclick="switchTab('map')">
+<nav class="tab-bar" id="tab-bar" role="tablist" aria-label="Mapa i llista de zones">
+  <button class="tab-btn active" id="tab-map" role="tab" aria-selected="true" onclick="switchTab('map')">
     <span class="tab-icon">🗺️</span>
     <span id="tab-map-lbl">Mapa</span>
   </button>
-  <button class="tab-btn" id="tab-list" onclick="switchTab('list')">
+  <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" onclick="switchTab('list')">
     <span class="tab-icon">🍄</span>
     <span id="tab-list-lbl">Zones</span>
   </button>
 </nav>
 
 <!-- Explain overlay -->
-<div class="explain-overlay" id="explain-overlay" onclick="closeExplain(event)">
+<div class="explain-overlay" id="explain-overlay" role="dialog" aria-modal="true" aria-label="Explicació de la puntuació" onclick="closeExplain(event)">
   <div class="explain-box" id="explain-box"></div>
 </div>
+
+<!-- Offline pack overlay (saved zones) -->
+<div class="offline-overlay" id="offline-overlay" onclick="closeOfflinePanel(event)">
+  <div class="offline-box" id="offline-box"></div>
+</div>
+
+<div class="save-toast" id="save-toast" role="status" aria-live="polite"></div>
 
 <script>
 // ── Map init ──────────────────────────────────────────────────────────────────
@@ -4035,6 +4464,7 @@ const TRANSLATIONS = {
     overallScore: 'puntuació global',
     overallExplain: 'El càlcul combina condicions meteorològiques (pluja, temperatura, vent, altitud, humitat) multiplicades per la idoneïtat del sòl i el tipus de bosc detectats per satèl·lit.',
     soilTypes: { calcareous:'calcari (bàsic)', siliceous:'silícic (àcid)', mixed:'mixt', unknown:'desconegut' },
+    soilPhInferred: 'inferit per pH',
     phPrefs: {
       acid:'àcid (pH < 6.5)', basic:'bàsic (pH > 7)',
       neutral_to_acid:'neutre a lleugerament àcid', neutral_to_slightly_acid:'neutre a lleugerament àcid',
@@ -4092,6 +4522,11 @@ const TRANSLATIONS = {
       explain: () => `Per sota del 60–65% l'evaporació del sòl és ràpida, especialment en dies de vent. Una HR alta (>80%) dóna temps al miceli per fructificar.`,
     },
     stnNotes: 'Notes del bosc',
+    lookalikesTitle: '⚠ Perill de confusió',
+    lookalikesWarning: 'Perill de confusió',
+    lookalikesNote: "Verificat amb guies micològiques de referència. No substitueix l'assessorament d'un expert: en dubte, no collir.",
+    lookalikeSeverity: { mortal: 'MORTAL', toxic: 'TÒXIC', inedible: 'NO COMESTIBLE', none: 'SENSE PERILL GREU' },
+    seasonLabels: { spring: 'primavera', summer: 'estiu', autumn: 'tardor', winter: 'hivern' },
     confHigh: 'alta', confMedium: 'mitjana', confLow: 'baixa',
     factorsTitle: 'Factors del càlcul (índex relatiu)',
     factorsRelative: 'És un índex relatiu de favorabilitat, no una probabilitat de trobar bolets.',
@@ -4142,6 +4577,7 @@ const TRANSLATIONS = {
       habitat: () => 'hàbitat CORINE Land Cover (100 m)',
       habitat_none: () => 'sense hàbitat verificat',
       curation: (pct, lbl) => `curació · ${lbl} (${pct}%)`,
+      field_observation: (obs) => `observació de camp verificada (${obs || 'persona'})`,
       field_reports: (n) => n > 0 ? `${n} informes de camp` : 'cap informe de camp encara',
       no_water: () => 'balanç hídric no disponible (sense ET0)',
       no_weather: () => 'meteo no disponible · sense predicció',
@@ -4201,6 +4637,7 @@ const TRANSLATIONS = {
       routeLong: 'Com arribar-hi',
       osm: 'OSM',
       parkingNear: 'Parking a prop',
+      driveFrom: 'des de',
       share: 'Comparteix',
       quality: 'Qualitat de dades',
       qualityHigh: 'alta',
@@ -4238,11 +4675,37 @@ const TRANSLATIONS = {
       soil: 'Sòl',
       confidence: 'Curació de la zona',
       trailhead: 'Pista / punt d\'inici',
+      difficulty: 'Dificultat',
+      difficultyEasy: 'fàcil',
+      difficultyModerate: 'moderada',
+      difficultyHard: 'exigent',
+      water: 'Aigua',
       sources: 'Fonts de dades',
+      verifiedByPerson: 'Verificat per una persona',
+      fieldObsTitle: 'Observació de camp',
+      fieldObsTree: 'Espècie d\'arbre',
+      fieldObsUndergrowth: 'Sotabosc',
+      fieldObsSoil: 'Reacció del sòl',
+      fieldObsWater: 'Aigua',
+      fieldObsBy: 'per',
+      fieldObsOn: 'el',
     },
     langBtn: 'EN',
     tabMap: 'Mapa',
     tabList: 'Zones',
+    offlineTitle: 'Zones desades',
+    statusOffline: 'Sense connexió — mostrant les zones desades',
+    offlineNote: 'Instantània fora de línia: meteorologia i puntuacions del moment de desar-la. Per veure la previsió actual, torna a connectar-te.',
+    offlineBanner: 'Sense connexió. Es mostren les zones desades (instantània, aproximada).',
+    offlineEmpty: 'Encara no has desat cap zona. Amb connexió, obre una zona i toca «Desa per anar al bosc».',
+    saveZone: '💾 Desa per anar al bosc',
+    saveStation: '💾 Desa la zona',
+    savedToast: 'Desada per anar al bosc ✔',
+    removedToast: 'Zona esborrada',
+    openSaved: 'Obre',
+    openLive: 'En viu',
+    deleteSaved: 'Esborra',
+    offlineSnapshot: 'Instantània fora de línia · aproximada',
   },
   en: {
     appTitle: 'Mushroom Forecast · Catalonia',
@@ -4265,6 +4728,7 @@ const TRANSLATIONS = {
     overallScore: 'overall score',
     overallExplain: 'Score combines weather (rain, temperature, wind, altitude, humidity) multiplied by soil suitability and forest type detected by satellite.',
     soilTypes: { calcareous:'calcareous (basic)', siliceous:'siliceous (acid)', mixed:'mixed', unknown:'unknown' },
+    soilPhInferred: 'pH-inferred',
     phPrefs: {
       acid:'acid (pH < 6.5)', basic:'basic (pH > 7)',
       neutral_to_acid:'neutral to slightly acid', neutral_to_slightly_acid:'neutral to slightly acid',
@@ -4322,6 +4786,11 @@ const TRANSLATIONS = {
       explain: () => `Below 60–65% the soil evaporates quickly, especially on windy days. High RH (>80%) gives the mycelium time to fruit.`,
     },
     stnNotes: 'Forest notes',
+    lookalikesTitle: '⚠ Lookalikes (do not confuse)',
+    lookalikesWarning: 'Lookalike warning',
+    lookalikesNote: 'Verified against reference field guides. Not a substitute for expert advice: when in doubt, do not pick.',
+    lookalikeSeverity: { mortal: 'DEADLY', toxic: 'TOXIC', inedible: 'INEDIBLE', none: 'NO SERIOUS DANGER' },
+    seasonLabels: { spring: 'spring', summer: 'summer', autumn: 'autumn', winter: 'winter' },
     confHigh: 'high', confMedium: 'medium', confLow: 'low',
     factorsTitle: 'Score factors (relative index)',
     factorsRelative: 'A relative favourability index, not a probability of finding mushrooms.',
@@ -4372,6 +4841,7 @@ const TRANSLATIONS = {
       habitat: () => 'CORINE Land Cover habitat (100 m)',
       habitat_none: () => 'no verified habitat',
       curation: (pct, lbl) => `curation · ${lbl} (${pct}%)`,
+      field_observation: (obs) => `verified field observation (${obs || 'person'})`,
       field_reports: (n) => n > 0 ? `${n} field reports` : 'no field reports yet',
       no_water: () => 'water balance unavailable (no ET0)',
       no_weather: () => 'weather unavailable · no prediction',
@@ -4431,6 +4901,7 @@ const TRANSLATIONS = {
       routeLong: 'Get directions',
       osm: 'OSM',
       parkingNear: 'Nearby parking',
+      driveFrom: 'from',
       share: 'Share',
       quality: 'Data quality',
       qualityHigh: 'high',
@@ -4468,11 +4939,37 @@ const TRANSLATIONS = {
       soil: 'Soil',
       confidence: 'Zone curation',
       trailhead: 'Trailhead',
+      difficulty: 'Difficulty',
+      difficultyEasy: 'easy',
+      difficultyModerate: 'moderate',
+      difficultyHard: 'hard',
+      water: 'Water',
       sources: 'Data sources',
+      verifiedByPerson: 'Verified by a person',
+      fieldObsTitle: 'Field observation',
+      fieldObsTree: 'Tree species',
+      fieldObsUndergrowth: 'Undergrowth',
+      fieldObsSoil: 'Soil reaction',
+      fieldObsWater: 'Water',
+      fieldObsBy: 'by',
+      fieldObsOn: 'on',
     },
     langBtn: 'CA',
     tabMap: 'Map',
     tabList: 'Zones',
+    offlineTitle: 'Saved zones',
+    statusOffline: 'Offline — showing saved zones',
+    offlineNote: 'Offline snapshot: weather and scores as of the moment you saved it. Reconnect for the live forecast.',
+    offlineBanner: 'Offline. Showing saved zones (snapshot, coarse).',
+    offlineEmpty: 'No zones saved yet. While online, open a zone and tap "Save for offline".',
+    saveZone: '💾 Save for offline',
+    saveStation: '💾 Save this zone',
+    savedToast: 'Saved for offline ✔',
+    removedToast: 'Zone removed',
+    openSaved: 'Open',
+    openLive: 'Live',
+    deleteSaved: 'Delete',
+    offlineSnapshot: 'Offline snapshot · coarse',
   },
 };
 
@@ -4673,8 +5170,12 @@ function visibleEntries() {
 function switchTab(tab) {
   activeTab = tab;
   const sidebar = document.getElementById('sidebar');
-  document.getElementById('tab-map').classList.toggle('active', tab === 'map');
-  document.getElementById('tab-list').classList.toggle('active', tab === 'list');
+  const mapBtn = document.getElementById('tab-map');
+  const listBtn = document.getElementById('tab-list');
+  mapBtn.classList.toggle('active', tab === 'map');
+  listBtn.classList.toggle('active', tab === 'list');
+  mapBtn.setAttribute('aria-selected', tab === 'map' ? 'true' : 'false');
+  listBtn.setAttribute('aria-selected', tab === 'list' ? 'true' : 'false');
   if (tab === 'list') {
     sidebar.classList.add('mob-visible');
     // Close detail panel when switching to list
@@ -4695,8 +5196,8 @@ function scoreClass(s) {
   return 'none';
 }
 function scoreColor(s) {
-  if (s >= 75) return '#4a8c3f';
-  if (s >= 55) return '#c08b00';
+  if (s >= 75) return '#3d7433';
+  if (s >= 55) return '#946600';
   if (s >= 35) return '#a0573a';
   return '#b0a090';
 }
@@ -4747,13 +5248,22 @@ function soilNameLabel(type) {
   return T('soilTypes')[type] || type || '—';
 }
 function confClass(label) {
-  if (label === 'high') return 'conf-high';
-  if (label === 'low') return 'conf-low';
+  // zones.json uses baixa/medium/alta (the schema); older payloads used
+  // low/medium/high. Both must style the same badge (Phase 7.3).
+  if (label === 'high' || label === 'alta') return 'conf-high';
+  if (label === 'low' || label === 'baixa') return 'conf-low';
   return 'conf-medium';
 }
 function confLabelText(label) {
-  const m = { high: T('confHigh'), medium: T('confMedium'), low: T('confLow') };
+  const m = { high: T('confHigh'), medium: T('confMedium'), low: T('confLow'),
+              alta: T('confHigh'), baixa: T('confLow') };
   return m[label] || label || '';
+}
+function difficultyText(d) {
+  if (d === 'fàcil') return U('difficultyEasy');
+  if (d === 'moderada') return U('difficultyModerate');
+  if (d === 'exigent') return U('difficultyHard');
+  return d || '—';
 }
 // Phase 4.4: prediction-confidence level helpers (alta / mitjana / baixa)
 function confLevelClass(level) {
@@ -4787,6 +5297,7 @@ function confReasonText(r) {
     return r.src === 'none' && R.habitat_none ? R.habitat_none() : (R.habitat ? R.habitat() : r.label);
   }
   if (code === 'curation')     return R.curation ? R.curation(r.pct, confLabelText(r.label_key)) : r.label;
+  if (code === 'field_observation') return R.field_observation ? R.field_observation(r.observer) : r.label;
   if (code === 'field_reports') return R.field_reports ? R.field_reports(r.count ?? 0) : r.label;
   if (code === 'no_water')     return R.no_water ? R.no_water() : r.label;
   if (code === 'no_weather')   return R.no_weather ? R.no_weather() : r.label;
@@ -5179,6 +5690,7 @@ function showForestCircle(stn) {
 function selectStation(name, comarca) {
   activeStation = name;
   activeZone = null;
+  rememberDetailFocus();
 
   document.querySelectorAll('.station-card').forEach(c => {
     const on = c.dataset.id === name;
@@ -5206,6 +5718,23 @@ function selectStation(name, comarca) {
 }
 
 // ── Render detail panel ───────────────────────────────────────────────────────
+
+// Phase 6.4: keyboard focus lands in the panel when it opens and returns to the
+// card/button that opened it when it closes. The panel is a region, not a modal:
+// the map and list stay usable.
+let _focusBeforeDetail = null;
+
+function rememberDetailFocus() {
+  const panel = document.getElementById('detail-panel');
+  const active = document.activeElement;
+  if (active && active !== document.body && !(panel && panel.contains(active)))
+    _focusBeforeDetail = active;
+}
+
+function focusDetailPanel() {
+  const panel = document.getElementById('detail-panel');
+  if (panel) requestAnimationFrame(() => panel.focus({ preventScroll: true }));
+}
 function jsq(s) {
   return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
@@ -5252,6 +5781,7 @@ function dayStrip(stn) {
 function renderDetail(stn) {
   const panel = document.getElementById('detail-panel');
   panel.classList.add('visible');
+  focusDetailPanel();
   const species = speciesFor(stn);
 
   if (stn.error) {
@@ -5293,6 +5823,7 @@ function renderDetail(stn) {
       <a class="trip-btn" href="${osmUrl(stn)}" target="_blank" rel="noopener">🗺 ${U('osm')}</a>
       <button class="trip-btn" onclick="loadParking('${jsq(stn.name)}')">🅿️ ${U('parkingNear')}</button>
       <button class="trip-btn" onclick="copyZoneLink('${jsq(stn.name)}')">🔗 ${U('share')}</button>
+      <button class="trip-btn" onclick="saveActiveForOffline()">${T('saveStation')}</button>
     </div>
     <div class="parking-list" id="parking-box" style="display:none"></div>
 
@@ -5326,6 +5857,20 @@ function renderDetail(stn) {
     </div>`;
 }
 
+function seasonLabelHtml(sp) {
+  if (!sp.season) return '';
+  return `<span class="sp-season">${escHtml(T('seasonLabels')[sp.season] || sp.season)}</span>`;
+}
+
+function lookalikeWarningHtml(sp) {
+  const ls = sp.lookalikes || [];
+  if (!ls.length) return '';
+  return `<div class="sp-lookalikes">
+      <div class="sp-lookalike-warn">⚠ ${T('lookalikesWarning')}</div>
+      ${ls.map(l => `<div class="sp-lookalike-item"><b>${escHtml(l.name)}</b><span class="sp-danger ${l.danger}">${escHtml(T('lookalikeSeverity')[l.danger] || l.danger)}</span><div class="muted">${escHtml(l.differences)}</div></div>`).join('')}
+    </div>`;
+}
+
 function speciesItemsHtml(species) {
   return species.map((sp, i) => `
     <div class="sp-item ${filterSpecies && sp.id === filterSpecies ? 'sp-selected' : ''}" onclick="toggleSp(this, ${i})">
@@ -5342,6 +5887,7 @@ function speciesItemsHtml(species) {
         <div class="geo-mult">
           ${T('soilLbl')}: ${sp.soil_match}% · ${T('forestLbl')}: ${sp.forest_match}%
         </div>
+        ${seasonLabelHtml(sp)}
         ${phenoLineHtml(sp)}
         <div class="breakdown-grid">
           ${Object.entries(sp.breakdown).map(([k, v]) => `
@@ -5352,6 +5898,7 @@ function speciesItemsHtml(species) {
             </div>`).join('')}
         </div>
         <div class="sp-notes">${escHtml(sp.notes)}</div>
+        ${lookalikeWarningHtml(sp)}
         <button class="learn-more-btn" onclick="event.stopPropagation();openExplain(${i})">
           ${T('learnMore')}
         </button>
@@ -5387,6 +5934,7 @@ function selectZone(stationName, zoneId) {
   if (!zone) return;
   activeStation = stationName;
   activeZone = zoneId;
+  rememberDetailFocus();
 
   document.querySelectorAll('.station-card').forEach(c =>
     c.classList.toggle('active', c.dataset.id === stationName));
@@ -5406,6 +5954,7 @@ function selectZone(stationName, zoneId) {
 function renderZoneDetail(stn, zone) {
   const panel = document.getElementById('detail-panel');
   panel.classList.add('visible');
+  focusDetailPanel();
   const species = zoneSpeciesFor(zone);
   const ordered = filterSpecies
     ? [...species].sort((a, b) => (b.id === filterSpecies) - (a.id === filterSpecies))
@@ -5420,7 +5969,10 @@ function renderZoneDetail(stn, zone) {
   const access = zone.access || {};
   const ph = soil.ph_approx ?? soil.ph;
   const confLabel = zone.confidence_label || '';
-  const confPct = zone.confidence != null ? Math.round(zone.confidence * 100) : null;
+  // `zone.confidence` is the Phase-4.4 object; only the legacy numeric form
+  // (if a caller supplies an older payload) can be shown as a percentage.
+  const confPct = typeof zone.confidence === 'number'
+    ? Math.round(zone.confidence * 100) : null;
   const shade = shadeLabel(zone.aspect);
 
   // Phase 3.5 enrichment (DEM/LiDAR) — higher-resolution values shown when the
@@ -5428,11 +5980,26 @@ function renderZoneDetail(stn, zone) {
   const enrichment = zone.enrichment || {};
   const eTerrain = enrichment.terrain || {};
   const eCanopy = enrichment.canopy || {};
-  const canopyPct = forest.canopy_pct != null ? forest.canopy_pct
-    : (eCanopy.canopy_pct != null ? eCanopy.canopy_pct * 100 : null);
+  // Canopy comes from the LiDAR enrichment (Phase 3.3); the duplicated null
+  // `forest.canopy_pct`/`undergrowth` placeholders were removed in Phase 7.2.
+  const canopyPct = eCanopy.canopy_pct != null ? eCanopy.canopy_pct * 100 : null;
   const undergrowthPct = eCanopy.undergrowth != null ? eCanopy.undergrowth * 100 : null;
   const solarRatio = (eTerrain.solar_radiation || {}).annual;
   const coldAir = eTerrain.cold_air_pooling;
+
+  // Trip card: render whenever any access/water fact is present (not only when
+  // a trailhead name exists, which would hide drive time and difficulty on the
+  // 6.2 zones that have no named trailhead).
+  const hasParking = access.parking_lat != null && access.parking_lon != null;
+  const accessParts = [];
+  if (access.trailhead) accessParts.push(`<b>${U('trailhead')}:</b> ${escHtml(access.trailhead)}`);
+  if (hasParking) accessParts.push(`🅿️ <a href="https://www.openstreetmap.org/?mlat=${access.parking_lat}&mlon=${access.parking_lon}#map=17/${access.parking_lat}/${access.parking_lon}" target="_blank" rel="noopener">parking</a>`);
+  const driveRefMatch = (access.drive_min_source || '').match(/OSRM driving · (.*?) →/);
+  const driveRef = driveRefMatch ? driveRefMatch[1] : null;
+  if (access.drive_min != null) accessParts.push(`${access.drive_min} min${driveRef ? ` · ${U('driveFrom')} ${driveRef}` : ''}`);
+  if (access.difficulty) accessParts.push(`${U('difficulty')}: ${difficultyText(access.difficulty)}`);
+  if (zone.water_m != null) accessParts.push(`${U('water')}: ${zone.water_m} m`);
+  const tripCard = accessParts.length ? `<div class="zone-notes">${accessParts.join(' · ')}</div>` : '';
 
   panel.innerHTML = `
     <div class="detail-header">
@@ -5446,6 +6013,7 @@ function renderZoneDetail(stn, zone) {
       <a class="trip-btn primary" href="${routeUrl({ lat: zone.lat, lon: zone.lon })}" target="_blank" rel="noopener">↗ ${U('routeLong')}</a>
       <a class="trip-btn" href="${osmUrl({ lat: zone.lat, lon: zone.lon })}" target="_blank" rel="noopener">🗺 ${U('osm')}</a>
       <button class="trip-btn" onclick="copyZoneLink('${jsq(stn.name)}')">🔗 ${U('share')}</button>
+      <button class="trip-btn" onclick="saveActiveForOffline()">${T('saveZone')}</button>
     </div>
 
     <div class="zone-fact-grid">
@@ -5483,7 +6051,7 @@ function renderZoneDetail(stn, zone) {
       </div>
       <div class="zone-fact">
         <div class="zone-fact-label">${U('soil')}</div>
-        <div class="zone-fact-value">${soilNameLabel(soil.type)}${ph != null ? `<span class="muted"> · pH ${ph}</span>` : ''}</div>
+        <div class="zone-fact-value">${soilNameLabel(soil.type)}${soil.resolution === '1:25k' ? `<span class="muted"> · 1:25k</span>` : (soil.resolution === '1:50k' ? `<span class="muted"> · 1:50k</span>` : '')}${soil.class_source === 'ph' ? `<span class="muted"> · ${T('soilPhInferred')}</span>` : ''}${ph != null ? `<span class="muted"> · pH ${ph}</span>` : ''}</div>
       </div>
       <div class="zone-fact">
         <div class="zone-fact-label">${U('confidence')}</div>
@@ -5493,7 +6061,9 @@ function renderZoneDetail(stn, zone) {
 
     ${confBlockHtml(zone)}
 
-    ${access.trailhead ? `<div class="zone-notes"><b>${U('trailhead')}:</b> ${escHtml(access.trailhead)}${access.parking_lat != null ? ` · 🅿️ <a href="https://www.openstreetmap.org/?mlat=${access.parking_lat}&mlon=${access.parking_lon}#map=17/${access.parking_lat}/${access.parking_lon}" target="_blank" rel="noopener">parking</a>` : ''}${access.drive_min != null ? ` · ${access.drive_min} min` : ''}</div>` : ''}
+    ${fieldObservationHtml(zone)}
+
+    ${tripCard}
 
     ${zone.notes ? `<div class="zone-notes">${escHtml(zone.notes)}</div>` : ''}
 
@@ -5553,6 +6123,27 @@ function confBlockHtml(zone) {
       <span class="conf-value muted">${c.field_reports ? c.field_reports : T('confNoReports')}</span>
     </div>
     <div class="conf-note">${T('confNote')}</div>
+  </div>`;
+}
+
+// ── Phase 7.7: verified manual field observation (badge + facts) ──────────────
+function fieldObservationHtml(zone) {
+  const o = zone.field_observation;
+  if (!o) return '';
+  const facts = [];
+  if (o.tree_species) facts.push([U('fieldObsTree'), escHtml(o.tree_species)]);
+  if (o.undergrowth != null) facts.push([U('fieldObsUndergrowth'), escHtml(String(o.undergrowth))]);
+  if (o.soil_reaction) facts.push([U('fieldObsSoil'), soilNameLabel(o.soil_reaction)]);
+  if (o.water_m != null) facts.push([U('fieldObsWater'), o.water_m + ' m']);
+  const conf = o.confidence ? `<span class="muted">· ${confLabelText(o.confidence)}</span>` : '';
+  const meta = o.observer
+    ? `<span class="muted">· ${U('fieldObsBy')} ${escHtml(o.observer)}${o.verified_at ? ' · ' + U('fieldObsOn') + ' ' + escHtml(String(o.verified_at)) : ''}</span>` : '';
+  const factsHtml = facts.length
+    ? `<div class="zone-fact-grid">${facts.map(([l, v]) => `<div class="zone-fact"><div class="zone-fact-label">${l}</div><div class="zone-fact-value">${v}</div></div>`).join('')}</div>` : '';
+  return `<div class="field-obs">
+    <div class="field-obs-head"><span class="badge badge-for">✓ ${U('verifiedByPerson')}</span>${conf}${meta}</div>
+    ${factsHtml}
+    ${o.notes ? `<div class="zone-notes">${escHtml(o.notes)}</div>` : ''}
   </div>`;
 }
 
@@ -5624,9 +6215,246 @@ function closeDetail() {
   if (activeCircle) { map.removeLayer(activeCircle); activeCircle = null; }
   activeStation = null;
   activeZone = null;
+  if (_focusBeforeDetail && _focusBeforeDetail.isConnected) {
+    _focusBeforeDetail.focus({ preventScroll: true });
+  } else {
+    const search = document.getElementById('search-input');
+    if (search) search.focus({ preventScroll: true });
+  }
+  _focusBeforeDetail = null;
   updateUrl();
   // On mobile stay on map tab
   if (isMobile()) switchTab('map');
+}
+
+// ── Offline pack (Phase 6.1) ──────────────────────────────────────────────────
+// Save one zone's map/forecast/access notes for the day into localStorage so it
+// can be opened without a connection. This is an explicit, coarse snapshot —
+// never presented as live data.
+
+const OFFLINE_KEY = 'bolets-offline-zones';
+
+function comarcaFor(name) {
+  if (!forecastData || !forecastData.comarques) return '';
+  for (const [comarca, stns] of Object.entries(forecastData.comarques)) {
+    for (const s of stns) if (s.name === name) return comarca;
+  }
+  return '';
+}
+
+function getSavedZones() {
+  try {
+    const raw = localStorage.getItem(OFFLINE_KEY);
+    if (!raw) return [];
+    const obj = JSON.parse(raw);
+    return Object.values(obj || {});
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveToast(msg) {
+  const el = document.getElementById('save-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function buildOfflineSnapshot(stn, zone) {
+  const id = zone ? `${stn.name}::${zone.id}` : `${stn.name}::station`;
+  const src = zone || stn;
+  const days = (src.days || []).slice(0, 7).map((list, i) => {
+    const sp = filterSpecies
+      ? (list || []).find(s => s.id === filterSpecies)
+      : (list || [])[0];
+    return {
+      date: (src.dates || [])[i] || null,
+      score: sp ? sp.score : null,
+      name: sp ? sp.name : null,
+      label: sp ? sp.label : null,
+    };
+  });
+  const topSpecies = (zone ? zoneSpeciesFor(zone) : speciesFor(stn))
+    .slice(0, 8).map(sp => ({
+      name: sp.name, scientific: sp.scientific, score: sp.score, label: sp.label,
+    }));
+  return {
+    id,
+    stnName: stn.name,
+    comarca: comarcaFor(stn.name),
+    zoneId: zone ? zone.id : null,
+    isZone: !!zone,
+    savedAt: new Date().toISOString(),
+    forecastDate: forecastData ? forecastData.date : null,
+    name: src.name || stn.name,
+    lat: src.lat, lon: src.lon, alt_m: src.alt_m,
+    alt_range_m: src.alt_range_m || null,
+    aspect: src.aspect || null,
+    aspect_deg: src.aspect_deg != null ? src.aspect_deg : null,
+    slope_deg: src.slope_deg != null ? src.slope_deg : null,
+    forest: zone ? (zone.forest || null) : null,
+    soil: zone ? (zone.soil || null) : null,
+    access: zone ? (zone.access || null) : null,
+    confidence: src.confidence != null ? src.confidence : null,
+    confidence_label: src.confidence_label || null,
+    notes: src.notes || null,
+    sources: src.sources || null,
+    days,
+    topSpecies,
+  };
+}
+
+function saveActiveForOffline() {
+  const stn = activeStation ? findStation(activeStation) : null;
+  if (!stn) return;
+  const zone = activeZone ? findZone(stn, activeZone) : null;
+  const snap = buildOfflineSnapshot(stn, zone);
+  let store = {};
+  try { store = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '{}'); } catch (e) {}
+  store[snap.id] = snap;
+  try { localStorage.setItem(OFFLINE_KEY, JSON.stringify(store)); } catch (e) {
+    saveToast(lang === 'ca' ? 'No s\'ha pogut desar (emmagatzematge ple)' : 'Could not save (storage full)');
+    return;
+  }
+  saveToast(T('savedToast'));
+  refreshOfflineBtn();
+}
+
+function deleteSavedZone(id) {
+  let store = {};
+  try { store = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '{}'); } catch (e) {}
+  delete store[id];
+  try { localStorage.setItem(OFFLINE_KEY, JSON.stringify(store)); } catch (e) {}
+  saveToast(T('removedToast'));
+  renderOfflinePanel();
+  refreshOfflineBtn();
+}
+
+function refreshOfflineBtn() {
+  const btn = document.getElementById('offline-btn');
+  if (!btn) return;
+  const n = getSavedZones().length;
+  btn.textContent = n ? `💾${n}` : '💾';
+}
+
+function toggleOfflinePanel() {
+  const ov = document.getElementById('offline-overlay');
+  if (ov.classList.contains('visible')) {
+    ov.classList.remove('visible');
+  } else {
+    renderOfflinePanel();
+    ov.classList.add('visible');
+  }
+}
+
+function closeOfflinePanel(e) {
+  if (e && e.target !== document.getElementById('offline-overlay')) return;
+  document.getElementById('offline-overlay').classList.remove('visible');
+}
+
+function fmtSavedAt(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString(lang === 'ca' ? 'ca-ES' : 'en-GB', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function renderOfflinePanel() {
+  const box = document.getElementById('offline-box');
+  const saved = getSavedZones();
+  const cards = saved.map(snap => `
+    <div class="offline-card">
+      <div class="oc-main">
+        <div class="oc-name">${escHtml(snap.name)}</div>
+        <div class="oc-meta">${escHtml(snap.comarca || '')}${snap.comarca ? ' · ' : ''}${snap.alt_m}m · ${fmtSavedAt(snap.savedAt)}</div>
+      </div>
+      <div class="oc-actions">
+        <button class="offline-btn primary" onclick="openSavedZone('${escHtml(snap.id)}')">${T('openSaved')}</button>
+        <button class="offline-btn danger" onclick="deleteSavedZone('${escHtml(snap.id)}')">${T('deleteSaved')}</button>
+      </div>
+    </div>`).join('');
+  box.innerHTML = `
+    <div class="offline-header">
+      <h2>💾 ${T('offlineTitle')}</h2>
+      <button class="offline-close" onclick="closeOfflinePanel()" aria-label="Tanca">✕</button>
+    </div>
+    <div class="offline-note">${T('offlineNote')}</div>
+    <div class="offline-body">
+      ${saved.length ? cards : `<div class="offline-empty">${T('offlineEmpty')}</div>`}
+    </div>`;
+}
+
+function openSavedZone(id) {
+  const snap = getSavedZones().find(s => s.id === id);
+  if (!snap) return;
+  closeOfflinePanel();
+  renderOfflineZoneDetail(snap);
+}
+
+function renderOfflineZoneDetail(snap) {
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('visible');
+  focusDetailPanel();
+  activeStation = null;
+  activeZone = null;
+  const daysHtml = snap.days.map((d, i) => {
+    const col = d.score != null ? scoreColor(d.score) : '#b0a090';
+    const dayName = d.date ? T('dayNames')[new Date(d.date + 'T12:00:00').getDay()] : '—';
+    return `<div class="day-cell ${i === 0 ? 'active' : ''}">
+      <div class="dc-day">${dayName}</div>
+      <div class="dc-score" style="color:${col}">${d.score ?? '—'}</div>
+      <div class="dc-bar"><div class="dc-bar-fill" style="width:${d.score ?? 0}%;background:${col}"></div></div>
+    </div>`;
+  }).join('');
+  const facts = [
+    [U('altRange'), snap.alt_range_m ? snap.alt_range_m.join('–') + ' m' : snap.alt_m + ' m'],
+    [U('aspect'), snap.aspect_deg != null ? `${aspectLabel(snap.aspect)} ${snap.aspect_deg}°` : (aspectLabel(snap.aspect) || '—')],
+    [U('slope'), snap.slope_deg != null ? snap.slope_deg + '°' : '—'],
+    [U('forestType'), snap.forest ? forestTypeLabel(snap.forest.type) : '—'],
+    [U('dominantTree'), snap.forest ? escHtml(snap.forest.dominant || '—') : '—'],
+    [U('soil'), snap.soil ? soilNameLabel(snap.soil.type) : '—'],
+    [U('confidence'), snap.confidence_label ? confLabelText(snap.confidence_label) : '—'],
+  ].map(([lbl, val]) => `
+    <div class="zone-fact"><div class="zone-fact-label">${lbl}</div><div class="zone-fact-value">${val}</div></div>`).join('');
+  const speciesHtml = snap.topSpecies.map(sp => `
+    <div class="sp-item" style="cursor:default">
+      <div class="sp-top">
+        <span class="score-pill" style="background:${scoreColor(sp.score)};width:36px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:white;flex-shrink:0">${sp.score}</span>
+        <span><div class="sp-name">${escHtml(sp.name)}</div><div class="sp-sci">${escHtml(sp.scientific)}</div></span>
+        <span class="sp-label">${T('scoreLabels')[sp.label] ?? sp.label}</span>
+      </div>
+    </div>`).join('');
+
+  panel.innerHTML = `
+    <div class="detail-header">
+      <button class="detail-close" onclick="closeDetail()" aria-label="Tanca">✕</button>
+      <h2>${escHtml(snap.name)}</h2>
+      <div class="alt">⬆ ${snap.alt_m}m · ${snap.lat.toFixed(3)}°N ${snap.lon.toFixed(3)}°E</div>
+      <div class="offline-banner" style="margin:10px 0 0">📦 ${T('offlineSnapshot')}${snap.forecastDate ? ` · ${snap.forecastDate}` : ''} · ${fmtSavedAt(snap.savedAt)}</div>
+    </div>
+
+    <div class="trip-actions">
+      <a class="trip-btn primary" href="${routeUrl({ lat: snap.lat, lon: snap.lon })}" target="_blank" rel="noopener">↗ ${U('routeLong')}</a>
+      <a class="trip-btn" href="${osmUrl({ lat: snap.lat, lon: snap.lon })}" target="_blank" rel="noopener">🗺 ${U('osm')}</a>
+      ${snap.zoneId ? `<a class="trip-btn" href="?est=${encodeURIComponent(snap.stnName)}&zona=${encodeURIComponent(snap.zoneId)}">${T('openLive')}</a>` : ''}
+    </div>
+
+    <div class="zone-fact-grid">${facts}</div>
+
+    ${snap.access && snap.access.trailhead ? `<div class="zone-notes"><b>${U('trailhead')}:</b> ${escHtml(snap.access.trailhead)}</div>` : ''}
+    ${snap.notes ? `<div class="zone-notes">${escHtml(snap.notes)}</div>` : ''}
+
+    <div class="day-strip-wrap"><div class="day-strip">${daysHtml}</div></div>
+
+    <div class="species-list">${speciesHtml}</div>
+
+    ${snap.sources && snap.sources.length ? `<div class="zone-sources">${U('sources')}<ul>${snap.sources.map(s => `<li>· ${escHtml(s)}</li>`).join('')}</ul></div>` : ''}
+  `;
+  // Center the map on the saved zone even without a live forecast.
+  map.setView([snap.lat, snap.lon], 14);
 }
 
 // ── Explain overlay ───────────────────────────────────────────────────────────
@@ -5634,25 +6462,38 @@ function closeDetail() {
 let _currentSpeciesList = [];
 let _currentExplainCtx = null;
 
+let _focusBeforeExplain = null;
+
 function openExplain(i) {
   const sp  = _currentSpeciesList[i];
   const ctx = _currentExplainCtx;
   if (!sp || !ctx) return;
 
+  _focusBeforeExplain = document.activeElement;
   document.getElementById('explain-box').innerHTML = buildExplain(sp, ctx);
   document.getElementById('explain-overlay').classList.add('visible');
   document.body.style.overflow = 'hidden';
+  const closeBtn = document.querySelector('#explain-box .explain-close');
+  if (closeBtn) requestAnimationFrame(() => closeBtn.focus({ preventScroll: true }));
+}
+
+function restoreExplainFocus() {
+  if (_focusBeforeExplain && _focusBeforeExplain.isConnected)
+    _focusBeforeExplain.focus({ preventScroll: true });
+  _focusBeforeExplain = null;
 }
 
 function closeExplain(e) {
   if (e && e.target !== document.getElementById('explain-overlay')) return;
   document.getElementById('explain-overlay').classList.remove('visible');
   document.body.style.overflow = '';
+  restoreExplainFocus();
 }
 
 function closeExplainBtn() {
   document.getElementById('explain-overlay').classList.remove('visible');
   document.body.style.overflow = '';
+  restoreExplainFocus();
 }
 
 function meterHtml(pct, color) {
@@ -5702,6 +6543,24 @@ function factorsHtml(sp) {
       </div>
       ${sp.confidence ? `<div class="explain-conf">${T('confPrediction')}: <b>${confLevelText(sp.confidence.level)} ${Math.round((sp.confidence.score ?? 0) * 100)}%</b><span class="muted"> · ${(sp.confidence.inputs || []).map(i => T('confInputs')[i] || i).join(', ')}</span></div>` : ''}
       <div class="explain-verdict" style="margin-top:6px">${T('factorsRelative')}</div>
+    </div>`;
+}
+
+function lookalikesHtml(sp) {
+  const ls = sp.lookalikes || [];
+  if (!ls.length) return '';
+  return `<div class="explain-section lookalike-section">
+      <div class="explain-section-title">${T('lookalikesTitle')}</div>
+      ${ls.map(l => `
+        <div class="explain-card lookalike-card">
+          <div class="explain-card-row">
+            <span class="explain-label">${escHtml(l.name)}</span>
+            <span class="explain-value"><span class="sp-danger ${l.danger}">${escHtml(T('lookalikeSeverity')[l.danger] || l.danger)}</span></span>
+            <span class="explain-need"></span>
+          </div>
+          <div class="explain-verdict">${escHtml(l.differences)}</div>
+        </div>`).join('')}
+      <div class="explain-verdict" style="margin-top:4px">${T('lookalikesNote')}</div>
     </div>`;
 }
 
@@ -5941,7 +6800,7 @@ function buildExplain(sp, ctx) {
       <h2>${sp.name}</h2>
       <div class="sci">${sp.scientific} · ${ctx.name} (${ctx.alt_m}m)</div>
     </div>
-    <button class="explain-close" onclick="closeExplainBtn()">✕</button>
+    <button class="explain-close" onclick="closeExplainBtn()" aria-label="Tanca">✕</button>
   </div>
 
   <div class="explain-score-hero">
@@ -5953,6 +6812,8 @@ function buildExplain(sp, ctx) {
   </div>
 
   <div class="explain-body">
+
+    ${lookalikesHtml(sp)}
 
     <div class="explain-section">
       <div class="explain-section-title">${T('secSoil')}</div>
@@ -6272,6 +7133,32 @@ function wireUi() {
 document.getElementById('hdr-date').textContent =
   new Date().toLocaleDateString('ca-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
+function hydrateForecast(data) {
+  // Phase 6.4: static species fields arrive once in `species_meta` (name,
+  // scientific name, thresholds, lookalikes, notes, season). Merge them back
+  // onto every score entry so the rest of the UI is unchanged.
+  const meta = (data && data.species_meta) || {};
+  const fill = (sp) => {
+    if (!sp || sp.id == null) return sp;
+    const m = meta[sp.id];
+    if (!m) return sp;
+    for (const k of ['name', 'scientific', 'thresholds', 'lookalikes', 'notes', 'season'])
+      if (!(k in sp) && (k in m)) sp[k] = m[k];
+    return sp;
+  };
+  for (const stns of Object.values((data && data.comarques) || {})) {
+    for (const stn of stns) {
+      (stn.days || []).forEach(day => (day || []).forEach(fill));
+      (stn.species || []).forEach(fill);
+      for (const zone of (stn.zones || [])) {
+        (zone.days || []).forEach(day => (day || []).forEach(fill));
+        (zone.species || []).forEach(fill);
+      }
+    }
+  }
+  return data;
+}
+
 async function loadForecast() {
   const dot  = document.getElementById('status-dot');
   const txt  = document.getElementById('status-text');
@@ -6280,7 +7167,7 @@ async function loadForecast() {
 
   try {
     const res  = await fetch('/api/forecast');
-    const data = await res.json();
+    const data = hydrateForecast(await res.json());
     forecastData = data;
     const urlState = applyUrlState();
 
@@ -6307,12 +7194,35 @@ async function loadForecast() {
     updateUrl();
   } catch (e) {
     dot.className = 'dot err';
-    txt.textContent = (lang === 'ca' ? 'Error carregant dades: ' : 'Error loading data: ') + e.message;
+    txt.textContent = T('statusOffline');
+    renderOfflineFallback();
   }
+}
+
+function renderOfflineFallback() {
+  const saved = getSavedZones();
+  const best = document.getElementById('best-zones');
+  const list = document.getElementById('station-list');
+  if (best) best.innerHTML = `<div class="offline-banner">📡 ${T('offlineBanner')}</div>`;
+  if (!list) return;
+  if (!saved.length) {
+    list.innerHTML = `<div class="offline-empty">${T('offlineEmpty')}</div>`;
+    return;
+  }
+  list.innerHTML = saved.map(snap => `
+    <div class="station-card" style="cursor:pointer" onclick="openSavedZone('${escHtml(snap.id)}')">
+      <div class="station-name">${escHtml(snap.name)}</div>
+      <div class="station-meta">
+        <span>${escHtml(snap.comarca || '')}</span>
+        <span>⬆ ${snap.alt_m}m</span>
+        <span>💾 ${fmtSavedAt(snap.savedAt)}</span>
+      </div>
+    </div>`).join('');
 }
 
 wireUi();
 loadForecast();
+refreshOfflineBtn();
 
 // Invalidate map on resize/orientation change
 window.addEventListener('resize', () => {
@@ -6322,9 +7232,266 @@ window.addEventListener('resize', () => {
 window.addEventListener('orientationchange', () => {
   setTimeout(() => map.invalidateSize(), 200);
 });
+
+// ── Service worker (PWA / offline) ─────────────────────────────────────────────
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>"""
+
+# ── PWA: manifest, icons and service worker (Phase 6.1) ───────────────────────
+#
+# Everything here is served from this single stdlib-only file. The icons are
+# drawn programmatically (a simple rovelló on a dark tile) and encoded as PNG
+# with zlib + struct, so no binary asset needs to be committed.
+
+PWA_THEME_COLOR = "#2a2015"
+PWA_BACKGROUND_COLOR = "#f5f0eb"
+PWA_NAME = "Bolets Forecast — Catalunya"
+PWA_SHORT_NAME = "Bolets"
+PWA_DESCRIPTION = (
+    "Previsió de bolets gratuïta, local i explicable per a Catalunya: mapa, "
+    "zones (massís → obaga/solana) i previsió meteorològica de 7 dies."
+)
+
+
+def _png_chunk(tag, data):
+    return (
+        struct.pack(">I", len(data)) + tag + data
+        + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+    )
+
+
+def _png_bytes(width, height, rgba_rows):
+    """Encode a list of `width*height*4` RGBA bytes as an 8-bit PNG."""
+    raw = b"".join(b"\x00" + row for row in rgba_rows)
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", ihdr)
+        + _png_chunk(b"IDAT", zlib.compress(raw, 9))
+        + _png_chunk(b"IEND", b"")
+    )
+
+
+def _icon_subpixel(u, v, maskable):
+    """Colour (r,g,b,a) of one point in the mushroom icon, coords in [0,1].
+
+    `maskable` fills the whole square (safe-zone icons), otherwise a rounded
+    tile is drawn with transparent corners.
+    """
+    # Background: dark tile (rounded for "any", full-bleed for "maskable").
+    r = 0.22
+    dx = abs(u - 0.5)
+    dy = abs(v - 0.5)
+    if maskable:
+        inside = True
+    else:
+        flat = 0.5 - r
+        inside = (dy <= flat) or (dx <= flat) or \
+            ((dx - flat) ** 2 + (dy - flat) ** 2 <= r * r)
+    if not inside:
+        return (0, 0, 0, 0)
+
+    bg = (42, 32, 21, 255)        # #2a2015
+    stem = (245, 240, 235, 255)   # #f5f0eb
+    cap = (201, 87, 47, 255)      # #c9572f (rovelló orange-red)
+    dot = (245, 240, 235, 255)
+
+    # Stem: tapered rectangle centred on x=0.5, from y 0.55 to 0.82.
+    stem_w = 0.085 + 0.03 * ((v - 0.55) / 0.27)  # narrows upward
+    if 0.55 <= v <= 0.82 and abs(u - 0.5) <= stem_w:
+        return stem
+
+    # Cap: upper half of an ellipse centred at (0.5, 0.52).
+    ex = (u - 0.5) / 0.34
+    ey = (v - 0.52) / 0.32
+    if v <= 0.52 and ex * ex + ey * ey <= 1.0:
+        # Dots (amanita-style) on the cap.
+        for (du, dv, dr) in ((0.14, 0.16, 0.045), (-0.13, 0.12, 0.036),
+                             (0.0, 0.26, 0.040), (-0.03, 0.04, 0.030),
+                             (0.10, 0.28, 0.026)):
+            if (u - (0.5 + du)) ** 2 + (v - (0.52 - dv)) ** 2 <= dr * dr:
+                return dot
+        return cap
+
+    # Stem base ellipse.
+    if 0.80 <= v and abs(u - 0.5) <= 0.085 and (u - 0.5) ** 2 / (0.085 ** 2) + (v - 0.82) ** 2 / (0.05 ** 2) <= 1.0:
+        return stem
+
+    return bg
+
+
+def _render_icon(size, maskable=False):
+    """Return PNG bytes for a `size`×`size` mushroom icon, anti-aliased via
+    2×2 supersampling."""
+    ss = 2
+    rows = []
+    for y in range(size):
+        row = bytearray()
+        for x in range(size):
+            acc = [0, 0, 0, 0]
+            for sy in range(ss):
+                for sx in range(ss):
+                    u = (x + (sx + 0.5) / ss) / size
+                    v = (y + (sy + 0.5) / ss) / size
+                    r, g, b, a = _icon_subpixel(u, v, maskable)
+                    acc[0] += r * a
+                    acc[1] += g * a
+                    acc[2] += b * a
+                    acc[3] += a
+            n = ss * ss
+            a = acc[3] / n
+            if a <= 0:
+                row += bytes((0, 0, 0, 0))
+            else:
+                row += bytes((int(round(acc[0] / acc[3])),
+                              int(round(acc[1] / acc[3])),
+                              int(round(acc[2] / acc[3])),
+                              int(round(a))))
+        rows.append(bytes(row))
+    return _png_bytes(size, size, rows)
+
+
+# Icon rasters are cached at import time so the server never redraws them.
+ICON_180 = _render_icon(180)
+ICON_192 = _render_icon(192)
+ICON_512 = _render_icon(512)
+ICON_MASKABLE_512 = _render_icon(512, maskable=True)
+
+
+FAVICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+    '<rect width="64" height="64" rx="14" fill="#2a2015"/>'
+    '<ellipse cx="32" cy="33" rx="21" ry="20" fill="#c9572f"/>'
+    '<circle cx="23" cy="27" r="2.6" fill="#f5f0eb"/>'
+    '<circle cx="38" cy="30" r="2.2" fill="#f5f0eb"/>'
+    '<circle cx="31" cy="21" r="2.4" fill="#f5f0eb"/>'
+    '<rect x="26" y="35" width="12" height="18" rx="4" fill="#f5f0eb"/>'
+    '</svg>'
+)
+
+
+PWA_MANIFEST = {
+    "name": PWA_NAME,
+    "short_name": PWA_SHORT_NAME,
+    "description": PWA_DESCRIPTION,
+    "lang": "ca",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": PWA_BACKGROUND_COLOR,
+    "theme_color": PWA_THEME_COLOR,
+    "icons": [
+        {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    ],
+}
+
+MANIFEST_JSON = json.dumps(PWA_MANIFEST, ensure_ascii=False, indent=2)
+
+
+SW_JS = r"""// Bolets Forecast — service worker (Phase 6.1)
+// App-shell + coarse offline snapshot. Weather/forecast are always re-fetched
+// when online; offline serves the last saved snapshot (labelled as such).
+const CACHE = 'bolets-v1';
+const PRECACHE = [
+  '/',
+  '/manifest.webmanifest',
+  '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png',
+];
+const MAX_CACHE_BYTES = 1_000_000;  // don't cache the huge /api/forecast body
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+
+  let url;
+  try { url = new URL(req.url); } catch (_) { return; }
+  // Leave cross-origin requests (Leaflet, tiles, unpkg) to the network.
+  if (url.origin !== location.origin) return;
+
+  // Navigation: network-first, fall back to the cached app shell offline.
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put('/', copy));
+          return res;
+        })
+        .catch(() => caches.match('/'))
+    );
+    return;
+  }
+
+  // API: network-first, then a cached snapshot if one exists (coarse).
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const len = Number(res.headers.get('content-length') || 0);
+          if (res.ok && (!len || len <= MAX_CACHE_BYTES)) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Static app assets (icons, manifest): cache-first.
+  e.respondWith(
+    caches.match(req).then((hit) =>
+      hit || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy));
+        return res;
+      })
+    )
+  );
+});
+"""
+
+
+def _pwa_assets():
+    return {
+        "/manifest.webmanifest": (MANIFEST_JSON.encode(), "application/manifest+json; charset=utf-8"),
+        "/sw.js": (SW_JS.encode(), "text/javascript; charset=utf-8"),
+        "/favicon.svg": (FAVICON_SVG.encode(), "image/svg+xml"),
+        "/icon-180.png": (ICON_180, "image/png"),
+        "/icon-192.png": (ICON_192, "image/png"),
+        "/icon-512.png": (ICON_512, "image/png"),
+        "/icon-maskable-512.png": (ICON_MASKABLE_512, "image/png"),
+    }
+
 
 # ── Field reports (Phase 5.1) ──────────────────────────────────────────────────
 #
@@ -6649,6 +7816,59 @@ def delete_reports(device_hash, report_id=None):
 
 # ── HTTP server ───────────────────────────────────────────────────────────────
 
+# ── Phase 6.4: forecast response cache + gzip ────────────────────────────────
+
+_forecast_cache = {"key": None, "t": 0.0, "raw": b"", "gzip": b""}
+_forecast_lock = threading.Lock()
+
+
+def forecast_signature():
+    """Cheap key for the built forecast: day + every file it reads.
+
+    Uses mtime_ns + size so any edit to the species, zone, enrichment or weather
+    cache invalidates the response without re-hashing tens of megabytes.
+    """
+    parts = [date.today().isoformat(), "xema" if METEOCAT_API_KEY else "noxema"]
+    for path in (MUSHROOMS, ZONES_FILE, ZONES_ENRICHED_FILE, WEATHER_CACHE_FILE,
+                 FIELD_OBS_FILE):
+        try:
+            st = os.stat(path)
+            parts.append(f"{path}:{st.st_mtime_ns}:{st.st_size}")
+        except OSError:
+            parts.append(f"{path}:-")
+    return "|".join(parts)
+
+
+def get_forecast_payload():
+    """Return (raw_json, gzip_json) for the current forecast, cached for a TTL.
+
+    The cache holds serialised bytes, not the Python object, so a repeat request
+    costs no scoring and much less memory. Concurrent callers serialise on the
+    lock; the HTTP server is single-threaded but this keeps the contract safe.
+    """
+    key = forecast_signature()
+    now = time.time()
+    with _forecast_lock:
+        hit = _forecast_cache
+        if (hit["key"] == key and hit["raw"]
+                and (now - hit["t"]) < FORECAST_CACHE_TTL):
+            return hit["raw"], hit["gzip"], True
+    # Build outside the lock so a slow provider call cannot block other reads.
+    data = build_forecast()
+    raw = json.dumps(data, ensure_ascii=False).encode()
+    try:
+        gz = gzip.compress(raw, 6)
+    except Exception:
+        gz = b""
+    # Re-sign after the build: a build that refreshed the weather cache changed
+    # the file it reads, and the stored payload should match the new state.
+    key = forecast_signature()
+    with _forecast_lock:
+        _forecast_cache.update({"key": key, "t": time.time(),
+                                "raw": raw, "gzip": gz})
+    return raw, gz, False
+
+
 class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):
@@ -6656,17 +7876,39 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode()
+        self.send_json_body(body, status)
+
+    def send_json_body(self, body, status=200):
+        """Send a pre-serialised JSON body, gzip-compressing when the client asks.
+
+        Compression is transparent to the browser and the service worker, and it
+        cuts the large forecast payload by more than 10× on the wire.
+        """
+        accepts_gzip = "gzip" in (self.headers.get("Accept-Encoding") or "").lower()
+        use_gzip = accepts_gzip and len(body) > 1024
+        payload = gzip.compress(body, 6) if use_gzip else body
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", len(body))
+        self.send_header("Content-Length", len(payload))
+        self.send_header("Vary", "Accept-Encoding")
+        if use_gzip:
+            self.send_header("Content-Encoding", "gzip")
         self.end_headers()
-        self.wfile.write(body)
+        self.wfile.write(payload)
 
     def send_html(self, html_str):
         body = html_str.encode()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", len(body))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def send_bytes(self, body, content_type, cache_control="public, max-age=86400"):
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", len(body))
+        self.send_header("Cache-Control", cache_control)
         self.end_headers()
         self.wfile.write(body)
 
@@ -6678,10 +7920,40 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/api/forecast":
             try:
-                data = build_forecast()
-                self.send_json(data)
+                raw, gz, cached = get_forecast_payload()
+                # Prefer the pre-compressed body when the client accepts gzip.
+                if gz and "gzip" in (self.headers.get("Accept-Encoding") or "").lower():
+                    body = gz
+                else:
+                    body = raw
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", len(body))
+                self.send_header("Vary", "Accept-Encoding")
+                self.send_header("X-Forecast-Cache", "hit" if cached else "miss")
+                if body is gz:
+                    self.send_header("Content-Encoding", "gzip")
+                self.end_headers()
+                self.wfile.write(body)
             except Exception as e:
-                self.send_json({"error": str(e)}, 500)
+                # Stale-on-error, matching the weather-cache semantics: if a
+                # build fails but a previous payload exists, serve it.
+                with _forecast_lock:
+                    raw = _forecast_cache.get("raw")
+                    gz = _forecast_cache.get("gzip")
+                if raw:
+                    body = gz if (gz and "gzip" in (self.headers.get("Accept-Encoding") or "").lower()) else raw
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", len(body))
+                    self.send_header("Vary", "Accept-Encoding")
+                    self.send_header("X-Forecast-Cache", "stale")
+                    if body is gz:
+                        self.send_header("Content-Encoding", "gzip")
+                    self.end_headers()
+                    self.wfile.write(body)
+                else:
+                    self.send_json({"error": str(e)}, 500)
 
         elif path == "/api/stations":
             self.send_json(STATIONS)
@@ -6719,6 +7991,12 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(query_reports(bbox=bbox, days=days))
             except Exception as e:
                 self.send_json({"reports": [], "total": 0, "error": str(e)}, 400)
+
+        elif path in _pwa_assets():
+            body, ctype = _pwa_assets()[path]
+            # The service worker must never be served stale, so it is re-validated.
+            cc = "no-cache" if path == "/sw.js" else "public, max-age=86400"
+            self.send_bytes(body, ctype, cache_control=cc)
 
         else:
             self.send_response(404)

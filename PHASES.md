@@ -84,7 +84,8 @@ change the `model:` line in `.opencode/commands/phase.md` and
 | 3 | Terrain and canopy science | Replace coarse point samples with DEM, LiDAR, soil and habitat features | Each zone is scored with aspect, slope, solar radiation, TPI, cold-air pooling, canopy/undergrowth and 1:25k soil/habitat; every factor is sourced and explainable | done |
 | 4 | Weather quality | Make the weather local, elevation-corrected and water-balance aware | Zone-level weather from XEMA/radar, drought/recharge, confidence and phenology; a 7-day forecast reliable enough to plan a trip | done |
 | 5 | Field loop | Close the loop: field reports calibrate the model | Reports calibrate the model; published AUC/Brier (the report UI, logbook, photos and alerts are optional extras, deferred) | done |
-| 6 | PWA and expansion | Make it field-ready and cover more of Catalonia | Installable offline PWA, all Catalonia, 20–25 species, verified locations and field-grade performance | todo |
+| 6 | PWA and expansion | Make it field-ready and cover more of Catalonia | Installable offline PWA, all Catalonia, 20–25 species, verified locations and field-grade performance | done |
+| 7 | Model and data depth | Remove silent data errors and upgrade the layers that cap the habitat model | Every curated value sourced and complete, finer soil/habitat resolution, and weights validated on held-out data instead of assumed | in progress |
 
 **Phase 1 — Navigation and free access.** Main: fix search, filters, map/list
 sync, routing and the paywall. End: a free, fast map that gets a hunter to a
@@ -110,6 +111,14 @@ on GBIF/iNaturalist data alone, so the loop does not depend on the extras.
 
 **Phase 6 — PWA and expansion.** Main: offline field use and geographic/species
 coverage. End: an installable Catalonia-wide app with 20–25 verified species.
+
+**Phase 7 — Model and data depth.** Main: fix the data errors and resolution caps
+that make the numbers behind the map less trustworthy than the UI implies.
+End: a complete, sourced curated layer, finer soil and habitat resolution, and
+weights validated on held-out data. Specified in `PROPOSAL.md` ("Phase 7 — Model
+and data depth"); the steps below copy its goal, work and evidence so the ledger
+stays self-contained. Order is deliberate: integrity fixes (7.1–7.3), then
+accuracy upgrades (7.4, 7.6, 7.7), then validation (7.5), then radar (7.8).
 
 ## Status legend
 
@@ -150,10 +159,18 @@ coverage. End: an installable Catalonia-wide app with 20–25 verified species.
 | 5.5 | Alerts (web push / Telegram) | optional | 2026-11-08 | Deferred extra service — not part of the core mushroom map |
 | 5.6 | Calibration and published metrics | done | 2026-11-10 | `calibrate.py` (new), `calibration_report.json` (generated), `README.md`, `PROPOSAL.md`; py_compile + `--self-test` (auc/brier/curve/split) + live GBIF+iNaturalist occurrence AUC per species + field-reports N=0 (no recalibration) |
 | 5.7 | Phase 5 verification and docs | done | 2026-11-10 | `app.py` (DELETE /api/reports deletion path), `README.md`, `PROPOSAL.md`; py_compile + node --check (script unchanged) + 17-unit privacy/rate-limit/deletion checks + live curl POST/GET/DELETE (200/201/400/403/404/429) + `/api/forecast` 200 no-regression (22 stn/66 zones/0 errors) |
-| 6.1 | PWA manifest, service worker, offline pack | todo | — | — |
-| 6.2 | Add comarques with verified coordinates | todo | — | — |
-| 6.3 | Expand species and add lookalike warnings | todo | — | — |
-| 6.4 | Performance, caching, final verification | todo | — | — |
+| 6.1 | PWA manifest, service worker, offline pack | done | 2026-11-10 | `app.py`, `README.md`, `PROPOSAL.md`; py_compile + node --check (app & SW) + curl manifest/sw/icons/stations/forecast + CDP offline-pack test + headless screenshots 1440/500px |
+| 6.2 | Add comarques with verified coordinates | done | 2026-11-10 | `zones.json` (+69 → 135), `mushrooms.json` (+24 → 46 stations / 22 groups), `zones_enriched.json`, `README.md`, `PROPOSAL.md`; 69/69 CORINE forest gate + 135/135 enrichment + API 0 errors |
+| 6.3 | Expand species and add lookalike warnings | done | 2026-11-11 | `mushrooms.json` (+8 → 21 species, `season` + `lookalikes` on all), `app.py` (season gating + lookalikes/season payload + lookalike UI CA/EN), `README.md`, `PROPOSAL.md`; py_compile + node --check + 14 season/lookalike unit checks + fixture (46 stn/135 zones, 16 species in Nov, 16/16 lookalikes) + live API 200 (0 errors) + headless screenshots 1440/500px |
+| 6.4 | Performance, caching, final verification | done | 2026-11-11 | `app.py`, `README.md`, `PROPOSAL.md`, `PHASES.md`; payload 48.7 MB → 29.7 MB raw / 1.08 MB gzip; repeat request 3.07 s → 1.8 ms; 46 stn / 135 zones / 0 errors; score-equivalence fixture; headless 1440×900 + 500×900; keyboard/ARIA/contrast fixes |
+| 7.1 | Forest-offset repair | done | 2026-11-12 | `repair_forest_offsets.py` (new), `forest_offset_report.json` (generated), `README.md`, `PROPOSAL.md`, `PHASES.md`; CORINE live gate 46/46 stations + 135/135 zones, self-test, py_compile, `build_forecast` 46 stn/135 zones/0 errors, 0 moves |
+| 7.2 | Complete the zone facts (access, water, canopy) | done | 2026-11-16 | `complete_zone_facts.py` (French Overpass mirror first + 60 s timeout + keep `drive_min` on OSRM failure); `zones.json` (water_m 135/135 with source, parking 119/135, drive_min 135/135, difficulty 135/135), `zones_enriched.json` (regenerated), `README.md`, `PROPOSAL.md`, `PHASES.md`; py_compile + self-test + node --check + `--check-schema` OK + live `/api/forecast` 200 (46 stn/135 zones/0 errors, water null 0, parking null 16) + independent `around:` water verification (3 zones) + headless trip card 1440/500. 16 zones keep parking null (no OSM parking in 2.5 km); confidence re-derived to 110 alta/25 medium |
+| 7.3 | Confidence that discriminates | done | 2026-11-12 | `derive_zone_confidence.py` (new), `confidence_report.json` (new), `zones.json` (135 confidence values + evidence), `zones_enriched.json`, `app.py` (7.4/7.6 anchors + badge CSS/labels), `README.md`, `PROPOSAL.md`, `PHASES.md`; py_compile + `--self-test` + `--check` + schema OK + shadow 0.62–0.77 (44 alta/91 medium) + byte-identical score fixture + live API 200 (46 stn/135 zones/0 errors) + DOM/screenshots 1440/500 |
+| 7.4 | IGME MAGNA 50 soil | done | 2026-11-15 | `enrich_zones.py` (`_igme_magna50`, legend tables, fallback reasons, review hold, self-test), `app.py` (`_apply_magna50_soil`, `Q_SOIL_MAGNA50`, 1:50k labels), `zones_enriched.json` (56 × 1:50k / 79 × 1:1M, incl. 2 held), `zones.json` (confidence re-derived), `README.md`, `PHASES.md`; py_compile + self-test + 58/58 live re-query match + per-zone audit (0 fallback class changes, 15 promotions, 2 held at 1:1M) + `derive_zone_confidence --check` + live API 200 (46 stn/135 zones/0 errors, 56 served at 1:50k) |
+| 7.5 | Backtest and validate the assumptions | done | 2026-11-15 | `calibrate.py` (weighted AUC, target-group background + effort weighting, temporal split, permutation importance, weight refit + bootstrap CI), `calibration_report.json` (v2), `PROPOSAL.md`, `PHASES.md`; py_compile + `--self-test` + offline fixture + live run (3216 pooled rows, H dominant drop 0.0822, weight refit `no_change`, gain −0.001 CI [−0.008,+0.0043], temporal habitat AUC 0.5334 older / 0.5929 newer) |
+| 7.6 | Real 1:25k soil and habitat | done | 2026-11-15 | `enrich_zones.py` (MSC25M 1:25k soil WFS with point-in-polygon selection + CHC3 SITMUN habitat WMS providers, `_classify_msc25_parent`, `_to_utm31`, `_corine` caching), `app.py` (`_apply_magna50_soil`/`_zone_soil_display` accept `1:25k`, `SOIL_SOURCE_1_25K`, soil-badge `· 1:25k`, CHC3/MSC25M labels), `zones_enriched.json` (7 × 1:25k soil / 50 × 1:25k habitat), `zones.json` + `confidence_report.json` (re-derived 82 alta/53 medium), `README.md`, `PROPOSAL.md`; py_compile + self-test + `--check` + `--check-schema` + live API (46 stn/135 zones/0 errors) + DOM (soil badge `· 1:25k`) + headless 1440/500 screenshots. Score byte-identical; CHC50 WMS still down (CHC3 used for BCN), MSC25M covers 7/135 |
+| 7.7 | GeoVeg and manual field observations | done | 2026-11-15 | `enrich_zones.py` (dormant `_geoveg` + `_parse_geoveg` + `_geoveg_shadow`), `app.py` (field-observation loader/validation, `field_observation`+`verified_by_person` payload, badge + confidence reason), `field_observations.json` (new, empty schema), `Dockerfile`, `README.md`, `PROPOSAL.md`; py_compile + `--self-test` (parser/shadow) + node --check + deterministic `build_forecast` round-trip + byte-identical 134/134 non-observed zones + live API 200 (46/135/0 errors) + headless DOM/screenshots 1440/500 CA+EN |
+| 7.8 | Radar rain (XRAD or equivalent) | blocked | 2026-11-16 | No code/data change. Free geo-referenced source now exists (EUMETNET OPERA via MeteoGate ORD API, CC BY 4.0, anonymous) but is delivered as pan-European GDAL tiled GeoTIFF/HDF5 composites with no server-side point query, 24-h rolling cache only, and 2 km resolution; consuming it needs a non-stdlib raster/LAEA decode + archive access + a storm-day gauge validation that cannot be done in one stdlib-only session. Findings: `/tmp/opencode/radar_7_8_investigation.md` |
 
 ---
 
@@ -1859,6 +1876,68 @@ documented shapes were right but three live details were not):
 - Save one zone's map/forecast/access notes for the day.
 - Clear "offline snapshot, coarse" messaging.
 
+**Result (2026-11-10):**
+
+- Status: done
+- Files:
+  - `app.py` — PWA section after the HTML string: `PWA_*` constants, a pure-Python
+    PNG encoder (`_png_chunk`/`_png_bytes`) and icon renderer (`_icon_subpixel`/
+    `_render_icon`, 2×2 supersampled mushroom-on-tile) with `ICON_180`/`192`/`512`/
+    `MASKABLE_512` cached at import; `FAVICON_SVG`; `PWA_MANIFEST`/`MANIFEST_JSON`;
+    `SW_JS` (cache `bolets-v1`: precache shell, network-first navigation with
+    cached-`/` fallback, network-first API with size-capped cache fallback,
+    cache-first static); `_pwa_assets()`. `Handler.send_bytes()` +
+    `do_GET` routes for `/manifest.webmanifest`, `/sw.js` (revalidated, no-cache),
+    `/favicon.svg`, `/icon-*.png`. `<head>` gains manifest link, `theme-color`,
+    description, apple-web-app metas and favicon. Header gains a `💾` saved-zones
+    button; an `#offline-overlay` and a `#save-toast` are added to the body.
+    Embedded JS: service-worker registration; an offline-pack section
+    (`comarcaFor`, `getSavedZones`, `saveToast`, `buildOfflineSnapshot`,
+    `saveActiveForOffline`, `deleteSavedZone`, `refreshOfflineBtn`,
+    `toggleOfflinePanel`/`closeOfflinePanel`/`renderOfflinePanel`, `openSavedZone`,
+    `renderOfflineZoneDetail`, `fmtSavedAt`, `renderOfflineFallback`); "💾 Desa
+    per anar al bosc" buttons in the station and zone detail trip-actions; the
+    forecast catch path now renders the saved zones instead of a raw error.
+  - `README.md` — new "PWA and offline use (Phase 6.1)" section; files tree notes
+    the manifest/SW/icons are served from `app.py`.
+  - `PROPOSAL.md` — Phase 6 status note (6.1 done, 6.2–6.4 remaining).
+- Verification:
+  - `python3 -m py_compile app.py` → OK.
+  - Embedded `<script>` extracted to `/tmp/opencode/app_check_61.js` →
+    `node --check` → OK (116,533 bytes). `SW_JS` extracted to
+    `/tmp/opencode/sw_61.js` → `node --check` → OK. `MANIFEST_JSON` parses and
+    carries the three icons; all four PNGs decode (`\x89PNG…`, 2.0–6.4 KB).
+  - Live server (port 8961, isolated `DATA_DIR`): `GET /` 200 (157 KB and contains
+    `rel="manifest"`, `theme-color`, `serviceWorker.register`, `offline-overlay`,
+    `saveActiveForOffline`, `renderOfflineFallback`); `/manifest.webmanifest` 200
+    `application/manifest+json`; `/sw.js` 200 `text/javascript`; `/icon-192.png`
+    200 `image/png` (2,260 B); `/icon-512.png` (6,376 B); `/icon-maskable-512.png`
+    (4,133 B); `/favicon.svg` 200 `image/svg+xml`; `/api/stations` 200.
+  - No-regression: `/api/forecast` 200 → 15,595,130 B, date 2026-11-10, 22
+    stations / 66 zones / 66 `zone_score` / **0 errors** (with a seeded
+    `geo_cache.json` copy; the first empty-DATA_DIR run only "failed" because the
+    cache file was absent, which is the app's normal cold-cache behaviour, not a
+    PWA defect).
+  - **Offline-pack end-to-end (CDP over headless Chromium, Node 22 WebSocket):**
+    save `Rasos — solana baixa` → snapshot stored (`{n:1, hasDays:7, hasTop:8}`);
+    the saved-zones panel renders "Zones desades" + the zone name + the snapshot
+    note; opening it renders the "Instantània fora de línia · aproximada" banner,
+    the zone name, the route link and species; delete returns `remaining:0`.
+- Screenshots (headless Chromium, under `/tmp/opencode/shots61/`):
+  - `desktop_home.png` (1440×900) — header with the 💾 button.
+  - `desktop_zone.png` (1440×900) — zone detail with "Desa per anar al bosc".
+  - `mobile_home.png` (500×900) — mobile shell.
+  - `zone_dom.html` — DOM dump confirming the save button and offline overlay.
+- Notes / sources: no data invented — the icons are generated from the app's own
+  palette (`#2a2015` tile, `#c9572f` cap, `#f5f0eb` stem); the manifest/short
+  name/description reuse the app's existing branding. The offline pack stores a
+  user-requested snapshot in `localStorage` and is always labelled as a coarse,
+  dated snapshot, never a live prediction. The service worker leaves cross-origin
+  requests (Leaflet, tiles) untouched and never caches the multi-MB
+  `/api/forecast` body (a `content-length` cap), which is the documented
+  "offline snapshot, coarse" trade-off.
+- Next step: 6.2 (add comarques with verified coordinates).
+
 ### Step 6.2 — Add comarques with verified coordinates
 
 - Priority: Alt Urgell, Solsonès, Osona, La Selva, Alta Ribagorça, Val d'Aran,
@@ -1867,11 +1946,149 @@ documented shapes were right but three live details were not):
 - Add zones, not just stations.
 - No invented coordinates; if a source is missing, leave it out.
 
+**Result (2026-11-10):**
+
+- Status: done
+- Files:
+  - `zones.json` — +69 zones → **135** total; 24 new station keys. Each centroid
+    is a live CORINE-verified forest cell (311/312/313/324), with altitude,
+    aspect and slope from the ICGC 5 m DEM, `soil.type` from IGME 1:1M and
+    `ph_approx` from SoilGrids v2 when it answered. New zones carry
+    `confidence: 0.6` / `medium` and an explicit `sources` list.
+  - `mushrooms.json` — +24 station records across **16 comarques**: the 13
+    priority ones (Alt Urgell, Solsonès, Osona, La Selva, Alta Ribagorça,
+    Val d'Aran, Noguera, Priorat, Terra Alta, Montsià, Baix Empordà, Maresme,
+    Garraf) plus Gironès, Vallès Oriental and Alt Penedès, where the verified
+    stands fall just outside the nominal boundary. `meta.focus_comarques`
+    refreshed.
+  - `zones_enriched.json` — regenerated: 46 stations / 135 zones, **135/135**
+    with DEM terrain, LiDAR canopy, soil and habitat blocks.
+  - `README.md` — new "Coverage expansion (Phase 6.2)" section (per-comarca
+    table, method, gate result, honest limits); present-tense counts updated
+    from 66/22 to 135/46, soil/forest distribution and batch-fetch size.
+  - `PROPOSAL.md` — Phase 6 status now records 6.1 and 6.2 done.
+  - `PHASES.md` — this handoff and the status board row.
+- Method: seeded each massís from a published coordinate (Catalan Wikipedia
+  article or OSM/Nominatim place record), scanned a 5×5 km box at 1 km
+  (widened to 7×7 / 750 m where forest was scarce) against CORINE CLC 2018,
+  sampled the ICGC 5 m DEM for every forest cell, then kept up to three stands
+  per massís (north/obaga, south/solana, highest remaining, ≥500 m apart).
+  Every stored zone was re-queried against CORINE after selection. No
+  coordinate is an offset invented by hand: the stored centroid is a
+  CORINE-verified forest cell.
+- Verification:
+  - `python3 -m py_compile app.py enrich_zones.py` → OK.
+  - Schema: 46 stations / 22 groups / 135 zones / **135 unique ids**; every
+    required field present; every zone key exists in `mushrooms.json`.
+  - Forest-cover gate re-run live on all 69 new zones: **69/69 passed**
+    (`forest.type` matches the CORINE class). Two candidates failed the final
+    re-check — Serra de Cavalls west (CORINE 242) and Montgròs south-west
+    (CORINE 221) — and were **deleted**, leaving those two stations with 2
+    zones each. No failing cell was kept or relabelled.
+  - `enrich_zones.py`: `Wrote zones_enriched.json (46 stations, 135 zones, 135
+    DEM, 135 soil, 135 habitat)`; all 135 zones also carry a LiDAR canopy block.
+  - Live `/api/forecast` (isolated `DATA_DIR`, port 8972): HTTP 200, 32.0 MB,
+    4.6 s, **22 comarques / 46 stations / 135 zones / 0 errors**; 135/135
+    `weather`, `water`, `confidence`, `phenology`, `enrichment` and
+    `zone_score` blocks (XEMA 0 because no key was configured).
+  - Reverse-geocoded every new station centroid with Nominatim: 21 matched the
+    assigned comarca; Les Gavarres (Gironès), Serra de Sant Mateu (Vallès
+    Oriental) and Puig de la Mola (Alt Penedès) were moved to their real
+    comarca rather than mislabelled.
+- Screenshots: none — this step changes data only, not the UI (same as
+  steps 2.2–2.5).
+- Notes / sources: Catalan Wikipedia and OpenStreetMap/Nominatim place records
+  (seed coordinates only), CORINE CLC 2018 WMS (forest class), ICGC 5 m DEM
+  2021–2023 (altitude/aspect/slope), IGME 1:1M (lithology), SoilGrids v2 (pH).
+  `forest.dominant` names the CORINE group (`frondós` / `conífera` / `mixt`),
+  not an invented tree species; 52 of the 69 new zones have `ph_approx: null`
+  because SoilGrids timed out, and those zones omit SoilGrids from `sources`
+  instead of inventing a pH. `access`, `water_m`, `canopy_pct` and
+  `undergrowth` are `null` pending a verified source.
+- Next step: 6.3 (expand species and add lookalike warnings).
+
 ### Step 6.3 — Expand species and add lookalike warnings
 
 - Target 20–25 species, including spring/summer/winter.
 - For each edible: habitat, season, altitude, soil, trees, notes, lookalikes.
 - Lookalike warnings are safety-critical; verify with a trusted source.
+
+**Result (2026-11-11):**
+
+- Status: done
+- Files:
+  - `mushrooms.json` — 8 new species appended (13 → **21**): `bolet-de-sant-jordi`
+    (Calocybe gambosa, spring), `cep-destiu` (Boletus reticulatus, summer),
+    `girgola` (Pleurotus ostreatus, winter), `camperol` (Agaricus campestris),
+    `fredolic-gros` (Tricholoma portentosum), `cama-sec` (Marasmius oreades),
+    `cep-negre` (Boletus aereus), `molleric` (Suillus luteus) — each with the full
+    scoring schema (trees, soil, altitude band, aspect, temperature band, rain
+    trigger/window/dry-spell, wind sensitivity), an optional `season`, and a
+    `lookalikes` list. `Ou de Reig` gained `season: "summer"`; every one of the 21
+    species now carries a `lookalikes` array (severity `mortal`/`toxic`/`inedible`/
+    `none` + key differences).
+  - `app.py` — `SEASON_MONTHS` + `species_in_season()` (spring/summer/winter are
+    filtered to Mar–May/Jun–Aug/Dec–Feb; autumn/unset stays year-round and is
+    damped out of season by `phenology_factor`, which now handles all four
+    seasons); `score_station` uses the new gate and adds `season` + `lookalikes`
+    to every species result; embedded UI gains `seasonLabelHtml`,
+    `lookalikeWarningHtml` (compact warning line in each expanded species row) and
+    `lookalikesHtml` (a prominent "⚠ Perill de confusió / Lookalikes" section at
+    the top of the score explainer), plus CA/EN strings and severity/season label
+    maps and `.sp-danger` / `.lookalike-card` CSS.
+  - `README.md` — species section rewritten (21 species table + new "Seasons
+    (Phase 6.3)" and "Lookalike warnings (Phase 6.3)" subsections), the "Adding a
+    new species" schema documents `season` + `lookalikes`, the intro counts fixed
+    to 22 comarques / 46 stations / 135 zones / 21 species, and the roadmap
+    "Just shipped" list updated.
+  - `PROPOSAL.md` — top status and Phase 6 note now record 6.3 done; the
+    "what exists" species count updated to 21.
+- Method / sources: species facts (habitat, soil, altitude, temperature band,
+  season, trees) follow standard Catalan field-guide knowledge for each species;
+  lookalikes pair each edible with its documented confusable/dangerous species
+  (e.g. Amanita caesarea ↔ Amanita muscaria & Amanita phalloides; Tricholoma
+  terreum/portentosum ↔ Tricholoma pardinum; Morchella esculenta ↔ Gyromitra
+  esculenta; Macrolepiota procera ↔ Lepiota brunneoincarnata; Agaricus
+  campestris ↔ Agaricus xanthodermus; Pleurotus ostreatus ↔ Omphalotus olearius;
+  Boletus spp. ↔ Tylopilus felleus / Rubroboletus satanas). Where a species has
+  no serious lookalike (trompeta de la mort, llenegres, orella de llebre,
+  molleric) the entry is marked `none` honestly rather than inventing a danger.
+  No coordinate, altitude, soil, sighting or confidence value was invented; all
+  new data is species-level field-guide knowledge, and the lookalike UI states it
+  is a starting point, not expert identification ("in dubte, no collir").
+- Verification:
+  - `python3 -m py_compile app.py calibrate.py enrich_zones.py warm_parking.py forecast.py` → OK.
+  - `mushrooms.json` parses; 21 species, 21 unique ids, every species has
+    `lookalikes` (each with name/danger/differences) and a valid `season`.
+  - 14 unit checks (season gating, phenology gate per season, schema fields) → 0 failures.
+  - Fixture through the real `build_forecast()` (only network fetchers
+    monkeypatched): 46 stations / 135 zones / 0 errors; **16 species scored in
+    November** (11 default + 5 `autumn`), the 5 seasonal species
+    (`ou-de-reig`, `murgola`, `bolet-de-sant-jordi`, `cep-destiu`, `girgola`)
+    correctly filtered out; 16/16 species results carry `lookalikes` + `season`;
+    zone species carry them too; `ou-de-reig` absent in November (gated summer).
+  - Embedded `<script>` extracted → `node --check` → OK (118,936 bytes).
+  - Live server (port 8977, isolated `DATA_DIR`): `/`, `/api/stations`,
+    `/api/geocode` → 200; `/api/forecast` → 200 (48.7 MB, 62.7 s), 46 stations /
+    135 zones / **0 station errors / 0 zone errors**, 16 species per station with
+    16/16 `lookalikes` + `season` keys.
+  - Headless Chromium (fixture served on 8978 from the saved live payload):
+    desktop (1440×900) and mobile (500×900) — explainer DOM renders the lookalike
+    section (`Perill de confusió`, severity badge `TÒXIC`, the
+    `Fredolic tigrat · Tricholoma pardinum` card and its differences text) and the
+    species rows render `sp-season` = `tardor`; 0 console errors.
+- Screenshots (headless Chromium, under `/tmp/opencode/shots63/`):
+  - `desktop_explain.png` (1440×900, 356 KB) — zone detail + explainer with the lookalikes section.
+  - `mobile_explain.png` (500×900, 95 KB) — same view on mobile.
+  - `desktop_explain.html` / `mobile_explain.html` — DOM dumps (primary textual evidence).
+- Notes / sources: species + lookalike facts are curated field-guide knowledge,
+  not model outputs. The only scoring-behaviour change is seasonal: `Ou de Reig`
+  (previously always scored, damped) is now gated to summer, and the new
+  spring/summer/winter species appear only in their season; the 11 pre-existing
+  autumn species keep their exact year-round + damped behaviour (no `season`
+  field added, so station scores for them are unchanged). `lookalikes` is
+  reporting-only — never multiplied into a score.
+- Next step: 6.4 (performance, caching, final verification).
 
 ### Step 6.4 — Performance, caching, final verification
 
@@ -1879,6 +2096,1009 @@ documented shapes were right but three live details were not):
 - Zone GeoJSON/PMTiles if needed.
 - Mobile performance, accessibility, keyboard.
 - Final README/PROPOSAL/PHASES update.
+
+**Result (2026-11-11):**
+
+- Status: done
+- Files:
+  - `app.py` — three backend changes and one UI pass.
+    - **Payload dedup:** `SPECIES_STATIC_FIELDS` + `_dedupe_species_payload()`
+      move `name`, `scientific`, `thresholds`, `lookalikes`, `notes` and
+      `season` into a top-level `species_meta` catalogue (16 species, ~13 KB)
+      instead of repeating them on every species × day × zone entry. Called at
+      the very end of `build_forecast()`, after scoring and altitude-lag
+      mutations, so no score input changes. The frontend gains
+      `hydrateForecast()` (called in `loadForecast`) which merges the catalogue
+      back onto every station/zone day before rendering.
+    - **gzip:** `send_json_body()` compresses JSON responses >1 KB when the
+      client sends `Accept-Encoding: gzip` (`Content-Encoding: gzip`,
+      `Vary: Accept-Encoding`); `/api/forecast` serves a pre-compressed body.
+      `import gzip` added.
+    - **Built-forecast cache:** `forecast_signature()` keys the response on the
+      day + `mtime_ns`/size of `mushrooms.json`, `zones.json`,
+      `zones_enriched.json` and `weather_cache.json` (plus the presence of a
+      Meteocat key). `get_forecast_payload()` caches the serialised raw and gzip
+      bytes for `FORECAST_CACHE_TTL = 300 s` behind a lock; `/api/forecast`
+      sends `X-Forecast-Cache: hit|miss|stale` and serves the previous payload
+      on a failed rebuild (stale-on-error, like the weather cache).
+    - **Accessibility:** global `:focus-visible` ring (light ring on the dark tab
+      bar/status bar), `prefers-reduced-motion` override, 44 px mobile targets
+      for the detail/explainer close buttons, 32–36 px route buttons and 44 px
+      tab buttons; the detail panel is a focusable `role="region"` that receives
+      focus on open and restores it to the opening card (or the search input)
+      on close; the explainer is `role="dialog" aria-modal="true"` with a
+      labelled close button, autofocus and focus restoration; the mobile tabs
+      are `role="tab"` with `aria-selected` kept in sync by `switchTab()`;
+      score-pill green/amber darkened to `#3d7433`/`#946600` (white text now
+      5.6:1 / 5.0:1, WCAG AA); the zone detail confidence badge no longer shows
+      `NaN%` (it multiplied the Phase-4.4 confidence *object*).
+  - `README.md` — new "Performance, caching and accessibility (Phase 6.4)"
+    section (payload/cache/gzip numbers, no-GeoJSON rationale, a11y fixes) and
+    the "Just shipped (Phases 1–6)" list extended with PWA + field-grade
+    performance.
+  - `PROPOSAL.md` — top status now says Phase 6 is complete and Phase 7 is next;
+    the Phase 6 status block records 6.1–6.4 done and summarises 6.4.
+  - `PHASES.md` — phase map Phase 6 → done, status board row, this handoff.
+- Method: measured first with a warm-weather-cache harness
+  (`/tmp/opencode/profile_64.py`): `build_forecast()` 2.38 s, JSON serialisation
+  0.53 s for 48.65 MB, so CPU was not the 63 s bottleneck — the payload was
+  48.7 MB and repeated static text was ~95% of it. The live request in step 6.3
+  was dominated by upstream weather/water fetching, which the existing cache and
+  the new built-forecast cache now avoid on repeat loads. No scoring formula,
+  threshold, curated value or data source was changed.
+- Verification:
+  - `python3 -m py_compile app.py` → OK.
+  - Extracted embedded `<script>` → `node --check` → OK (121,537 bytes).
+  - **Score equivalence (same process, same cache):** built once with
+    `_dedupe_species_payload` disabled and once with it enabled, rehydrated the
+    deduped payload from `species_meta`, compared all 46 station objects
+    (including 135 zones × 7 days × 16 species): **0 differing stations, scores
+    identical**, every dynamic field equal.
+  - **Payload/timings (live server 8981, weather cache warm):**
+    - JSON 48,670,082 B → **29,662,940 B raw** (−39%); gzip
+    **1,082,455 B** (−97.8% vs the original 48.7 MB; 4,081,513 B was already
+      the gzip of the old payload, so 3.8× smaller than old-gzip).
+    - first request `miss` 3.07 s / 1,082,455 B wire; second request `hit`
+      **1.77 ms**, byte-identical body (`cmp` on both gzip bodies).
+    - browser (headless Chromium): `encodedBodySize` 1,082,455,
+      `decodedBodySize` 29,662,940, `transferSize` 1,082,755, load 168 ms;
+      `fetch('/api/forecast')` reported `content-encoding: gzip`,
+      `content-length: 1082455`, `x-forecast-cache: hit`.
+    - 46 stations / 135 zones / **0 station errors / 0 zone errors**,
+      7 dates (2026-11-11 … 2026-11-17), 16 species in November.
+  - **Hydration/UI:** headless Chromium confirmed `species_meta` has 16 entries
+    and the first Rasos zone species has `name`, `notes`, `thresholds`,
+    `lookalikes` (1) and `phenology`; the explainer renders
+    "⚠ Perill de confusió" and the lookalike card; 0 console errors.
+  - **Keyboard:** Tab/Enter on a zone row opened the detail panel and moved
+    focus into it (`focusInPanel: true`, `focusTag: detail-panel`); `Escape`
+    closed it (`panelVisible: false`) and returned focus to `#search-input`
+    (the opening row was replaced by the zone detail). The explainer opened with
+    focus on `explain-close`, `role="dialog"`, `aria-modal="true"`, and `Escape`
+    closed it with focus back in the detail panel.
+  - **Mobile:** at 500×900 the map/list tabs report
+    `aria-selected=true/false` and swap correctly, `.tab-btn` min-height is
+    44 px, and the zoom/detail/list views render with no console errors.
+  - No GeoJSON/PMTiles: zones are curated points, not polygons; there is no
+    geometry to serve, so adding vector tiles would be new data, not a speed-up.
+- Screenshots (headless Chromium, under `/tmp/opencode/shots64/`):
+  - `desktop_zone.png` (1440×900) — zone detail, fixed "mitjana" confidence
+    badge (no NaN), darker score pills.
+  - `mobile_zone.png` (500×900) — zone detail bottom sheet.
+  - `mobile_list.png` (500×900) — list tab with `aria-selected`.
+  - `desktop_zone.html` / `mobile_zone.html` / `mobile_list.html` — DOM dumps
+    (primary textual evidence).
+- Notes / sources: no data invented; this step only deletes duplicate static
+  fields, compresses, caches and fixes UI semantics. The deduped API remains a
+  superset for clients that merge `species_meta`; the README documents the shape.
+  The 300 s TTL is shorter than the 15-minute XEMA observation TTL and the 3-hour
+  weather TTL, so annotations cannot go stale beyond the documented provider
+  windows. The service worker still refuses to cache the forecast body
+  (`MAX_CACHE_BYTES = 1 MB`); gzip brings it to 1.08 MB, just over the cap, so
+  the intentional "coarse snapshot, not the whole forecast offline" behaviour is
+  unchanged.
+- Next step: 7.1 (forest-offset repair). Phase 7 is ledgered from `PROPOSAL.md`
+  ("Phase 7 — Model and data depth").
+
+---
+
+## Phase 7 — Model and data depth (proposed, ledgered 2026-11-12)
+
+Phases 1–6 made the map complete. Phase 7 makes the numbers behind it
+trustworthy: remove silent data errors, upgrade the layers that cap the habitat
+model, and validate the hand-chosen assumptions before adding more features.
+
+The order is deliberate: cheap data-integrity fixes first (7.1–7.3), then the
+accuracy upgrades (7.4, 7.6, 7.7), then the validation that tells us whether the
+upgrades were worth it (7.5), and finally radar (7.8), the largest and most
+uncertain dependency. Each step is independently shippable and ends with the
+same evidence standard as Phases 2–6: a live run, a zone-by-zone diff, and a
+documented "no invented data" audit.
+
+### Step 7.1 — Forest-offset repair
+
+- **Goal:** every station's `forest_lat/forest_lon` points at real forest.
+- **Problem:** legacy offsets are manual. Ribes de Freser lands on pasture and
+  Puigcerdà on agricultural land; a bad point distorts habitat, canopy and soil
+  for every zone at that station, invisibly.
+- **Work:** reuse the 6.2 scanner (CORINE gate + ICGC DEM + ≥500 m spacing) over
+  `mushrooms.json`, produce an `old → new` diff per station, auto-apply only when
+  the forest gate passes, and flag the rest for human review.
+- **Evidence:** per-station diff, 46/46 forest gate, regression fixture showing
+  zone counts and scores change only where a point moved.
+- **Risk:** manual offsets can encode real field knowledge; never silently
+  overwrite, and keep the previous coordinates in the record.
+- **Blocked if:** the CORINE/ICGC services are unavailable and fewer than 46
+  stations can be re-gated, or an offset change cannot be traced to a source.
+
+**Result (2026-11-12):**
+
+- Status: done
+- Files:
+  - `repair_forest_offsets.py` (new) — standing CORINE forest gate for every
+    station point. Read-only by default; `--apply` writes a move only when the
+    candidate passes the same 311/312/313/324 gate, keeps the previous
+    coordinates/date/reason/source in the station's `forest_offset_history`, and
+    never rewrites `alt_m` silently (candidate DEM altitude is recorded for
+    review). Failed points are flagged `needs_review`. `--check-zones` re-gates
+    all zone centroids; `--self-test` exercises pass/candidate/needs-review/
+    dry-run/apply/history/report offline with no network.
+  - `forest_offset_report.json` (new, generated) — `generated_at`, gate source,
+    per-station old coordinates, CORINE code/label, zone count, status,
+    candidate (if any), `zone_gate` summary (135 checked / 135 forest /
+    0 mismatches), and `changes: []`.
+  - `README.md` — removed the stale `forest_lat/forest_lon` documentation and the
+    "Ribes de Freser / Puigcerdà are non-forest" limitation; documented that the
+    station coordinate *is* the forest point, added the gate usage, the live
+    result and the new files.
+  - `PROPOSAL.md` — status line for Phase 7 and a 7.1 result note; the premise
+    was partly stale (the separate offsets no longer exist).
+  - `PHASES.md` — this entry and the status board.
+- Method: loaded the 46 `target_stations` from `mushrooms.json`, queried CORINE
+  CLC 2018 WMS live at each point, accepted only 311/312/313/324, and compared
+  each zone's curated `forest.type` with the CORINE class. Since every point
+  passed, `--apply` was not needed and no coordinate changed.
+- Review flags: two station points are forest but sit in a different CORINE
+  class from their zones' majority — **Serra del Montsià** (station 313 mixed;
+  zones mixed/broadleaf) and **Pallars – Sort** (station 311 broadleaf; zones
+  conifer/broadleaf/conifer). Both are valid stands inside a mixed massís, each
+  matches at least one of its own zones, and neither is a non-forest point, so
+  neither was moved. The report records the flag for transparency.
+- Verification:
+  - `python3 -m py_compile app.py repair_forest_offsets.py enrich_zones.py` → OK.
+  - `python3 repair_forest_offsets.py --self-test` → OK (gate, candidate,
+    dry-run, apply, previous-coordinate history, report shape).
+  - Live `python3 repair_forest_offsets.py --check-zones` → **46/46 stations
+    pass** the forest gate (0 candidates, 0 needs-review, 0 moves) and
+    **135/135 zone centroids** return a forest class matching the curated
+    `forest.type` (0 mismatches). Codes: 311 broadleaf / 312 conifer /
+    313 mixed / 324 shrub.
+  - Report cross-check: every `old` lat/lon/alt in
+    `forest_offset_report.json` equals the current `mushrooms.json` value;
+    every gate code is a forest class; `changes` is empty. `mushrooms.json`
+    was not written (no `forest_offset_history` keys added).
+  - Regression: `app.build_forecast()` live → **46 stations / 135 zones /
+    0 station errors / 0 zone errors**, 8.76 s; sample Puig de la Mola zones
+    scored 84/85/85. Because no point moved, scores are unchanged by
+    construction (the report proves 0 moves); zone counts remain exactly
+    3/3/2 as curated.
+  - No UI/JS change → no `node --check` or screenshots required.
+- Screenshots: none; this step does not change the UI.
+- Notes / sources: CORINE CLC 2018 WMS (forest class); ICGC 5m LiDAR DEM
+  (candidate altitude, only for a candidate needing review). The old
+  "Ribes de Freser / Puigcerdà" example referred to towns that are no longer
+  station points; the current 46 were already re-sourced in Phases 2.2–2.5 and
+  6.2. No forest location, coordinate or confidence was invented.
+- Audit fix (2026-11-15): a plain read-only run rewrote
+  `forest_offset_report.json` without `zone_gate`, silently erasing the gate
+  evidence that step 7.3 consumes (which would remove the +0.04 gate bonus from
+  every zone on the next confidence re-derivation). The tool now carries the
+  previous `zone_gate` forward unless `--check-zones` refreshes it; the 7.3
+  consumer still validates the zone count before trusting it.
+- Next step: 7.2 (complete the zone facts: access, water, canopy consistency).
+
+### Step 7.2 — Complete the zone facts (access, water, canopy consistency)
+
+- **Goal:** the curated layer stops being thinner than the enriched layer.
+- **Problem:** `water_m` is null on 135/135 zones; `access.drive_min` and
+  `access.difficulty` are null on 135/135; parking/trailhead are null on the 69
+  zones added in 6.2; `forest.canopy_pct`/`undergrowth` are null in `zones.json`
+  even though the LiDAR enrichment has real values.
+- **Work:** derive `water_m` from OSM waterway/waterbody geometry (Overpass,
+  cached like parking); compute `drive_min` with OSRM for a documented reference
+  point; derive `difficulty` from slope + walk distance with a written rule;
+  remove the duplicated canopy fields (reference `zones_enriched.json` or
+  regenerate them); add a schema test that the two files agree.
+- **Evidence:** null counts per field, source label per derived value, schema
+  test, and a UI check of the trip card on the new zones.
+- **Risk:** OSM is incomplete in remote forest — a missing feature must read
+  "unknown", never "no water". Routing adds a service dependency with its own
+  cache and failure mode.
+- **Blocked if:** OSRM/Overpass are unreachable and no cached responses exist; do
+  not hand-write distances.
+
+**Result (2026-11-12):**
+
+- Status: **blocked** (partial — see water/parking below)
+- Files:
+  - `complete_zone_facts.py` (new) — stdlib-only derivation of the missing zone
+    facts, plus a `--self-test` and a `--check-schema` mode. Reads `zones.json`,
+    fills `access.drive_min` (OSRM from the comarca capital), `access.difficulty`
+    (written slope + walk-distance rule), `water_m`/`water_source` (OSM
+    waterway/waterbody via Overpass) and `access.parking_*` for the 69 6.2 zones
+    (OSM `amenity=parking`), removes the duplicated `forest.canopy_pct`/
+    `undergrowth` null placeholders, and writes back. Results are cached in
+    `water_cache.json` and `route_cache.json` (both gitignored); `--check-schema`
+    verifies `zones.json` ↔ `zones_enriched.json` agree.
+  - `zones.json` — `access.drive_min` filled on **135/135** zones,
+    `access.difficulty` filled on **135/135** (with `drive_min_source` /
+    `difficulty_source` source labels), `forest.canopy_pct`/`undergrowth` removed
+    from all 135 zones. `water_m` and the 69 new zones' `access.parking_*`
+    remain null (see blocker).
+  - `zones_enriched.json` — regenerated via `enrich_zones.py` (135/135 DEM +
+    canopy + soil + habitat from cache; no re-fetch).
+  - `app.py` — trip card now renders whenever any access/water fact is present
+    (previously it was gated on `trailhead`, which hid drive time/difficulty on
+    the 6.2 zones); shows drive time, difficulty and water distance with CA/EN
+    labels; `water_source` added to both zone payloads; canopy reads
+    `enrichment.canopy` directly (the null placeholders are gone).
+  - `README.md`, `PROPOSAL.md`, `.gitignore` — schema/docs updated; new caches
+    ignored.
+- Method:
+  - `drive_min` = OSRM `driving` time from the **comarca capital** (documented
+    reference point; Wikipedia/OSM Nominatim) to the zone's parking point, or the
+    zone centroid when no parking is mapped. 22 capitals + 4 station overrides
+    (the "Montseny" massís group → its real comarca capital; La Canya → Ripoll).
+  - `difficulty` = written rule: with parking, `fàcil` (walk ≤ 1500 m & slope
+    < 20°), `moderada` (walk ≤ 4000 m & slope < 30°), else `exigent`; walk
+    distance = straight-line parking → centroid (station point fallback).
+  - `water_m` = nearest OSM `waterway`/`natural=water`/`water` segment distance
+    (Overpass `out geom`), capped at 2000 m; missing ⇒ `water_m` null +
+    `water_source` "unknown", never "no water".
+- **Blocker (water + 6.2 parking):** every public Overpass instance was
+  unreachable during the session — overpass-api.de returned HTTP 502, and
+  kumi.systems / private.coffee timed out / osm.ch returned `duplicate_query` or
+  empty. Per the step's "Blocked if" (no hand-written distances), `water_m` and
+  the 69 zones' parking were **not** invented; they stay null. The script is
+  complete and re-runs with a single command once Overpass recovers (it caches
+  per station and resumes).
+- Verification:
+  - `python3 -m py_compile app.py complete_zone_facts.py enrich_zones.py repair_forest_offsets.py` → OK.
+  - `python3 complete_zone_facts.py --self-test` → OK (point-segment distance,
+    difficulty-rule boundaries, canopy removal, cache keys, schema fixture).
+  - `python3 complete_zone_facts.py --check-schema` → **OK: 46 stations / 135 zones agree**.
+  - `python3 enrich_zones.py` → 46 stations / 135 zones / 135 DEM + canopy + soil
+    + habitat (from cache, no re-fetch).
+  - Embedded `<script>` extracted → `node --check` OK (123,059 bytes).
+  - Live `GET /` 200, `GET /api/stations` 200; `GET /api/forecast` 200
+    (gzip 1.13 MB): **46 stations / 135 zones / 0 errors**, `access.drive_min`
+    135/135, `access.difficulty` 135/135, `water_m` 0 (blocked). Sample: Puig de
+    la Mola obaga → `drive_min: 51`, `difficulty: "fàcil"`, source labels present.
+  - Null-count diff: `drive_min` 135→0 null, `difficulty` 135→0 null,
+    `forest.canopy_pct`/`undergrowth` removed 135→0, `water_m` 135→135 null
+    (blocked, not "no water").
+- Screenshots (headless Chromium, under `/tmp/opencode/`):
+  - `shot72_desktop.png` (1440×900) and `shot72_mobile.png` (500×900), both on
+    the new `Puig de la Mola — obaga` zone; DOM dump `dom72.html` confirms the
+    trip card renders `51 min · Dificultat: fàcil` (drive + difficulty now shown
+    on a 6.2 zone that has no named trailhead/parking).
+- Notes / sources: no distance, coordinate or difficulty was hand-written.
+  `drive_min` is a real OSRM route (origin = comarca capital, a documented point);
+  `difficulty` is a documented written rule from curated `slope_deg` + a
+  straight-line walk distance; `water_m` is Overpass geometry (blocked today).
+  Capitals sourced from Wikipedia / OSM Nominatim.
+- Audit fix (2026-11-15): the trip card now labels the drive time with its
+  documented origin (`25 min · des de Ripoll`) instead of a bare `25 min`; the
+  module docstrings no longer claim a water source label on an Overpass failure
+  (the field is left untouched) and describe the station-point walk fallback the
+  code actually uses.
+- Retry (2026-11-16): **promoted to done.** Overpass recovered enough to finish
+  the water + parking layer.
+  - Code: `complete_zone_facts.py` — endpoint order is now the French world
+    mirror first (`overpass.openstreetmap.fr`), then `overpass-api.de`, then
+    `kumi.systems`, with `OVERPASS_TIMEOUT` 60 s: on this date the primary was
+    flapping (502 "at capacity" then multi-second queues) while the French
+    mirror answered a Catalan station bbox in ~2 s with full coverage. Added a
+    guard so an OSRM failure keeps a previously derived `drive_min` instead of
+    nulling it (a retry must not destroy data), with a self-test for it.
+  - Run: `python3 complete_zone_facts.py` → 46/46 stations answered Overpass in
+    49 s; `water_m` **135/135** filled (1–1,849 m; 39 zones <100 m, 63 <300 m,
+    19 <600 m, 10 <1,200 m, 4 ≤2,000 m), **parking 119/135** (53 of the 69 6.2
+    zones got a mapped point; 16 have no OSM parking within 2.5 km and stay
+    null), `drive_min` 135/135, `difficulty` 135/135, 0 zone errors.
+  - Independent validation (not the same code path): for three zones with
+    `water_m` 15 / 236 / 1,849 m, an Overpass `way(around:R)["waterway"]` query
+    finds no way inside `R−30 m` and one inside `R+30 m` — the distances are
+    real geometry, not a fabricated number.
+  - Diff vs the blocked state: changes are confined to `water_m`, `water_source`
+    and `access.parking_*` / `drive_min` / `drive_min_source` / `difficulty` /
+    `difficulty_source`. No score, soil, forest or terrain value changed.
+    `drive_min` moved on 44 zones and `difficulty` on 14 (parking is now the walk
+    origin per the documented method); with curated Phase-2 parkings the median
+    parking→centroid walk is ~4 km, so long walks are the norm and the new
+    points are closer than that, not outliers.
+  - Verification: `py_compile` OK, `--self-test` OK, `--check-schema` **OK (46
+    stations / 135 zones agree)**, `enrich_zones.py` regenerated 135/135 DEM +
+    canopy + soil + habitat from cache, live `/api/forecast` 200 (1,150,709 B
+    gzip, 7.8 s) with water null 0 / parking null 16 / drive null 0.
+  - Headless Chromium: `?est=Serra del Cadí&zona=serra-del-cadi-vessant-est`
+    renders the full trip card `🅿️ parking · 46 min · des de la Seu d'Urgell ·
+    Dificultat: moderada · Aigua: 137 m` (CA); DOM in `dom72_retry.html`,
+    screenshots `shot72_retry_desktop.png` (1440×900) and
+    `shot72_retry_mobile.png` (500×900).
+  - Confidence re-derived (7.3): water + parking are evidence bonuses, so
+    `derive_zone_confidence.py --apply` moves the 135 zones from 82 `alta`/53
+    `medium` to **110 `alta`/25 `medium`** (76 zones changed; `--check` then
+    reports "CHECK OK"). Reporting-only: the score is unchanged.
+  - Honest limits: the parking point is the nearest OSM `amenity=parking`, not a
+    verified trailhead (`parking_source` says so); 16 zones remain null rather
+    than "no parking"; `water_m` is straight-line distance to the mapped
+    drainage, not a walking distance.
+- Next step: 7.8 review (radar) — the last open step of Phase 7.
+
+### Step 7.3 — Confidence that discriminates
+
+- **Goal:** the confidence badge ranks zones instead of showing the same value
+  everywhere.
+- **Problem:** the curated `confidence` is a constant `0.6 / medium` on all 135
+  zones, so the `C` factor contributes no differentiation. The computed 4.4 block
+  varies only through a few anchors (XEMA distance/age, canopy sample coverage),
+  while weather, soil, forest and curation are constants.
+- **Work:** derive the curated confidence from evidence (number of sources,
+  whether 1:25k/MAGNA 50 answered, pH present, access present, forest gate
+  passed); keep the confidence `score` reporting-only (never multiplied into the
+  prediction); add the new resolution anchors from 7.4/7.6.
+- **Evidence:** confidence distribution across 135 zones, 4.4 unit fixtures, and
+  a byte-identical score check proving only `C`/reporting moved.
+- **Risk:** changing a published value needs a shadow diff; compute new and old
+  confidence side by side and review before switching.
+- **Blocked if:** the shadow diff cannot show that scores are unchanged.
+
+**Result (2026-11-12):**
+
+- Status: done
+- Files:
+  - `derive_zone_confidence.py` (new) — derives the curated per-zone
+    `confidence`/`confidence_label` from sourced evidence only, writes
+    `confidence_evidence` per zone, and supports `--apply`, `--shadow` (default),
+    `--check` and `--self-test`. Formula:
+    `clamp(0.30, 0.45 + Σ bonuses, 0.80)`; bonuses = source count (0.02/0.04),
+    SoilGrids pH (0.05), soil resolution 1:25k/MAGNA 50 (0.10/0.07, inactive
+    until 7.6/7.4), soil class known vs `mixed` (0.05), CHC50 1:25k habitat
+    (0.10, inactive until 7.6), DEM LiDAR/Copernicus (0.04/0.02), canopy
+    coverage ≥0.90/≥0.75 (0.03/0.015), 7.1 forest gate (0.04), drive+difficulty
+    (0.04), parking+trailhead (0.03), known water (0.03). Labels:
+    `alta ≥ 0.75 > medium ≥ 0.55 > baixa`.
+  - `confidence_report.json` (new, generated) — formula, thresholds, old/new
+    distributions and every zone's old/new value with its full evidence block.
+  - `zones.json` — all 135 zones now carry an evidence-derived confidence plus
+    `confidence_evidence`; **flat 0.6 → 0.62–0.77**, 44 `alta` / 91 `medium`.
+  - `zones_enriched.json` — regenerated with `enrich_zones.py` from cache; the
+    new curated fields are preserved and `--check-schema` still passes.
+  - `app.py` — `_conf_quality` and `_conf_reasons` now read future
+    `enrichment.soil.resolution` / `enrichment.habitat.resolution` and use the
+    7.4/7.6 anchors (`Q_SOIL_1_25K 0.90`, `Q_SOIL_MAGNA50 0.75`,
+    `Q_HABITAT_1_25K 0.85`) only when those resolutions are recorded, so today's
+    values are unchanged. Fixed the curated badge mapping: the schema labels
+    `alta`/`baixa` now get `conf-high`/`conf-low` CSS and CA/EN text (the old
+    code only understood `high`/`low`, so `alta` rendered with medium styling).
+    Scoring untouched.
+  - `README.md` — new “Confidence that discriminates (Phase 7.3)” section
+    (formula table, evidence sources, commands, live result), plus updated zone
+    schema example, the 135-zone note, the 4.4 curation row/limits and the Files
+    tree.
+  - `PROPOSAL.md` — 7.3 status note.
+  - `PHASES.md` — this entry and the status board.
+- Method: read evidence from the files that already exist — `sources` count per
+  zone, `enrichment.soil` (type/pH/resolution), `enrichment.habitat`,
+  `enrichment.terrain.dem_source`, `enrichment.canopy.sample_coverage`,
+  `forest_offset_report.json` `zone_gate` (135 checked / 135 forest / 0
+  mismatches), `access.drive_min`/`difficulty`/parking/trailhead and `water_m`.
+  A null `water_m` is recorded as “unknown (not treated as failure)” and earns
+  no bonus but no penalty; the 69 zones with null parking due to the 7.2
+  Overpass blocker simply miss the optional parking bonus, not the access route
+  bonus. No value was hand-written.
+- Shadow diff (reviewed before `--apply`): old `{0.6: 135}` / `{medium: 135}` →
+  new `{0.62: 7, 0.67: 42, 0.69: 6, 0.71: 1, 0.72: 22, 0.74: 13, 0.76: 4,
+  0.77: 40}` / `{alta: 44, medium: 91}`. 135/135 changed.
+- Verification:
+  - `python3 -m py_compile app.py derive_zone_confidence.py enrich_zones.py complete_zone_facts.py` → OK.
+  - `python3 derive_zone_confidence.py --self-test` → OK (determinism,
+    bounds, labels, gate pass/missing/stale/mismatch, pH/mixed effects,
+    parking/water/access, 1:25k anchors, apply/idempotence, differing zones).
+  - `python3 derive_zone_confidence.py --apply` → wrote `zones.json` +
+    `confidence_report.json`; `--check` → **OK: 135 zones match the derivation**.
+  - `python3 enrich_zones.py` → 46 stations / 135 zones / 135 DEM + canopy +
+    soil + habitat (from cache, no re-fetch);
+    `python3 complete_zone_facts.py --check-schema` → **OK: 46 stations / 135
+    zones agree**.
+  - Shadow/score equivalence fixture (`/tmp/opencode/verify_73.py`, real
+    `app.build_forecast` with only weather/water/xema/geo monkeypatched; old
+    `zones.json` snapshotted in `/tmp/opencode/zones_before_73.json`): after
+    removing the reporting-only `confidence`/`confidence_label`/`factors.C`
+    keys, old and new payloads are **byte-identical** (24,904,303 bytes each).
+    So every score, day, species breakdown and zone_score is unchanged.
+  - 4.4 fixture (`/tmp/opencode/verify_73_conf.py`): completeness 86 % → 86 %
+    (same) and every non-curation input identical; prediction score moved
+    0.577–0.624 → 0.587–0.642 (fixture) / 0.631–0.678 (live), all `mitjana`.
+    The per-zone curated labels are 44 `alta` / 91 `medium`; 15,120
+    per-species confidence blocks still render.
+  - Embedded `<script>` extracted → `node --check` OK (123,059 bytes).
+  - Live `GET /` 200, `GET /api/stations` 200, `GET /api/forecast` 200
+    (29,990,205 bytes): **46 stations / 135 zones / 0 station errors / 0 zone
+    errors**; `confidence_label` 44 alta / 91 medium, `confidence.completeness_pct`
+    100 on all 135, `confidence.score` 0.631–0.678. Sample
+    `rasos-solana-baixa` → `alta`, curation reason `curació · 74%`; `water_m`
+    null on all (7.2 blocker unchanged, not treated as a failure).
+  - Headless Chromium (server on port 8813):
+    - `shot73_desktop_alta.png` (1440×900) — Rasos — solana baixa, badge
+      `alta` with `conf-high`.
+    - `shot73_mobile_medium.png` (500×900) — Aigüestortes — obaga (baixa),
+      badge `mitjana` with `conf-medium`.
+    - `dom73_alta.html` / `dom73_medium.html` — DOM dumps confirming the two
+      different rendered badges and the 100 % completeness row.
+- Screenshots: `/tmp/opencode/shot73_desktop_alta.png`,
+  `/tmp/opencode/shot73_mobile_medium.png`.
+- Notes / sources: no new external source. Every input is an existing curated
+  field or enrichment sample: `zones.json` `sources` (CORINE CLC 2018, ICGC 5 m
+  LiDAR DEM, IGME 1:1M, SoilGrids v2, station notes), `zones_enriched.json`
+  (DEM/canopy/soil/habitat resolutions), `forest_offset_report.json` (CORINE
+  forest gate), and `access`/`water_m` from 7.2. The 1:25k/MAGNA 50/CHC50
+  anchors are dormant until 7.4/7.6 actually answer, so no resolution is
+  claimed early.
+- Audit fix (2026-11-15): the forest-gate bonus was applied globally — one
+  mismatched zone would have removed +0.04 from all 135 zones. The report's
+  mismatch ids are now attributed per zone (`forest_gate_by_zone`); an
+  unattributable aggregate is "unknown" and earns nothing. The scale parser is
+  also guarded so `1:250000`/`1:500000` cannot be read as 1:25k/1:50k. Values
+  are unchanged on the current all-pass gate (`--check` OK).
+- Next step: 7.4 (IGME MAGNA 50 soil).
+
+### Step 7.4 — IGME MAGNA 50 soil
+
+- **Goal:** replace the 1:1M lithology where a 1:50,000 sheet exists.
+- **Problem:** 1:1M cannot see a few-hundred-metre siliceous pocket inside a
+  calcareous hillside. The `mixed` class (37/135 zones) is the model saying "I
+  don't know", and it flattens the strongest habitat discriminator.
+- **Work:** `_igme_magna50(lat, lon)` in `enrich_zones.py`; normalise the MAGNA 50
+  legend into calcareous/siliceous/mixed with a reviewed mapping table; store
+  `soil.resolution` and the raw lithology text; fall back to 1:1M when the sheet
+  is missing and record why.
+- **Evidence:** per-zone resolution counts, 135-zone re-run, comparison of the
+  soil distribution, and unchanged values where MAGNA 50 did not answer.
+- **Risk:** Pyrenean sheet coverage is patchy and legends are verbose; a wrong
+  mapping moves every score. Audit all changed zones before promoting values.
+- **Blocked if:** no sheet can be fetched for a representative sample of zones.
+
+**Result (2026-11-15):**
+
+- Status: done. The 2026-11-13 session implemented and sampled the step but
+  stopped before writing this ledger, leaving 7.4 `in progress` with the
+  58-zone MAGNA promotion already live in `zones_enriched.json`. This session
+  verified that work and records the audit below; a later audit on 2026-11-15
+  added the two-zone review hold, the display/score parity fix and the cached-
+  sample rebuild, so the current counts are 56 promoted / 79 fallback.
+- Files:
+  - `enrich_zones.py` — `_igme_magna50(lat, lon)` queries the IGME MAGNA 50
+    "Litologías color" identify endpoint (`layers=visible:11`) at each centroid;
+    `_classify_magna()` normalises the legend with the reviewed keyword tables
+    (`_MAGNA_CALC_KW`, `_MAGNA_SIL_KW`, `_MAGNA_DETRITAL_KW`,
+    `_MAGNA_SURFICIAL_KW`); `_magna50_sample()` caches positive and negative
+    answers in `terrain_cache.json`; `_soil_compute()` promotes only an
+    unambiguous `calcareous`/`siliceous` answer to `resolution: "1:50k"`
+    (storing `litho_text`, `magna_hoja`, `fallback_reason: null`) and keeps the
+    step-3.4 1:1M sample with `resolution: "1:1M"` + `fallback_reason` otherwise.
+    `MAGNA_REVIEW_HOLDS` + `_magna_promotable()` keep the two review-flagged
+    zones on 1:1M even though the provider cache holds their MAGNA answer;
+    `enrich_zone()` stores the withheld proposal in `soil.magna_review` (class,
+    legend, sheet, `status: "held"`) and rebuilds the derived soil block from the
+    raw MAGNA sample, so a mapping/hold change applies without clearing
+    `terrain_cache.json`. `--self-test` covers the legend mapping,
+    surficial/detrital refusal, the hold logic and the held-zone enrichment shape.
+  - `app.py` — `_apply_magna50_soil()` overrides `geo.soil_type` only for a
+    `1:50k` zone, so the `H` factor uses the finer class; `Q_SOIL_MAGNA50 = 0.75`
+    and `_source_resolution()` raise the confidence anchor for those zones; the
+    explainer/quality labels say "sòl IGME MAGNA 50 (1:50k)";
+    `_zone_soil_display()` returns the same 1:50k class/resolution/pH to the zone
+    payload and detail card, so the explanation cannot contradict the score.
+  - `zones_enriched.json` — regenerated after the hold: 135 zones,
+    **56 at 1:50k / 79 at 1:1M** (the 2 held zones included in the fallback).
+    Distribution **calcareous 83 / siliceous 30 / mixed 22** (legacy sample:
+    76 / 22 / 37).
+  - `zones.json` — confidence re-derived with the now-active MAGNA anchor and
+    the hold: `0.62–0.80`, **63 alta / 72 medium**; the two held zones drop from
+    `0.80` to `0.77` and stay `alta` (the 7.3 baseline was `0.62–0.77`, 44/91).
+    `derive_zone_confidence.py --check` passes. Reporting-only, no score change.
+  - `README.md`, `PHASES.md` — this result, the 1:50k source/limitation text and
+    the updated confidence numbers.
+- Method: queried MAGNA 50 at each of the 135 zone centroids; a zone is promoted
+  only when the polygon answers, the legend maps unambiguously and the zone is
+  not on review hold. Coverage is **56/135 (41 %)** across **17 sheets** (181,
+  217, 218, 255, 256, 293, 297, 327, 332, 333, 364, 393, 394, 447, 448, 470,
+  547). Of the 79 fallbacks, **12** have no MAGNA sheet at the point, **65** have
+  a detrital/transitional or surficial legend the conservative rule refuses to
+  guess (e.g. conglomerates, sandstone–shale alternations, dunes, colluvium),
+  and **2** are held for field review; every one records the reason.
+- Audit (the step's mandatory "moves every score" check):
+  - **Fallback integrity:** all 79 `1:1M` zones keep their legacy `type` (0
+    changes); every one carries a non-empty `fallback_reason`. The 2 held zones
+    additionally carry `magna_review` with the suppressed 1:50k proposal.
+  - **Promotion integrity:** all 56 `1:50k` zones have a non-empty `litho_text`
+    and sheet number, `fallback_reason: null`, and `type ==
+    _classify_magna(litho_text)` (0 mismatches).
+  - **No invented data:** all 58 MAGNA-answering points (56 promoted + 2 held)
+    were re-queried live and returned the **identical legend text and sheet
+    number (58/58)**.
+  - **Display/score parity:** the 13 promoted zones whose curated `soil.type`
+    was still `mixed` used to show "mixed" in the detail card while scoring with
+    the MAGNA class; the payload/card now carry the **same 1:50k class and
+    resolution** the score uses. The card also mirrors the 1:1M geo class with a
+    `pH-inferred` label where `fetch_geo` resolved an ambiguous lithology from
+    SoilGrids pH (11 zones); 3 zones with no cached geo sample still show the
+    curated class while the score treats the soil as unknown (audit fix,
+    2026-11-15).
+  - **Class changes:** 41 of 56 promotions keep the legacy class (resolution and
+    confidence only); **15 change the `H` factor** — 8 `mixed→siliceous`,
+    7 `mixed→calcareous`. In November this moves the soil multiplier by
+    ×0.15–×6.67 per affected species (mixed 0.85 → 1.0 for a matching class,
+    → 0.15 for a mismatching one), which is the intended effect of replacing
+    "I don't know".
+  - **Held for review (2):** `colldepal-cresta-alta` and `baga-obaga-pi` would
+    flip calcareous → siliceous. Both sit on the same broad *"Liditas y
+    alternancia de areniscas y lutitas"* MAGNA unit (sheet 255), reproduced at
+    ±300 m around each point (Bagà also at ±600 m), with the neighbouring
+    calcareous formations only appearing ≥600 m away at Coll de Pal. The
+    polygon is reproducible, but the flip inverts the soil multiplier for every
+    acid/basic species pair, so both stay at the 1:1M calcareous value until a
+    field check; the proposal is recorded in `soil.magna_review`, and lifting the
+    hold is a one-line change in `MAGNA_REVIEW_HOLDS` + a re-run.
+- Verification:
+  - `python3 -m py_compile app.py enrich_zones.py derive_zone_confidence.py complete_zone_facts.py repair_forest_offsets.py` → OK.
+  - `python3 enrich_zones.py --self-test` → OK (MAGNA legend/hold assertions and
+    the held-zone cache-bypass check pass).
+  - `zones_enriched.json` parses, 135 zones; `derive_zone_confidence.py --check`
+    → `CHECK OK: 135 zones match the derivation`.
+  - `python3 complete_zone_facts.py --check-schema` → **schema OK: 46 stations /
+    135 zones agree** (re-run after the confidence/soil regeneration; the stale
+    copy was caught and fixed during the audit).
+  - Live API (port 8989, `Accept-Encoding: gzip`): HTTP 200, 1,171,276 B,
+    5.00 s cold; **46 stations / 22 comarques / 135 zones / 0 station errors /
+    0 zone errors**; runtime soil resolutions **56 × 1:50k, 79 × 1:1M**; both
+    held zones are served as `calcareous` with no `geo.soil_resolution`, the
+    `MAGNA 50 held for review` reason and confidence `0.667`/`0.675` (`alta`).
+  - Display parity (ports 8989/8991): 132/135 zones serve the same soil class
+    the score uses; the 3 exceptions are `serra-del-cadi-obaga`,
+    `serra-de-turp-obaga`, `aiguestortes-obaga-2031` (curated class, cached geo
+    unknown). Headless DOM: Planoles — carena shows `silícic (àcid) · 1:50k ·
+    pH 6.2`; Vall de Boí — vessant oest shows `silícic (àcid) · inferit per pH ·
+    pH 5.7`; the trip card shows `25 min · des de Ripoll`. Screenshots:
+    `/tmp/opencode/audit_zone_desktop.png` (1440×900) and
+    `/tmp/opencode/audit_zone_mobile.png` (500×900).
+- Notes / sources: all lithology text comes from the live IGME MAGNA 50 service;
+  no value is hand-written. The 65 ambiguous legends stay on the 1:1M sample
+  rather than being force-mapped, the 12 Pyrenean gaps are recorded as
+  `no coverage`, and the 2 high-impact flips are held, not promoted. The 1:25k
+  texture map remains unavailable (step 7.6). The MAGNA answer is cached per
+  point, so lifting a hold reuses the stored evidence without re-querying.
+- Next step: 7.5 (backtest and validate the assumptions).
+
+### Step 7.5 — Backtest and validate the assumptions
+
+- **Goal:** know whether the hand-chosen weights and multipliers are defensible.
+- **Problem:** rain 35 / temperature 25 / wind 20 / altitude 10 / humidity 10,
+  plus `H`, `M` and `P`, are modelling choices. The GBIF/iNaturalist AUC
+  (0.32–0.75) validates rank discrimination only, has no true absences, is
+  biased by recorder effort, and scores past observations with current weather.
+- **Work:** extend `calibrate.py` with temporal splits (train on seasons < Y,
+  test on Y), pseudo-absences, recorder-effort weighting for background points,
+  and a factor-sensitivity / model-fit pass over the stored per-factor
+  breakdown. Persist a versioned report; ship new weights only on a stable
+  held-out gain.
+- **Evidence:** report with the split definition, factor importances, AUC/Brier
+  against the current weights, and an explicit "no change" outcome when the gain
+  is not real.
+- **Risk:** sparse and secretive labels. Presence-only data cannot calibrate a
+  probability; only field reports can, and those start at zero. The honest
+  default is to keep the hand weights until out-of-sample evidence is clear.
+- **Blocked if:** the occurrence sources are unreachable; the step may still
+  record the split methodology but must not promote weights.
+
+**Result (2026-11-15):**
+
+- Status: done
+- Files:
+  - `calibrate.py` — extended with the Phase 7.5 backtest: `weighted_auc`,
+    `occurrence_year`/`choose_split_year`/`split_by_year`, `effort_weights`,
+    `target_group_background` (pseudo-absences), `factor_lookup`/`point_factors`,
+    `score_from_factors`, `build_pooled`, `permutation_importance`,
+    `_weight_candidates`, `bootstrap_gain_ci`, `refit_weather_weights`,
+    `temporal_habitat_auc`, and `run_backtest`. `run_pipeline` now bumps the
+    report `version` to 2, collects per-species occurrences, and writes a
+    `backtest_7_5` block. `--self-test` gained offline checks for every new
+    function.
+  - `calibration_report.json` (regenerated, version 2) — the live result below.
+  - `PROPOSAL.md` — 7.5 status note.
+  - `PHASES.md` — this entry and the status board.
+- Method (all stdlib, deterministic, no invented values):
+  - **Pseudo-absences** = target-group background: for each species, background
+    points are sampled from the pooled occurrence set of all species (excluding
+    the focal species), so the background reflects where recorders actually
+    sample (Phillips et al. 2009 target-group background).
+  - **Recorder-effort weighting** = `w = 1 / (1 + neighbours within 5 km)` on
+    every presence and background point, down-weighting spatially clustered,
+    over-sampled stands; the AUC uses a weighted Mann–Whitney U.
+  - **Factor sensitivity** = permutation importance of the stored `W`/`H`/`M`/`P`
+    factors (drop in weighted AUC when the factor is shuffled).
+  - **Model fit** = a held-out refit of the five weather weights (grid ±0.10/±0.05
+    around the hand weights), evaluated on a shuffled hold-out with a bootstrap
+    95 % CI on the gain; weights are shipped only on a positive gain whose CI is
+    entirely above zero.
+  - **Temporal split** = `choose_split_year` puts ~30 % of dated occurrences in
+    the test side; it validates only the time-invariant habitat signal
+    (H × M × altitude), because `W` and `P` are current-day values. The two eras
+    are scored **separately** (no pooling), and the older-era 95th-percentile
+    background threshold is carried to the newer era as a strict transfer check.
+- Live result (2026-11-15, GBIF + iNaturalist + `app.build_forecast()`):
+  - **3216 pooled rows** (1199 presence / 2017 background), baseline weighted AUC
+    **0.6037**.
+  - **Factor importances** (permutation drop): `H` **0.0822** (the dominant
+    discriminator), `W` 0.0082, `M` 0.0039, `P` **−0.0003** — phenology currently
+    contributes nothing to rank discrimination.
+  - **Weight refit → `no_change`.** The best held-out weights differ from the hand
+    weights, but held-out AUC is 0.631 (current) vs 0.6299 (refit), a gain of
+    **−0.001** with bootstrap 95 % CI **[−0.008, +0.0043]** (crosses zero). The
+    hand weights are not promoted; the score in `app.py` is untouched.
+  - **Temporal validation:** split year 2025 — **759 older / 431 newer
+    presences** against **1232 / 778** target-group background points.
+    Habitat-only AUC is **0.5334 on the older side** and **0.5929 on the newer
+    side** (pooled 0.5551), so the ranking is stable across eras. Only **3.5 %**
+    of newer presences clear the 95th percentile of the older background
+    (≈5 % older false-positive rate): the rank transfers, the absolute score
+    level does not.
+- Verification:
+  - `python3 -m py_compile calibrate.py` → OK.
+  - `python3 calibrate.py --self-test` → OK (weighted AUC, temporal split, effort
+    weights, target-group background, factor lookup, score formula, weight-candidate
+    grid, refit on a noisy single-signal fixture, permutation importance).
+  - Offline fixture through the real `run_backtest` (synthetic forecast + zones +
+    occurrences) → produces a well-formed `backtest_7_5` block and the degraded
+    `no_change` path when data is too sparse.
+  - Live `python3 calibrate.py` → 21 species occurrence AUC, then
+    `backtest_7_5: 3216 pooled rows; weight_refit decision = no_change`, and the
+    report written with `version: 2`.
+- Audit fix (2026-11-15): the first 7.5 pass recorded a split year but then
+  pooled the train and test presences into one AUC, so the "temporal" number was
+  not actually evaluated out-of-era. `temporal_habitat_auc` now scores the two
+  eras separately and reports a transfer check; `calibration_report.json` was
+  regenerated (2026-11-15T16:05Z). The main AUC, importances and refit decision
+  were unchanged by the fix; the temporal block now shows train 0.5334 / test
+  0.5929 instead of the pooled 0.5855.
+- Screenshots: none; this step changes no UI and no scoring.
+- Notes / sources: GBIF + iNaturalist occurrence records (presence-only); the
+  factor vectors are the real per-species `factors`/`breakdown` produced by
+  `app.build_forecast()`. No weight, coordinate, forest, soil, sighting or
+  confidence value was invented; no score weight was changed (the decision is
+  `no_change`, so `app.py` scoring is byte-identical).
+- Next step: 7.6 (real 1:25k soil and habitat).
+
+### Step 7.6 — Real 1:25k soil and habitat
+
+- **Goal:** replace the CORINE/1:1M fallback with the intended 1:25,000 layers.
+- **Problem:** all 135 enriched zones still say "CORINE CLC 2018 (fallback for
+  CHC50)". CORINE cannot tell Scots pine from black pine or young reforestation
+  from old growth — exactly the field distinctions the score claims to use.
+- **Work:** a retry-and-record job against the ICGC 1:25k soil and CHC50 habitat
+  services; when one answers, sample the polygon at the zone centroid, store
+  `resolution: "1:25k"`, and keep the old value during a shadow period.
+- **Evidence:** source resolution per zone, legend-mapping review, old-vs-new
+  score diff, and a documented "still unavailable" outcome where it is.
+- **Risk:** external availability, not code. CHC50 sits behind the same UB host
+  as GeoVeg. A bad legend translation would move scores silently.
+- **Blocked if:** the services stay down; record the retry log and stop rather
+  than substituting a coarser source silently.
+
+**Result (2026-11-15):**
+- Status: done (soil promoted for 7 zones; CHC50 still down, CHC3 recorded for
+  50 zones; score byte-identical)
+- Files:
+  - `enrich_zones.py` — added two step-7.6 providers ahead of the existing
+    fallbacks: `_msc25_wfs` / `_msc25_sample` (ICGC MSC25M 1:25k soil WFS at
+    `geoserveis.icgc.cat/…/edafologia/wfs`, layer `icgc_sols:sols-25000`, cached
+    under `soil_1_25k_wfs`, including the negative "no coverage" answer so the
+    128 gaps are never re-queried; a transient error is retried after 24 h), `_classify_msc25_parent` (Catalan
+    parent-material keyword rule → calcareous/siliceous/mixed, mirroring
+    `_classify_magna`), `_to_utm31` (WGS84→UTM31N for the WFS BBOX, which serves
+    geometry in EPSG:25831 and rejects EPSG:4326 filters), and `_chc3_habitat` /
+    `_chc3_sample` (DIBA SITMUN WMS `SITXELL` layer `SITXELL_MN340` "Hàbitats
+    -polígons- CHC3 2022", cached under `habitat_chc3`). `_soil_compute` now
+    prefers MSC25M 1:25k → MAGNA 50 → 1:1M; `_habitat_compute` records
+    `resolution: "1:25k"` + a `chc3` shadow block when CHC3 answers, keeping the
+    CORINE `dominant`/`corine_code` (the step's "keep the old value" rule).
+    `_corine` gained cache support (a `corine` key) so the self-test and re-runs
+    never re-query the CORINE WMS for the same cell. Self-test extended for the
+    MSC25M parent classifier, UTM conversion, CHC3 group mapping,
+    point-in-polygon selection and the error-retry cache policy.
+  - `zones_enriched.json` — regenerated: **7 zones at soil 1:25k** (all
+    calcareous, matching MAGNA/1:1M), **49 at 1:50k**, 79 at 1:1M; **50 zones at
+    habitat 1:25k** (CHC3), 85 at CORINE 100 m. Every 1:25k soil zone records
+    `soil.soil_1_25k` (tipus_sol, soil_taxon, codi_cas, class, source); every
+    CHC3 zone records `habitat.chc3` (cod_corine, corine_ca, cod_grup, grup_ca,
+    tipus_ca, subtip_ca, cod_eunis, forest_group, source).
+  - `app.py` — `_apply_magna50_soil` and `_zone_soil_display` now accept
+    `resolution: "1:25k"` (score and displayed geo use the finer class with
+    `soil_source = "ICGC MSC25M (1:25k)"`); added `SOIL_SOURCE_1_25K`; the
+    zone-detail soil badge renders `· 1:25k` (and `· 1:50k`); the confidence
+    reasons label the finer layers (`sòl ICGC MSC25M (1:25k)`, `hàbitat CHC3
+    (1:25k, ombra)`).
+  - `derive_zone_confidence.py` — the habitat anchor honours only an explicit
+    `resolution: "1:25k"`; the provider chain string is never parsed (audit fix,
+    see below).
+  - `zones.json` + `confidence_report.json` — confidence re-derived (7.3) with
+    the new anchors: **82 `alta` / 53 `medium`** (was 63/72), range still capped
+    at 0.80.
+  - `README.md`, `PROPOSAL.md` — Phase 7.6 sections (sources, coverage, the
+    score-unchanged / shadow-period guarantees).
+- Sources (all live-verified 2026-11-15):
+  - ICGC MSC25M soil WFS (1:25k), layer `icgc_sols:sols-25000` — answers only
+    where the polygon actually contains the centroid; the published sheets cover
+    **7/135** zones (Puig de la Mola, Montgrí, Montgròs). The earlier
+    400 m-box/first-feature query listed Serra de la Figuera too, but no polygon
+    contains that centroid; it correctly falls back after the audit fix.
+  - CHC50 (UB "geoveg") WMS — **still down**: the ArcIMS endpoint
+    (`161.116.68.143/…/UB_Geobotanica_habitats_fulls50m_1`) times out and
+    `geoveg.creaf.cat` no longer resolves. This is the documented retry log; the
+    step did not substitute a coarser source.
+  - CHC3 (Cartografia dels hàbitats de Catalunya v3, 1:25k, 2019-2022) via the
+    DIBA SITMUN WMS (`sitmun.diba.cat/…/SITXELL`, layer `SITXELL_MN340`) — the
+    current 1:25k successor, serving the Barcelona counties (50/135 zones).
+- Legend-mapping review (shadow, not promoted into the score):
+  - Soil: the 7 MSC25M answers all classify calcareous and match the existing
+    MAGNA/1:1M class, so **0 soil-class changes** — the score is byte-identical
+    (only `resolution`/`source` move).
+  - Habitat: 9 of the 50 CHC3 zones would move the coarse forest group vs the
+    curated `forest.type` (`vallcebre-obaga-nord`, `vallcebre-carena-alta`,
+    `santjaume-solana-sud`, `santjaume-obaga-nord`, `figols-solana-faig`,
+    `figols-vall-riera`, `arbucies-solana-sud`,
+    `serra-de-busa-obaga-1298-2`, `serra-de-sant-mateu-solana-373-2`; e.g.
+    `vallcebre-obaga-nord` curated broadleaf but CHC3 `42.5922+` "Boscos de pi
+    roig"). These are recorded in `habitat.chc3` for review and are **not**
+    promoted — the score keeps the CORINE forest group, so the score is
+    byte-identical.
+- Verification:
+  - `python3 -m py_compile app.py enrich_zones.py calibrate.py` → OK.
+  - `python3 enrich_zones.py --self-test` → OK (MSC25M parent classifier, UTM
+    conversion, CHC3 group mapping, enrichment shape).
+  - `python3 derive_zone_confidence.py --self-test` → OK; `--check` → OK (135
+    zones match).
+  - `python3 complete_zone_facts.py --check-schema` → OK (46 stations / 135 zones
+    agree).
+  - Embedded `<script>` → `node --check` → OK (123,860 bytes).
+  - Fixture through the real `app.build_forecast()` (only weather/water
+    monkeypatched): 46 stations / 135 zones / 0 station errors / 0 zone errors;
+    7 zones serve `geo.soil_type=calcareous` + `soil_resolution=1:25k`; 50 zones
+    serve `habitat.resolution=1:25k`; 44/46 massís show ≥2 distinct zone scores.
+  - Live `/api/forecast` (gzip, port 8993): HTTP 200, 1,182,962 B, 7.15 s cold,
+    46 stations / 135 zones / 0 errors; **7 zones** with `soil.resolution=1:25k`,
+    50 with `habitat.resolution=1:25k`; confidence **82 alta / 53 medium**.
+  - Headless Chromium DOM (clean server): the zone-detail soil badge renders
+    `calcari (bàsic) · 1:25k` (Montgrí — solana sud-est); a CORINE-only zone's
+    confidence reason reads `hàbitat CORINE Land Cover (100 m)` and a CHC3 zone
+    reads `hàbitat CHC3 (1:25k, ombra)`.
+- Audit fix (2026-11-15, after the first 7.6 pass):
+  - **MSC25M sampling:** the WFS BBOX filter returns every polygon that
+    *intersects* the box, in server order, so `MAXFEATURES=1` picked an arbitrary
+    neighbour. It now requests up to 50 candidates and keeps only the polygon
+    containing the centroid (ray casting, holes honoured); no containing polygon
+    means "no coverage". Re-sampling changed 8 → **7** promoted zones (Serra de
+    la Figuera has no containing polygon and correctly falls back); all 7 still
+    match the fallback class.
+  - **Habitat confidence:** the provider source string is a chain
+    ("CHC3 (1:25k) → CORINE fallback"), and `_habitat_resolution()` parsed it, so
+    **all 135** zones earned the 1:25k habitat bonus. It now honours only an
+    explicit `resolution: "1:25k"`; the 85 CORINE-only zones are 100 m again.
+    Confidence moved 130/5 → **82/53** (min 0.62, max 0.80, cap unchanged).
+  - **Provenance:** `_habitat_compute` now returns a per-sample source
+    (`DIBA SITMUN CHC3` only when it answered, `CORINE CLC 2018 (100 m)`
+    otherwise), so a zone's source cannot claim a layer that did not answer.
+  - **Cache robustness:** the MSC25M class is re-derived from the cached parent
+    material on read (a keyword fix no longer needs a cache wipe); a transient
+    provider error is retried after 24 h instead of being cached as permanent
+    "no coverage" (MSC25M, CHC3 and MAGNA).
+  - **Test:** the self-test is offline again (the held-zone rebuild seeds an
+    MSC25M negative) and now covers point-in-polygon selection and the
+    error-retry cache policy.
+- Screenshots (headless Chromium, `/tmp/opencode/`):
+  - `shot76_desktop.png` (1440×900, Montgrí zone with 1:25k soil)
+  - `shot76_mobile.png` (500×900, Rasos zone with CHC3 habitat)
+  - `audit_76_soil.png` (1440×900, re-check after the audit fix)
+- Score equivalence: the 7 promoted soil zones keep class "calcareous" (matching
+  the MAGNA/1:1M fallback), and the habitat block is reporting-only, so the
+  score is byte-identical to step 7.5. Only `confidence`/`C` and the resolution
+  labels moved.
+- Notes / sources: no coordinate, soil value, forest type or sighting was
+  invented. The MSC25M class is derived from each polygon's own parent-material
+  text; the CHC3 habitat is the polygon's own CORINE-list code/name. The two
+  services that were unavailable are recorded honestly (CHC50 down; MSC25M
+  mountain sheets unpublished); permanent gaps are cached, while a transient
+  error is retried after 24 h. Coverage is sheet/province-bound — this is a
+  partial upgrade by external data availability, not a code limit.
+- Next step: 7.7 (GeoVeg and manual field observations).
+
+### Step 7.7 — GeoVeg and manual field observations
+
+- **Goal:** recover stand-level tree species and soil reaction, and let verified
+  human observations fill the gaps.
+- **Problem:** GeoVeg is down and may not return; without it the habitat factor
+  is capped at CORINE groups.
+- **Work:** add a dormant `_geoveg(lat, lon)` provider behind the same interface
+  as `_corine`, with a reviewed keyword parser and a shadow diff; separately,
+  add a `field_observations.json` (or zone `notes`) path so a trusted person can
+  record tree species, undergrowth, soil and water for a zone by hand, with
+  source, date and confidence. Surface it as a "verified by a person" badge.
+- **Evidence:** parser tests, shadow diff, and a manual-observation round-trip
+  (enter → store → display → confidence).
+- **Risk:** free-text vegetation is ambiguous ("roures" can be two species).
+  Manual entries are unverified unless the source is recorded; never let a manual
+  note overwrite a sourced value silently.
+- **Blocked if:** the manual path cannot record a source/date per value.
+
+**Result (2026-11-15):**
+
+- Status: done
+- Files:
+  - `enrich_zones.py` — dormant GeoVeg provider + parser + shadow diff. `_geoveg(lat, lon)`
+    mirrors the `_corine` interface and returns `(None, "unavailable")` (the UB
+    geoveg host is down and its query shape cannot be verified offline, so no query
+    is fabricated); `_parse_geoveg(text)` normalises free text with reviewed keyword
+    tables (`_GEOVEG_CALC_KW`/`_GEOVEG_SIL_KW` for soil reaction, `_GEOVEG_TREE_SPECIES`
+    for tree species → forest group); `_geoveg_shadow(parsed, corine_code)` +
+    `_corine_forest_group(code)` diff-compute the parsed result against the CORINE
+    group with a `matches_corine` flag that is `null` when either side has no clear
+    tree group. None of it is wired into `_habitat_compute`, so the score is
+    byte-identical. Self-test extended with parser + shadow-diff assertions.
+  - `app.py` — manual field-observation path. `FIELD_OBS_FILE` constant +
+    `get_field_observations()` (validated loader: an entry is dropped unless it
+    records `source` + `verified_at` + `observer` and ≥1 observed fact) +
+    `_field_observation(zone_id)`; `build_forecast` re-reads the file each build
+    (and `forecast_signature()` now keys on its mtime/size); `score_zone` and
+    `zone_metadata` attach `field_observation` (the entry or null) and
+    `verified_by_person` (boolean) to every zone; `_conf_reasons` adds a
+    `field_observation` reason when present; the zone detail renders a
+    "✓ Verificat per una persona" badge + observed facts via `fieldObservationHtml`.
+  - `field_observations.json` (new) — empty `observations: {}` with the schema
+    documented in `_meta` (required provenance, the four facts, confidence labels).
+  - `Dockerfile` — copies `field_observations.json` into the image.
+  - `README.md`, `PROPOSAL.md` — Phase 7.7 sections (dormant provider, manual path,
+    badge, validation rule).
+- Method / design decisions:
+  - The GeoVeg provider is **dormant by design**: the host is down (README
+    limitation #4; step 7.6 recorded the same host down for CHC50), so `_geoveg`
+    returns "unavailable" rather than invent a URL or a value. The substantive,
+    testable work is the reviewed keyword parser and the shadow diff.
+  - "roures" (oaks) is ambiguous — the parser maps it to `Quercus spp.`, never a
+    single species (the step's documented risk).
+  - A manual entry is surfaced only with provenance and never overwrites
+    `forest.dominant` or `enrichment.soil.type`; it rides alongside as
+    `field_observation` and a reporting-only confidence reason (never multiplied
+    into a score).
+- Verification:
+  - `python3 -m py_compile app.py enrich_zones.py` → OK.
+  - `python3 enrich_zones.py --self-test` → OK (adds GeoVeg parser + shadow-diff
+    assertions: calcareous/siliceous reaction, "roures"→`Quercus spp.`, mixed
+    forest group, empty/irrelevant text→None, matches_corine true/false/None, and
+    the dormant `_geoveg` returns `(None, "unavailable")`).
+  - Embedded `<script>` extracted (126,070 bytes) → `node --check` → OK.
+  - Deterministic `build_forecast` round-trip (`/tmp/opencode/verify_77.py`, only
+    `fetch_weather_batch`/`fetch_water_batch`/`fetch_geo`/`get_xema_context`
+    monkeypatched): loader keeps the 1 valid entry and drops 3 invalid ones
+    (no-source / no-facts / no-date); 46 stations / 135 zones / 0 errors; the
+    observed zone carries `field_observation` + `verified_by_person: true` + a
+    `field_observation` confidence reason; the other **134/134 zones are
+    byte-identical** to a run with an empty observations file (score, days,
+    confidence and every dynamic value unchanged).
+  - Live `app.py` (port 8817, real Open-Meteo + Meteocat key): `/` 200,
+    `/api/stations` 200, `/api/forecast` 200 (gzip 1,186,710 B, 6.2 s) → 46
+    stations / 135 zones / 0 station errors / 0 zone errors; every zone carries
+    `field_observation: null` + `verified_by_person: false` (the committed file is
+    empty), so the empty path is confirmed end-to-end.
+  - Headless Chromium (fixture server with one synthetic observation served at
+    `/api/forecast`): zone deep link
+    `?est=Rasos de Peguera&zona=rasos-solana-baixa` renders the badge and facts in
+    CA and EN — "✓ Verificat per una persona · alta · per A. Botanic · el
+    2026-11-15", "Espècie d'arbre · Pinus sylvestris", "Sotabosc · low", "Reacció
+    del sòl · calcari (bàsic)", "Aigua · 380 m", and the confidence reason
+    "observació de camp verificada (A. Botanic)". 0 console errors.
+- Screenshots (headless Chromium, under `/tmp/opencode/`):
+  - `shot77_desktop.png` (1440×900) and `shot77_mobile.png` (500×900) — zone
+    detail with the "Verificat per una persona" badge; `dom77.html` / `dom77_en.html`
+    are the primary textual evidence (this session's model cannot view images).
+- Notes / sources: no vegetation text, tree species, soil value, coordinate or
+  confidence was invented. The parser is a reviewed keyword rule over the GeoVeg
+  free-text format (documented in the step); the dormant provider makes no network
+  call. The manual observation path stores only what a person records with
+  provenance, and is never trusted silently. The score is byte-identical to step
+  7.6 by construction (the provider is dormant and the badge/confidence reason are
+  reporting-only).
+- Audit fix (2026-11-15, parent review): the tree keyword `vern` (alder) was a
+  substring of `hivern` (winter), so "obaga d'hivern" parsed as an Alnus stand.
+  Replaced with the grove form `verned` (matches `verneda`/`vernedes`) and added
+  two self-test assertions ("hivern" → None, "verneda de ribera" → broadleaf /
+  Alnus glutinosa). Provider remains dormant; no payload or score changed.
+- Next step: 7.8 (radar rain, XRAD or equivalent).
+
+### Step 7.8 — Radar rain (XRAD or equivalent)
+
+- **Goal:** close the spatial gap in the most heavily weighted trigger.
+- **Problem:** rain over 5–10 days is summed from an ~11 km grid cell (or
+  interpolated gauges). Two stands 500 m apart share the number on paper but not
+  in reality, and a single convective storm can miss the nearest gauge entirely.
+  Without a key there is no local rainfall at all.
+- **Work:** provider-abstracted `_radar_rain(cache, lat, lon)` writing a `radar`
+  block (`mm_24h/72h/7d`, pixel age, source); gauge-adjust and blend it into the
+  water-balance `P` series as an explicit, labelled blend; degrade to XEMA and
+  Open-Meteo when unavailable.
+- **Evidence:** radar-vs-gauge validation on known storm days, a per-zone rain
+  diff, and a no-key run that stays byte-identical to today.
+- **Risk:** no clean free Catalan radar API; imagery needs geo-referencing,
+  compositing, beam-blockage masking and gauge adjustment. Highest effort and
+  availability risk of the phase.
+- **Blocked if:** no geo-referenced radar source can be validated against gauges.
+
+**Result (2026-11-16):**
+- Status: **blocked** (no code or data changed).
+- Finding: the 4.2 blocker ("no XRAD product") has **evolved**. A free,
+  geo-referenced radar source now exists — **EUMETNET OPERA** composites via the
+  **MeteoGate Open Radar Data (ORD) API** (CC BY 4.0, anonymous access, no
+  whitelisting since 2026-05-20). But it cannot be consumed *and*
+  validated-against-gauges in one stdlib-only session, which is this step's
+  evidence bar.
+- Files: none changed.
+- Investigation (sources, all verified live 2026-11-16):
+  - `https://api.meteogate.eu/eu-eumetnet-weather-radar/` — landing page 200,
+    OpenAPI spec saved. Backup `https://radar-backup.meteogate.eu/api/` (current
+    cloud-provider incident).
+  - Composite products (platform `0-20010-0-OPERA`): `DBZH` (reflectivity, 1 km,
+    ODIM HDF5), `RATE` (rain rate mm/h, 2 km, ODIM), `ACRR` (**1-h accumulation
+    mm, 2 km, GeoTIFF**). Projection `+proj=laea +lat_0=55 +lon_0=10
+    +x_0=1950000 +y_0=-2100000`, grid 1900×2200 @ 2000 m.
+  - ACRR files are **open-access, uncompressed, tiled, float32 GeoTIFF**
+    (~2.7 MB/file) on `object-store.os-api.cci1.ecmwf.int/openradar-24h-backup/`
+    — a **24-hour rolling cache only** (so `mm_72h`/`mm_7d` need the archive,
+    status TBD). Inspected header: Compression=1, Tile 512×512, BitsPerSample=32.
+  - The EDR `/position` and `/locations` queries **do not sample composites at a
+    point** (HTTP 204 / metadata-centre PointSeries only) — a consumer must
+    download + decode tiles and project lat/lon → LAEA → pixel itself.
+  - Environment is **stdlib-only** (Python 3.14; `h5py`, `numpy`, `pyproj`,
+    `rasterio`, `scipy`, `PIL`, `tifffile` all missing), matching the app's
+    stated design.
+- Why blocked, not done: hand-rolling a TIFF tile reader + LAEA projection +
+  hourly-accumulation summing + gauge-adjustment, then validating it on a real
+  storm day, exceeds one 45-minute step and risks a silent pixel-mapping bug
+  that would inject wrong rainfall into scores (the "no invented values" rule).
+  The current 24-h window (2026-11-15/16) is dry over most of Catalonia, so no
+  meaningful radar-vs-gauge storm-day validation was possible today anyway.
+  Resolution is 2 km — finer than Open-Meteo's ~11 km, but still above the
+  "two stands 500 m apart" goal; Pyrenean beam blockage is unaddressed.
+- Unblock path (recorded for a future session): (1) decide the dependency
+  question (add `rasterio`/`tifffile`, or hand-roll the uncompressed-tiled-TIFF
+  reader + LAEA in stdlib and unit-test against a known pixel); (2) confirm
+  archive access for `mm_72h`/`mm_7d`; (3) pick a rainy period and validate ACRR
+  1-h/24-h mm against IDW-interpolated XEMA gauges; (4) then wire the
+  `_radar_rain` provider + `radar` block + labelled blend into
+  `blend_water_precip` / `compute_water_block` (app.py ~785–859) and re-run the
+  no-key byte-identical regression.
+- Notes / sources: no rainfall value, coordinate or score was changed or
+  invented. Full findings and probe artifacts are in
+  `/tmp/opencode/radar_7_8_investigation.md` (`ord_openapi.json`,
+  `ord_items_platform.json`, `acrr_full.json`, `acrr.tiff.head`, `ord_pos_*.json`).
+- Parent review (2026-11-16): the finding was durable-documented in the repo
+  (`README.md` "Radar rain (Phase 7.8) — blocked", `PROPOSAL.md` status line)
+  because `/tmp` artifacts are ephemeral. No code, data or score changed. The
+  blocker is accepted as external: the source exists, the app's stdlib-only
+  design and the 24-hour cache/storm-day requirement prevent the step's evidence
+  bar from being met in one session.
+- Next step: none — 7.8 is the last step of Phase 7. Phase 7 is otherwise
+  complete (7.1, 7.3–7.7 done; 7.2 and 7.8 blocked on external availability).
 
 ---
 

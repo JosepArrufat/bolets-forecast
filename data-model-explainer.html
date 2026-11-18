@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolets — how the map reads the forest</title>
+<meta name="description" content="A plain-language explanation of the data layers, gaps and modelling choices behind the Bolets mushroom forecast.">
+<style>
+  :root {
+    --paper: #f6f1ea;
+    --card: #fffaf4;
+    --ink: #241c14;
+    --muted: #5f5448;
+    --line: #ddd2c4;
+    --accent: #8f3a1c;
+    --accent-bright: #c9572f;
+    --good: #2f5d3a;
+    --warn: #7a5312;
+    --code: #efe6d9;
+    --measure: 68ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 1rem/1.65 system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .skip {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 16px;
+    border-radius: .35rem;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .skip:focus {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  a { color: var(--accent); text-underline-offset: .18em; }
+  a:hover { text-decoration-thickness: .12em; }
+
+  :focus-visible {
+    outline: 3px solid var(--accent-bright);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .wrap {
+    width: min(100% - 32px, 72rem);
+    margin-inline: auto;
+  }
+
+  header.hero {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    margin: 0 0 .75rem;
+    font-size: .8rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 650;
+  }
+
+  h1 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 0 0 1rem;
+    max-width: 20ch;
+    text-wrap: balance;
+  }
+
+  .lede {
+    max-width: var(--measure);
+    font-size: 1.15rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  main { padding-block: 48px 64px; }
+
+  section { margin-block: 48px; }
+
+  h2 {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -.01em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-size: 1.05rem;
+    line-height: 1.35;
+    margin: 0 0 .45rem;
+  }
+
+  p { max-width: var(--measure); margin: 0 0 1rem; }
+
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    padding: 16px 24px;
+    margin-top: 32px;
+    box-shadow: 0 1px 2px rgba(36, 28, 20, .06), 0 8px 20px -12px rgba(36, 28, 20, .18);
+  }
+  .toc h2 {
+    font-family: inherit;
+    font-size: .8rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .toc ol {
+    margin: 0;
+    padding-left: 16px;
+    columns: 2;
+    column-gap: 16px;
+  }
+  .toc li { margin-block: 4px; break-inside: avoid; }
+  @media (max-width: 40rem) { .toc ol { columns: 1; } }
+
+  .stack {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+    max-width: 46rem;
+  }
+  .stack li {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 16px;
+    align-items: baseline;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent-bright);
+    border-radius: .35rem;
+    box-shadow: 0 1px 2px rgba(36, 28, 20, .05);
+  }
+  .stack .qual {
+    font-size: .78rem;
+    font-weight: 650;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .table-scroll { overflow-x: auto; margin-top: 24px; border-radius: .5rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    border: 1px solid var(--line);
+    font-size: .92rem;
+    min-width: 44rem;
+    box-shadow: 0 1px 2px rgba(36, 28, 20, .05), 0 8px 20px -14px rgba(36, 28, 20, .16);
+  }
+  caption {
+    caption-side: bottom;
+    text-align: left;
+    color: var(--muted);
+    font-size: .85rem;
+    padding-top: 8px;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  thead th {
+    background: #efe6d9;
+    font-size: .78rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td strong { font-weight: 650; }
+
+  @media (max-width: 40rem) {
+    .table-scroll { overflow-x: visible; }
+    table { min-width: 0; }
+    caption { padding-inline: 12px; }
+    thead { display: none; }
+    tbody tr { display: block; border-bottom: 1px solid var(--line); }
+    tbody tr:last-child { border-bottom: 0; }
+    tbody td {
+      display: grid;
+      grid-template-columns: 8rem 1fr;
+      gap: 8px;
+      border-bottom: 0;
+      padding: 8px 12px;
+    }
+    tbody td::before {
+      content: attr(data-col);
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 650;
+    }
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    padding: 24px;
+    box-shadow: 0 1px 2px rgba(36, 28, 20, .06), 0 8px 20px -12px rgba(36, 28, 20, .18);
+  }
+  .card .tag {
+    display: inline-block;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: .5rem;
+  }
+  .card p { margin: 0 0 .7rem; font-size: .94rem; }
+  .card p:last-child { margin-bottom: 0; }
+  .card b {
+    display: block;
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .note {
+    border-left: 4px solid var(--accent-bright);
+    background: #fbf1e8;
+    padding: 16px 24px;
+    border-radius: 0 .35rem .35rem 0;
+    max-width: 52rem;
+    margin: 24px 0;
+  }
+  .note p { margin: 0; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .meter {
+    max-width: 46rem;
+    margin-top: 24px;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(36, 28, 20, .06), 0 8px 20px -12px rgba(36, 28, 20, .18);
+  }
+  .meter-row {
+    display: grid;
+    grid-template-columns: 9rem 1fr 4.5rem;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: .85rem;
+  }
+  .meter-row:last-child { border-bottom: 0; }
+  .bar {
+    height: .6rem;
+    background: var(--code);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+    background: var(--accent-bright);
+    border-radius: 999px;
+  }
+  .meter-row .val { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @media (max-width: 34rem) {
+    .meter-row { grid-template-columns: 7rem 1fr 3.5rem; font-size: .8rem; }
+  }
+
+  ul.plain { max-width: var(--measure); padding-left: 24px; }
+  ul.plain li { margin-block: .45rem; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 0 48px;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+  footer p { max-width: var(--measure); }
+
+  .swatch {
+    display: inline-block;
+    width: .7rem;
+    height: .7rem;
+    border-radius: 2px;
+    margin-right: .35rem;
+    vertical-align: baseline;
+  }
+  .s-good { background: var(--good); }
+  .s-warn { background: var(--warn); }
+  .s-bad  { background: var(--accent-bright); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Bolets · field notes</p>
+    <h1>How the map reads the forest</h1>
+    <p class="lede">Every score is a model, not a measurement. This page explains
+      which layers we actually observe, which we infer, where the gaps are, and
+      what we do about them. No numbers are invented to fill a blank.</p>
+
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ol>
+        <li><a href="#layers">What sits under a score</a></li>
+        <li><a href="#rain">Why rain is the hard part</a></li>
+        <li><a href="#soil">Soil, canopy and confidence</a></li>
+        <li><a href="#labels">The secrecy problem</a></li>
+        <li><a href="#gaps">The six open gaps</a></li>
+        <li><a href="#help">How you can help</a></li>
+        <li><a href="#rules">What we will not do</a></li>
+      </ol>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap">
+
+  <section aria-labelledby="layers-title">
+    <h2 id="layers-title">What sits under a score</h2>
+    <p>A zone score mixes layers with very different quality. Some are measured
+      at metre resolution, some are inferred from a national map, and some are a
+      documented assumption. We label them so you can judge the answer, and we
+      show a confidence label next to every zone.</p>
+
+    <ul class="stack">
+      <li><span class="qual">Measured</span><span><strong>Terrain and canopy.</strong> Altitude, slope, aspect, cold-air pooling and canopy cover from ICGC LiDAR at 5&nbsp;m and 1&nbsp;m. The most reliable inputs we have.</span></li>
+      <li><span class="qual">Modelled</span><span><strong>Weather.</strong> A forecast on an ~11&nbsp;km grid, corrected for the zone's altitude. Useful, but it is a model of the atmosphere, not a gauge in the stand.</span></li>
+      <li><span class="qual">Mapped</span><span><strong>Soil and habitat.</strong> Geology from 1:1,000,000 maps and forest type from CORINE at 100&nbsp;m. Right at comarca scale, blind below it.</span></li>
+      <li><span class="qual">Assumed</span><span><strong>Weights and rules.</strong> Rain 35%, temperature 25%, the habitat multipliers, the phenology gate. Chosen from documented field knowledge; not yet fitted to enough outcomes.</span></li>
+    </ul>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Layer inventory at the time of writing. “Answers” means what the layer can honestly resolve.</caption>
+        <thead>
+          <tr><th scope="col">Layer</th><th scope="col">Source</th><th scope="col">Resolution</th><th scope="col">Answers</th><th scope="col">Cannot answer</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-col="Layer"><strong>Weather</strong></td>
+            <td data-col="Source">Open-Meteo + optional Meteocat stations</td>
+            <td data-col="Resolution">~11 km grid; stations 1–10 km</td>
+            <td data-col="Answers">Was it wet and warm this week?</td>
+            <td data-col="Cannot answer">Did the storm hit this slope?</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Terrain</strong></td>
+            <td data-col="Source">ICGC LiDAR DEM</td>
+            <td data-col="Resolution">5 m</td>
+            <td data-col="Answers">Obaga or solana; steep or flat; cold-air pocket?</td>
+            <td data-col="Cannot answer">Local soil water</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Canopy</strong></td>
+            <td data-col="Source">ICGC LiDAR height model</td>
+            <td data-col="Resolution">1 m, 5×5 sample</td>
+            <td data-col="Answers">Closed or open stand; edge or interior</td>
+            <td data-col="Cannot answer">Which tree species; understory under a closed canopy</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Soil type</strong></td>
+            <td data-col="Source">IGME 1:1M</td>
+            <td data-col="Resolution">~1 km</td>
+            <td data-col="Answers">Calcareous vs siliceous at massís scale</td>
+            <td data-col="Cannot answer">A siliceous pocket 300 m wide</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Soil pH</strong></td>
+            <td data-col="Source">SoilGrids v2</td>
+            <td data-col="Resolution">250 m model</td>
+            <td data-col="Answers">A pH estimate</td>
+            <td data-col="Cannot answer">Precision; missing on about half the zones</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Habitat</strong></td>
+            <td data-col="Source">CORINE 2018</td>
+            <td data-col="Resolution">100 m</td>
+            <td data-col="Answers">Conifer / broadleaf / mixed</td>
+            <td data-col="Cannot answer">Scots pine vs black pine; young vs old growth</td>
+          </tr>
+          <tr>
+            <td data-col="Layer"><strong>Outcomes</strong></td>
+            <td data-col="Source">Field reports; GBIF + iNaturalist</td>
+            <td data-col="Resolution">1 km rounded; presence-only</td>
+            <td data-col="Answers">Did people find it there, then?</td>
+            <td data-col="Cannot answer">True absences; unbiased sampling</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="rain-title">
+    <h2 id="rain-title">Why rain is the hard part</h2>
+    <p>Rain is 35% of the weather score, the single heaviest trigger. The app asks
+      one question: how many millimetres fell in the last 5–10 days, depending on
+      the species, compared with what that species needs.</p>
+
+    <p>The number usually comes from one weather grid cell roughly 11&nbsp;km
+      across, or from a handful of official rain gauges interpolated between.
+      That is a wide brush. A convective autumn storm can drop 40&nbsp;mm on one
+      side of a massís and 5&nbsp;mm on the other, eight kilometres away. The
+      nearest gauge often sits in the valley, under-recording what falls on the
+      slope. Two stands 500&nbsp;m apart get the same rain on paper even when
+      their real totals differ.</p>
+
+    <div class="note">
+      <p><strong>It is not an error that grows with the number of days.</strong>
+        A longer window does not add spatial error by itself. The problem is that
+        the <em>whole</em> total is sampled at a coarse place. A small spatial
+        offset can decide whether a storm's contribution is in the window or
+        out of it, and that can flip a score.</p>
+    </div>
+
+    <h3>What we do about it</h3>
+    <ul class="plain">
+      <li><strong>Altitude correction.</strong> Temperature is corrected for the zone's height. Rain is not yet, which is an honest gap.</li>
+      <li><strong>Optional official stations.</strong> With a free Meteocat key, local XEMA observations replace the modelled rain and are blended into the water balance. The distance and age of the nearest station are shown.</li>
+      <li><strong>Soil water balance.</strong> Instead of only summing rain, we track rain minus evaporation over the season, so a wet week after a dry month is not treated the same as a wet week in an already wet month.</li>
+      <li><strong>Radar, planned.</strong> A radar composite would give areal rain rather than a point. There is no clean free Catalan radar API today, so this is a later, larger step.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="soil-title">
+    <h2 id="soil-title">Soil, canopy and confidence</h2>
+
+    <p><strong>Soil.</strong> The 1:1,000,000 geology map separates the limestone
+      Pyrenees from the siliceous zones. It cannot see a local pocket. About a
+      sixth of zones still land in a “mixed” class — our way of saying the map
+      does not know. The finer IGME MAGNA 50 (1:50,000) answers for 49 zones, and
+      the ICGC MSC25M 1:25,000 soil map for 7; the rest keep 1:1M with the reason
+      recorded.</p>
+
+    <p><strong>pH.</strong> SoilGrids gives a pH estimate at 250&nbsp;m. It is a
+      global model, slightly high for the Pyrenees, and it times out on many
+      requests. Today it is missing on 45 of 135 zones. We could retry and
+      persist it to reach 135/135, but completeness is not accuracy: a value from
+      a 250&nbsp;m model is still an estimate, and we prefer a labelled blank to a
+      confident wrong number.</p>
+
+    <p><strong>Canopy.</strong> LiDAR gives real canopy cover and height. It
+      cannot see undergrowth beneath a closed canopy, so we call our understory
+      value a proxy and show its sample coverage.</p>
+
+    <p><strong>Confidence.</strong> Every zone carries a confidence label built
+      from data presence, source resolution, station distance and age. It is
+      shown, never multiplied into the prediction. The curated part is derived
+      per zone from that evidence (0.62–0.80; 82 <em>alta</em> / 53
+      <em>medium</em>), so it ranks zones instead of repeating one value.</p>
+
+    <div class="meter" role="img" aria-label="Illustrative confidence weights: weather 20, XEMA 15, terrain 15, canopy 10, soil 15, forest 15, curation 10, field reports 10.">
+      <div class="meter-row"><span>Weather</span><span class="bar"><span style="width:100%"></span></span><span class="val">20</span></div>
+      <div class="meter-row"><span>XEMA (opt-in)</span><span class="bar"><span style="width:75%"></span></span><span class="val">15</span></div>
+      <div class="meter-row"><span>Terrain</span><span class="bar"><span style="width:75%"></span></span><span class="val">15</span></div>
+      <div class="meter-row"><span>Soil</span><span class="bar"><span style="width:75%"></span></span><span class="val">15</span></div>
+      <div class="meter-row"><span>Forest</span><span class="bar"><span style="width:75%"></span></span><span class="val">15</span></div>
+      <div class="meter-row"><span>Canopy</span><span class="bar"><span style="width:50%"></span></span><span class="val">10</span></div>
+      <div class="meter-row"><span>Curation</span><span class="bar"><span style="width:50%"></span></span><span class="val">10</span></div>
+      <div class="meter-row"><span>Field reports</span><span class="bar"><span style="width:50%"></span></span><span class="val">10</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="labels-title">
+    <h2 id="labels-title">The secrecy problem</h2>
+    <p>Improving the weights needs outcomes: where someone looked, and whether
+      they found the mushroom. Those labels are scarce for a social reason, not a
+      technical one. Foragers rarely publish a forest, sometimes name a comarca,
+      and almost never report a failed trip. A model tuned only on public
+      successes learns where people walk, not where mushrooms grow.</p>
+
+    <p>So we split the question in two.</p>
+    <div class="two-col">
+      <div class="card">
+        <p class="tag">Can check now</p>
+        <h3>Discrimination</h3>
+        <p>Using public occurrence records, we ask whether known sites score
+          higher than random points in Catalonia. This is real and already
+          published per species (AUC from about 0.32 to 0.75). It tells us the
+          model separates good from poor places. It cannot tell us the
+          probability of finding something.</p>
+      </div>
+      <div class="card">
+        <p class="tag">Needs your data</p>
+        <h3>Calibration</h3>
+        <p>Turning a score into “roughly how often does this work?” needs
+          found / not-found reports, including the empty trips. With zero reports
+          we publish zero and do not retrain. With enough private, rounded
+          reports we can fit and validate weights honestly.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <p>This is why the app asks for a 30-second report and rounds the location
+        to 1&nbsp;km. Your exact spot stays private; the pattern becomes evidence.
+        A failed trip is as valuable as a basket.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="gaps-title">
+    <h2 id="gaps-title">The six open gaps</h2>
+    <p>These are the data-model tasks we know about. Each one is a trade-off, not
+      a bug.</p>
+
+    <div class="cards">
+      <article class="card">
+        <p class="tag">01 · Rain</p>
+        <h3>The gauge gap</h3>
+        <p><b>Problem</b>Rain comes from an ~11 km cell or a valley gauge; storms are local.</p>
+        <p><b>Plan</b>Blend a radar composite once a usable source exists, adjusted with gauges. Until then, show distance and age, and keep the XEMA option visible.</p>
+      </article>
+
+      <article class="card">
+        <p class="tag">02 · Soil</p>
+        <h3>The 1:1M ceiling</h3>
+        <p><b>Problem</b>A siliceous pocket inside limestone is invisible, and “mixed” flattens the strongest habitat signal.</p>
+        <p><b>Plan</b>Query IGME MAGNA 50 (1:50,000) where the sheet exists, normalise its legend, and keep 1:1M with a recorded fallback where it does not. <em>Shipped 2026-11-15:</em> MAGNA 50 answers for 49 zones and MSC25M 1:25,000 for 7; the CHC3 1:25k habitat is recorded as a shadow block for 50 zones.</p>
+      </article>
+
+      <article class="card">
+        <p class="tag">03 · pH</p>
+        <h3>Missing pH</h3>
+        <p><b>Problem</b>SoilGrids times out on 61 of 135 zones and its 250 m model is biased high in the Pyrenees.</p>
+        <p><b>Plan</b>Retry and persist the requests to approach 135/135, label the source and resolution, and never treat completeness as accuracy.</p>
+      </article>
+
+      <article class="card">
+        <p class="tag">04 · Habitat</p>
+        <h3>The tree species gap</h3>
+        <p><b>Problem</b>CORINE knows “conifer”, not Scots pine; the intended 1:25k habitat map is offline, and GeoVeg has been down for a long time.</p>
+        <p><b>Plan</b>Keep retrying the official layers, prepare a dormant GeoVeg parser, and let verified manual field observations fill specific stands with a date and source.</p>
+      </article>
+
+      <article class="card">
+        <p class="tag">05 · Labels</p>
+        <h3>The secrecy gap</h3>
+        <p><b>Problem</b>Few public outcomes, and successes are over-reported; locations are secret by culture.</p>
+        <p><b>Plan</b>Private 1 km reports, a personal logbook, comarca-level signals, and backtests that borrow strength across species. No forced disclosure.</p>
+      </article>
+
+      <article class="card">
+        <p class="tag">06 · Confidence</p>
+        <h3>The flat label</h3>
+        <p><b>Problem</b>The curated confidence is the same on every zone, and several quality inputs are constants.</p>
+        <p><b>Plan</b>Derive confidence from evidence — sources present, resolution, pH, access, gate passed — so the label ranks zones and explains itself.</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="help-title">
+    <h2 id="help-title">How you can help</h2>
+    <ul class="plain">
+      <li><strong>Report the empty trips.</strong> “Four hours, nothing” is the label the model needs most.</li>
+      <li><strong>Keep the location coarse.</strong> The 1 km cell is enough to calibrate; your forest stays yours.</li>
+      <li><strong>Add a field note to a zone.</strong> Tree species, undergrowth, soil, water, a washed-out track. A dated observation with a source beats a guess from a national map.</li>
+      <li><strong>Say the comarca, not the spot.</strong> If you only want to share “rovellons in the Berguedà this week”, that still helps the regional signal.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="rules-title">
+    <h2 id="rules-title">What we will not do</h2>
+    <ul class="plain">
+      <li><strong>Invent a coordinate, a pH or a source.</strong> A missing value is shown as missing.</li>
+      <li><strong>Hide uncertainty behind one number.</strong> The score is broken into habitat, microclimate, weather, season and confidence.</li>
+      <li><strong>Publish your exact spot.</strong> Reports are rounded to 1 km; exact locations are private by design.</li>
+      <li><strong>Claim precision we do not have.</strong> A zone is a stand-level estimate, not a tree-by-tree answer.</li>
+      <li><strong>Pretend the model is calibrated.</strong> With no field reports, AUC and Brier are published as unavailable, not as zero or as a success.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Bolets is a free mushroom-hunting forecast for Catalonia. This page
+      describes the current data model after Phases 1–6; it is an explainer, not
+      a promise of accuracy. The score is a guide for where to look, never a
+      guarantee of finding, and never a substitute for identifying what you pick.</p>
+    <p>Status snapshot: 46 stations, 135 curated zones, 13 species, LiDAR terrain
+      and canopy on every zone, field reports still at zero.</p>
+  </div>
+</footer>
+</body>
+</html>

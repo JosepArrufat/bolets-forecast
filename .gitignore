@@ -3,6 +3,8 @@ __pycache__/
 geo_cache.json
 weather_cache.json
 terrain_cache.json
+water_cache.json
+route_cache.json
 reports.db
 reports.db-wal
 reports.db-shm

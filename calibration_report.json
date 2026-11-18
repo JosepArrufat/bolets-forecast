@@ -1,6 +1,7 @@
 {
-  "generated_at": "2026-11-10T11:00:17Z",
-  "date": "2026-11-10",
+  "version": 2,
+  "generated_at": "2026-11-15T16:05:14Z",
+  "date": "2026-11-15",
   "methodology": "Field reports (found/not-found vs score_at_time) → AUC/Brier/calibration curve on a held-out split. GBIF + iNaturalist occurrences (presence-only, deduped) vs random Catalonia background points → per-species AUC of the model's current score, each point scored by its nearest curated zone (≤ 20 km). No recalibration is applied — the numbers are descriptive/validation, to avoid overfitting a tiny sample.",
   "field_reports": {
     "n": 0,
@@ -13,88 +14,88 @@
   "occurrence_auc": {
     "rovelló": {
       "scientific_name": "Lactarius sanguifluus",
-      "auc": 0.653,
-      "n_presence": 55,
-      "n_occurrences_raw": 119,
+      "auc": 0.536,
+      "n_presence": 88,
+      "n_occurrences_raw": 125,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "cep": {
       "scientific_name": "Boletus edulis",
-      "auc": 0.668,
-      "n_presence": 55,
-      "n_occurrences_raw": 127,
+      "auc": 0.586,
+      "n_presence": 68,
+      "n_occurrences_raw": 135,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "fredolic": {
       "scientific_name": "Tricholoma terreum",
-      "auc": 0.533,
-      "n_presence": 56,
-      "n_occurrences_raw": 164,
+      "auc": 0.568,
+      "n_presence": 114,
+      "n_occurrences_raw": 171,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "rossinyol": {
       "scientific_name": "Cantharellus cibarius",
-      "auc": 0.599,
-      "n_presence": 20,
+      "auc": 0.532,
+      "n_presence": 33,
       "n_occurrences_raw": 67,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "trompeta-de-la-mort": {
       "scientific_name": "Craterellus cornucopioides",
-      "auc": 0.745,
-      "n_presence": 46,
-      "n_occurrences_raw": 103,
+      "auc": 0.648,
+      "n_presence": 75,
+      "n_occurrences_raw": 102,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "llenega-negra": {
       "scientific_name": "Hygrophorus olivaceoalbus",
-      "auc": 0.577,
-      "n_presence": 18,
+      "auc": 0.668,
+      "n_presence": 33,
       "n_occurrences_raw": 40,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "llenega-blanca": {
       "scientific_name": "Hygrophorus eburneus",
-      "auc": 0.514,
-      "n_presence": 36,
+      "auc": 0.422,
+      "n_presence": 54,
       "n_occurrences_raw": 78,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "camagroc": {
       "scientific_name": "Cantharellus lutescens",
-      "auc": 0.321,
-      "n_presence": 47,
+      "auc": 0.447,
+      "n_presence": 64,
       "n_occurrences_raw": 92,
       "n_background": 200,
       "gbif_status": "SYNONYM"
     },
     "ou-de-reig": {
       "scientific_name": "Amanita caesarea",
-      "auc": 0.664,
-      "n_presence": 58,
-      "n_occurrences_raw": 115,
-      "n_background": 200,
+      "auc": null,
+      "n_presence": 0,
+      "n_occurrences_raw": 114,
+      "n_background": 0,
       "gbif_status": "ACCEPTED"
     },
     "bolet-de-tinta": {
       "scientific_name": "Coprinus comatus",
-      "auc": 0.421,
-      "n_presence": 70,
-      "n_occurrences_raw": 190,
+      "auc": 0.419,
+      "n_presence": 107,
+      "n_occurrences_raw": 191,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     },
     "orella-de-llebre": {
       "scientific_name": "Otidea onotica",
-      "auc": 0.653,
-      "n_presence": 29,
+      "auc": 0.598,
+      "n_presence": 44,
       "n_occurrences_raw": 60,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
@@ -109,9 +110,73 @@
     },
     "picornell": {
       "scientific_name": "Macrolepiota procera",
-      "auc": 0.623,
-      "n_presence": 104,
-      "n_occurrences_raw": 228,
+      "auc": 0.654,
+      "n_presence": 149,
+      "n_occurrences_raw": 230,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "bolet-de-sant-jordi": {
+      "scientific_name": "Calocybe gambosa",
+      "auc": null,
+      "n_presence": 0,
+      "n_occurrences_raw": 35,
+      "n_background": 0,
+      "gbif_status": "ACCEPTED"
+    },
+    "cep-destiu": {
+      "scientific_name": "Boletus reticulatus",
+      "auc": null,
+      "n_presence": 0,
+      "n_occurrences_raw": 65,
+      "n_background": 0,
+      "gbif_status": "ACCEPTED"
+    },
+    "girgola": {
+      "scientific_name": "Pleurotus ostreatus",
+      "auc": null,
+      "n_presence": 0,
+      "n_occurrences_raw": 116,
+      "n_background": 0,
+      "gbif_status": "ACCEPTED"
+    },
+    "camperol": {
+      "scientific_name": "Agaricus campestris",
+      "auc": 0.6,
+      "n_presence": 76,
+      "n_occurrences_raw": 145,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "fredolic-gros": {
+      "scientific_name": "Tricholoma portentosum",
+      "auc": 0.721,
+      "n_presence": 64,
+      "n_occurrences_raw": 73,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "cama-sec": {
+      "scientific_name": "Marasmius oreades",
+      "auc": 0.516,
+      "n_presence": 121,
+      "n_occurrences_raw": 189,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "cep-negre": {
+      "scientific_name": "Boletus aereus",
+      "auc": 0.636,
+      "n_presence": 48,
+      "n_occurrences_raw": 78,
+      "n_background": 200,
+      "gbif_status": "ACCEPTED"
+    },
+    "molleric": {
+      "scientific_name": "Suillus luteus",
+      "auc": 0.64,
+      "n_presence": 61,
+      "n_occurrences_raw": 95,
       "n_background": 200,
       "gbif_status": "ACCEPTED"
     }
@@ -121,5 +186,89 @@
     "Occurrence AUC uses the model's current (seasonal, weather-based) score; historical occurrences cannot be scored with historical weather, so the discrimination is confounded by the present season.",
     "Both presence and background points are scored via their nearest zone, so the metric is at the model's zone resolution.",
     "The field-report sample is the only true binary calibration signal; until enough reports accumulate, no score recalibration is justified (avoid overfitting)."
-  ]
+  ],
+  "backtest_7_5": {
+    "version": 2,
+    "generated_at": "2026-11-15T16:07:28Z",
+    "n_pooled_rows": 3216,
+    "n_presence": 1199,
+    "n_background": 2017,
+    "background_method": "target-group background (background sampled from the pooled occurrence set of all species, excluding the focal species) with recorder-effort weighting w = 1 / (1 + neighbours within 5 km)",
+    "auc_baseline": 0.6037,
+    "factor_importances": {
+      "W": {
+        "auc_baseline": 0.6037,
+        "auc_permuted": 0.5956,
+        "drop": 0.0082
+      },
+      "H": {
+        "auc_baseline": 0.6037,
+        "auc_permuted": 0.5216,
+        "drop": 0.0822
+      },
+      "M": {
+        "auc_baseline": 0.6037,
+        "auc_permuted": 0.5999,
+        "drop": 0.0039
+      },
+      "P": {
+        "auc_baseline": 0.6037,
+        "auc_permuted": 0.6041,
+        "drop": -0.0003
+      }
+    },
+    "weight_refit": {
+      "method": "grid search over the five weather weights (±0.10, ±0.05 steps) maximising weighted AUC on a held-out train side; evaluated on the held-out test side with a bootstrap 95 % CI",
+      "holdout": {
+        "frac": 0.3,
+        "seed": 11,
+        "n_train": 2252,
+        "n_test": 964
+      },
+      "current_weights": {
+        "pluja": 0.35,
+        "temperatura": 0.25,
+        "vent": 0.2,
+        "altitud": 0.1,
+        "humitat": 0.1
+      },
+      "best_weights": {
+        "pluja": 0.25,
+        "temperatura": 0.25,
+        "vent": 0.3,
+        "altitud": 0.2,
+        "humitat": 0.0
+      },
+      "heldout_auc_current": 0.631,
+      "heldout_auc_refit": 0.6299,
+      "gain": -0.001,
+      "bootstrap_ci": [
+        -0.008,
+        0.0043
+      ],
+      "decision": "no_change",
+      "rationale": "no stable held-out gain over the hand weights — keep the hand weights (honest default: no change)."
+    },
+    "temporal_validation": {
+      "split_year": 2025,
+      "n_dated_occurrences": 2259,
+      "n_presence": 1190,
+      "n_background": 2010,
+      "n_presence_train": 759,
+      "n_presence_test": 431,
+      "n_background_train": 1232,
+      "n_background_test": 778,
+      "habitat_auc": 0.5551,
+      "habitat_auc_train": 0.5334,
+      "habitat_auc_test": 0.5929,
+      "transfer_recall_at_5pct_train_fpr": 0.0348,
+      "note": "time-invariant habitat signal (H × M × altitude) only, evaluated separately on the older (train) and newer (test) sides; W and P are current-day values and cannot be temporally split"
+    },
+    "caveats": [
+      "Presence-only data has no true absences; the AUC is rank discrimination against target-group background, not a calibrated probability.",
+      "Occurrences are scored with the model's *current* (seasonal, weather-based) forecast, so W and P cannot be temporally split — only the time-invariant habitat factors (H, M, altitude) are.",
+      "The weight refit isolates the five hand weights on the raw weather sub-scores; it does not include the Phase 4.3 drought/recharge modifier (which lives inside the stored W).",
+      "No score weights are changed unless the report decision is 'ship' with a stable held-out gain; the default is 'no_change'."
+    ]
+  }
 }

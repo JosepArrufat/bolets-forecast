@@ -81,6 +81,11 @@ def _now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+# A transient provider error is retried after this window; a genuine
+# "no coverage" answer is permanent. See `_negative_cache_usable`.
+CACHE_ERROR_RETRY_S = 24 * 3600
+
+
 _cache_write_lock = threading.Lock()
 
 
@@ -557,6 +562,386 @@ def _igme_litho(lat, lon):
     return "unknown", "unknown"
 
 
+# ── Step 7.4: IGME MAGNA 50 (1:50,000) lithology ─────────────────────────────
+#
+# The 1:1M lithology cannot resolve a few-hundred-metre siliceous pocket inside a
+# calcareous hillside, so `mixed` (the model's "I don't know") caps the strongest
+# habitat discriminator. The MAGNA 50 series ("Mapa Geológico de España 1:50.000")
+# maps the same signal at 1:50k. We query the "Litologías color" polygon layer and
+# normalise its verbose legend into calcareous / siliceous / mixed with a
+# *conservative* reviewed rule below: a class is promoted only when the MAGNA text
+# is unambiguous (pure carbonate/evaporite → calcareous; igneous/metamorphic →
+# siliceous). Detrital terms (sandstone, conglomerate, lutite, silt, clay, …) are
+# neutral on their own — a carbonate-cemented conglomerate is calcareous — so they
+# force "mixed" (fall back to 1:1M) rather than guessing. Unconsolidated / surficial
+# deposits (glacial, colluvium, dunes, landslides, piedmont) are also "mixed".
+
+MAGNA_URL = ("https://mapas.igme.es/gis/rest/services/Cartografia_Geologica/"
+             "IGME_MAGNA_50/MapServer/identify")
+MAGNA_LAYER = "visible:11"   # "Litologías color MAGNA 50" (polygon, field DLO)
+MAGNA_SOURCE = "IGME MAGNA 50 (1:50k) lithology"
+MAGNA_UA = "BoletsForecast/1.0 (soil enrichment; step 7.4)"
+
+# Two promotions are held at 1:1M until a field check. Both flip a 1:1M
+# calcareous unit to siliceous on the same "Liditas y alternancia de areniscas y
+# lutitas" member (sheet 255, Coll de Pal / Bagà). The MAGNA polygon and the
+# classification are reproducible at ±300 m, but the class change inverts the
+# soil multiplier (×6.67 for acid-loving species, ×0.15 for basic-loving ones),
+# so the evidence is recorded for review and the value is not promoted yet.
+MAGNA_REVIEW_HOLDS = {
+    "colldepal-cresta-alta": "calcareous→siliceous flip on the Liditas unit; field review pending",
+    "baga-obaga-pi": "calcareous→siliceous flip on the Liditas unit; field review pending",
+}
+
+_MAGNA_CALC_KW = [
+    "caliza", "calizas", "dolomía", "dolomías", "dolomíti", "marga", "margas",
+    "calcárea", "calcáreo", "calcarenita", "cretácic", "jurásic", "travertino",
+    "carbonato", "calcisiltita", "nodulosa", "calco", "evaporita", "evaporitas",
+    "yeso", "yesos", "margocalc", "calcirrudita",
+]
+_MAGNA_SIL_KW = [
+    "granito", "granitos", "granodiorita", "granodioritas", "leucogranito",
+    "monzogran", "esquisto", "esquistos", "pizarra", "pizarras", "gneis",
+    "cuarcita", "cuarcitas", "silíceo", "micaesquisto", "ortogneis", "paragneiss",
+    "filita", "tonalita", "migmatita", "riolita", "pórfido", "lidita", "liditas",
+    "porfiroide", "porfiroides", "ignimbrita", "piroclas", "gabro", "basalto",
+    "andesita", "toba", "cuarzo",
+]
+_MAGNA_DETRITAL_KW = [
+    "arenisca", "areniscas", "conglomerado", "conglomerados", "lutita", "lutitas",
+    "limolita", "limolitas", "limo", "limos", "arena", "arenas", "grava", "gravas",
+    "arcilla", "arcillas", "arcillosa", "arcillosas", "pelita", "pelitas",
+    "microconglomerado", "ritmita", "ritmitas",
+]
+_MAGNA_SURFICIAL_KW = [
+    "glaciar", "till", "morrena", "morrenas", "coluvión", "coluvion", "coluviones",
+    "canchal", "canchales", "deslizamiento", "duna", "dunas", "eólico", "eolico",
+    "avalancha", "aluvial", "pie de monte", "bloques", "vertiente", "conos de",
+    "alud", "desmantelamiento", "depósito", "deposito", "cantos", "clastos",
+]
+
+
+def _classify_magna(text):
+    """Normalise a MAGNA 50 lithology description to calcareous/siliceous/mixed.
+
+    Conservative: only unambiguous rock types promote. A detrital-only description
+    (sandstone/conglomerate/shale) is "mixed" because it does not say whether the
+    cement is carbonate or siliceous; a carbonate keyword alongside a detrital one
+    is also "mixed" (transitional facies). Surficial/transported deposits are
+    "mixed" (not bedrock). Returns "unknown" only for empty/NO DATA text.
+    """
+    if not text or text in ("?", "NO DATA"):
+        return "unknown"
+    t = text.lower()
+    if any(k in t for k in _MAGNA_SURFICIAL_KW):
+        return "mixed"
+    has_cal = any(k in t for k in _MAGNA_CALC_KW)
+    has_sil = any(k in t for k in _MAGNA_SIL_KW)
+    has_det = any(k in t for k in _MAGNA_DETRITAL_KW)
+    if has_sil and not has_cal:
+        return "siliceous"
+    if has_cal and not has_sil and not has_det:
+        return "calcareous"
+    return "mixed"
+
+
+def _igme_magna50(lat, lon):
+    """IGME MAGNA 50 lithology → (litho_text, hoja, classification).
+
+    Returns (None, None, "no coverage") when no sheet polygon answers at the point,
+    and (None, None, "error") when the request fails — so the caller can fall back
+    to 1:1M and record why.
+    """
+    x, y = _to_mercator(lat, lon)
+    url = (
+        f"{MAGNA_URL}?geometry={x:.2f},{y:.2f}&geometryType=esriGeometryPoint"
+        f"&layers={MAGNA_LAYER}&tolerance=5"
+        f"&mapExtent={x-3000:.2f},{y-3000:.2f},{x+3000:.2f},{y+3000:.2f}"
+        "&imageDisplay=500,500,96&returnGeometry=false&f=json"
+    )
+    time.sleep(0.1)  # be polite: one MAGNA probe at a time
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": MAGNA_UA})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            d = json.loads(r.read())
+        results = d.get("results", [])
+        if not results:
+            return None, None, "no coverage"
+        attrs = results[0].get("attributes", {})
+        text = attrs.get("descripción litológica", "")
+        hoja = attrs.get("nº de hoja", "")
+        if not text:
+            return None, None, "no coverage"
+        return text, hoja, _classify_magna(text)
+    except Exception:
+        return None, None, "error"
+
+
+def _magna_promotable(zone_id, magna):
+    """True only when MAGNA answered clearly and the zone is not on review hold."""
+    return (zone_id not in MAGNA_REVIEW_HOLDS
+            and magna.get("covered")
+            and magna.get("class") in ("calcareous", "siliceous"))
+
+
+def _negative_cache_usable(rec):
+    """Whether a cached provider answer may be reused.
+
+    Genuine "no coverage" is permanent. A transient "error" is retried after
+    CACHE_ERROR_RETRY_S instead of marking the point as uncovered forever.
+    """
+    values = (rec or {}).get("values") or {}
+    if values.get("covered") is not False or values.get("reason") != "error":
+        return True
+    retry_at = rec.get("retry_at")
+    return isinstance(retry_at, (int, float)) and time.time() < retry_at
+
+
+def _store_negative(entry, key, source, values, status):
+    rec = {"source": source, "timestamp": _now(), "values": values}
+    if status == "error":
+        rec["retry_at"] = time.time() + CACHE_ERROR_RETRY_S
+    entry[key] = rec
+
+
+def _magna50_sample(cache, lat, lon):
+    """Cached MAGNA 50 sample → dict {covered, dlo, hoja, class, reason}.
+
+    A "no coverage" answer is cached too (covered=False) so re-runs do not
+    re-query the 12 Pyrenean gaps on every run; a transient error is retried
+    after CACHE_ERROR_RETRY_S.
+    """
+    entry = cache.setdefault(cache_key(lat, lon), {})
+    rec = entry.get("magna50")
+    if (rec and rec.get("source") == MAGNA_SOURCE
+            and isinstance(rec.get("values"), dict)
+            and _negative_cache_usable(rec)):
+        # Re-classify from the stored legend text: a mapping-table fix must
+        # apply to already-sampled points without clearing the cache.
+        values = dict(rec["values"])
+        if values.get("dlo"):
+            values["class"] = _classify_magna(values["dlo"])
+        return values
+    text, hoja, cls = _igme_magna50(lat, lon)
+    values = {
+        "covered": text is not None,
+        "dlo": text,
+        "hoja": hoja,
+        "class": cls if text is not None else "mixed",
+        "reason": "ok" if text is not None else cls,
+    }
+    _store_negative(entry, "magna50", MAGNA_SOURCE, values, cls)
+    return values
+
+
+def _magna_fallback_reason(magna):
+    """Human-readable reason the 1:1M lithology was kept instead of MAGNA 50."""
+    if not magna:
+        return "MAGNA 50 not sampled"
+    if not magna.get("covered"):
+        return f"MAGNA 50 {magna.get('reason')} at this point"
+    return f"MAGNA 50 legend ambiguous/mixed ({magna.get('dlo', '')[:60]})"
+
+
+# ── Step 7.6: ICGC MSC25M 1:25,000 soil (WFS) ────────────────────────────────
+#
+# The intended 1:25k soil layer is the ICGC "Mapa de sòls de Catalunya 1:25.000
+# (MSC25M)", served as a WFS at the edafologia service. Each polygon carries the
+# soil unit (`tipus_sol`), its Soil-Taxonomy class (`soil_taxon`) and a
+# `descripcio` that names the parent material ("S'han format sobre calcàries…").
+# The parent material is what determines the calcareous/siliceous reaction the
+# score uses, so we classify it with the same conservative keyword rule as MAGNA
+# 50: a clear carbonate/evaporite parent → calcareous, a clear igneous/metamorphic
+# or siliceous-sedimentary parent → siliceous, a detrital/ambiguous parent →
+# "mixed" (keep the coarser fallback). Coverage is NOT Catalonia-wide yet — the
+# MSC25M is published by sheet and the mountain sheets are still missing — so a
+# no-coverage answer records "no coverage" and falls back exactly like 7.4.
+
+SOIL_1_25K_WFS = "https://geoserveis.icgc.cat/servei/catalunya/edafologia/wfs"
+SOIL_1_25K_LAYER = "icgc_sols:sols-25000"
+SOIL_1_25K_SOURCE = "ICGC MSC25M (1:25k) soil map"
+SOIL_1_25K_UA = "BoletsForecast/1.0 (soil 1:25k enrichment; step 7.6)"
+
+_MSC25_CALC_KW = [
+    "calcari", "calcàri", "calcària", "calcàries", "calcaris", "calcaria",
+    "calcaries", "dolomia", "dolomía", "dolomies", "dolomías", "marga",
+    "margues", "guix", "guixos", "evaporita", "carbonat", "creta", "cretaci",
+    "travertí", "traverti",
+]
+_MSC25_SIL_KW = [
+    "granit", "granits", "granito", "esquist", "esquistos", "pissarra",
+    "pissarres", "pizarra", "gneis", "quarsita", "quarsites", "cuarcita",
+    "sílice", "silici", "silicícol", "lidita", "pòrfir", "porfir", "basalt",
+    "andesita", "riolita", "tuf", "conglomerat silícic",
+]
+_MSC25_DETRITAL_KW = [
+    "sediments detrítics", "detrític", "detritic", "terrígens", "terrigen",
+    "al·luvial", "al·luvials", "al.luvial", "col·luvial", "col.luvial",
+    "col·luvió", "fluvial", "fluvià", "eòlic", "eolic", "duna", "dunes",
+    "glaciar", "till", "morrena", "torrencial", "pedregós", "pedregos",
+    "còdols", "codols", "graves", "sorres", "sorrenc", "llims", "argiles",
+]
+
+
+def _classify_msc25_parent(text):
+    """Classify an MSC25M parent-material description → calcareous/siliceous/mixed.
+
+    Conservative, mirroring `_classify_magna`: only an unambiguous bedrock parent
+    promotes. A detrital/transported parent ("sediments detrítics", "al·luvial",
+    …) is "mixed" because it does not say whether the clasts/cement are carbonate
+    or siliceous. Returns "unknown" for empty text.
+    """
+    if not text:
+        return "unknown"
+    t = text.lower()
+    if any(k in t for k in _MSC25_DETRITAL_KW):
+        return "mixed"
+    has_cal = any(k in t for k in _MSC25_CALC_KW)
+    has_sil = any(k in t for k in _MSC25_SIL_KW)
+    if has_sil and not has_cal:
+        return "siliceous"
+    if has_cal and not has_sil:
+        return "calcareous"
+    return "mixed"
+
+
+def _point_in_ring(x, y, ring):
+    """Ray-casting point-in-polygon for a closed ring of [x, y, ...] coords."""
+    inside = False
+    n = len(ring)
+    for i in range(n):
+        x1, y1 = ring[i][0], ring[i][1]
+        x2, y2 = ring[(i + 1) % n][0], ring[(i + 1) % n][1]
+        if (y1 > y) != (y2 > y):
+            xin = (x2 - x1) * (y - y1) / (y2 - y1) + x1
+            if x < xin:
+                inside = not inside
+    return inside
+
+
+def _point_in_geom(x, y, geom):
+    """True when (x, y) is inside a GeoJSON Polygon/MultiPolygon (holes honoured)."""
+    if not isinstance(geom, dict):
+        return False
+    gtype = geom.get("type")
+    coords = geom.get("coordinates")
+    if gtype == "Polygon" and coords:
+        if not _point_in_ring(x, y, coords[0]):
+            return False
+        return not any(_point_in_ring(x, y, hole) for hole in coords[1:])
+    if gtype == "MultiPolygon" and coords:
+        for poly in coords:
+            if poly and _point_in_ring(x, y, poly[0]) \
+                    and not any(_point_in_ring(x, y, hole) for hole in poly[1:]):
+                return True
+        return False
+    if gtype == "GeometryCollection":
+        return any(_point_in_geom(x, y, g) for g in geom.get("geometries", []))
+    return False
+
+
+def _msc25_wfs(lat, lon):
+    """ICGC MSC25M 1:25k soil polygon at a point → (values dict, status).
+
+    Returns a dict with `tipus_sol`, `soil_taxon`, `codi_cas`, `descripcio` and
+    the derived `class`, or `(None, status)` where status is "no coverage" (the
+    polygon layer does not answer here — the sheet has not been published yet) or
+    "error" (the request failed). Coordinates are converted to UTM 31N because
+    the WFS serves geometry in EPSG:25831 and rejects EPSG:4326 BBOX filters.
+
+    The WFS BBOX filter returns every polygon that *intersects* the box, in
+    server order, so taking the first feature is wrong near a boundary. The query
+    asks for a small set of candidates and keeps only the polygon that actually
+    contains the point (ray casting); no containing polygon means "no coverage".
+    """
+    x, y = _to_utm31(lat, lon)
+    d = 50  # metres; a point-containing polygon is returned if it intersects
+    url = (
+        f"{SOIL_1_25K_WFS}?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature"
+        f"&TYPENAME={SOIL_1_25K_LAYER}"
+        f"&BBOX={x-d},{y-d},{x+d},{y+d}"
+        "&OUTPUTFORMAT=application/json&MAXFEATURES=50"
+    )
+    time.sleep(0.1)  # be polite: one WFS probe at a time
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": SOIL_1_25K_UA})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            data = json.loads(r.read())
+    except Exception:
+        return None, "error"
+    for feat in data.get("features", []):
+        if not _point_in_geom(x, y, feat.get("geometry")):
+            continue
+        p = feat.get("properties", {})
+        desc = p.get("descripcio") or ""
+        values = {
+            "tipus_sol": p.get("tipus_sol"),
+            "soil_taxon": p.get("soil_taxon"),
+            "codi_cas": p.get("codi_cas"),
+            "descripcio": desc,
+            "class": _classify_msc25_parent(desc),
+        }
+        return values, "ok"
+    return None, "no coverage"
+
+
+def _msc25_sample(cache, lat, lon):
+    """Cached MSC25M sample → dict {covered, class, ...}."""
+    entry = cache.setdefault(cache_key(lat, lon), {})
+    rec = entry.get("soil_1_25k_wfs")
+    if (rec and rec.get("source") == SOIL_1_25K_SOURCE
+            and isinstance(rec.get("values"), dict)
+            and _negative_cache_usable(rec)):
+        # Re-classify from the stored parent-material text so a keyword fix
+        # applies without clearing the cache.
+        values = dict(rec["values"])
+        if values.get("descripcio"):
+            values["class"] = _classify_msc25_parent(values["descripcio"])
+        return values
+    values, status = _msc25_wfs(lat, lon)
+    if values is None:
+        # Cache the negative answer too, so a re-run never re-queries the many
+        # mountain gaps (an "error" is retried after CACHE_ERROR_RETRY_S).
+        neg = {"covered": False, "reason": status, "class": "unknown"}
+        _store_negative(entry, "soil_1_25k_wfs", SOIL_1_25K_SOURCE, neg, status)
+        return neg
+    values = dict(values)
+    values["covered"] = True
+    entry["soil_1_25k_wfs"] = {"source": SOIL_1_25K_SOURCE,
+                               "timestamp": _now(), "values": values}
+    return values
+
+
+def _to_utm31(lat, lon):
+    """WGS84 → UTM zone 31N (ETRS89/ETRS89-compatible transverse mercator).
+
+    Only used for the ICGC soil WFS BBOX (geometry is served in EPSG:25831);
+    good to well under a metre over Catalonia, which is far finer than the ~400 m
+    query box.
+    """
+    a = 6378137.0
+    f = 1 / 298.257223563
+    k0 = 0.9996
+    e2 = f * (2 - f)
+    ep2 = e2 / (1 - e2)
+    latr = math.radians(lat)
+    lonr = math.radians(lon)
+    lon0 = math.radians(3.0)
+    N = a / math.sqrt(1 - e2 * math.sin(latr) ** 2)
+    T = math.tan(latr) ** 2
+    C = ep2 * math.cos(latr) ** 2
+    A = math.cos(latr) * (lonr - lon0)
+    M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 ** 3 / 256) * latr
+             - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 ** 3 / 1024) * math.sin(2 * latr)
+             + (15 * e2 * e2 / 256 + 45 * e2 ** 3 / 1024) * math.sin(4 * latr)
+             - (35 * e2 ** 3 / 3072) * math.sin(6 * latr))
+    x = k0 * N * (A + (1 - T + C) * A ** 3 / 6
+                  + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * A ** 5 / 120) + 500000.0
+    y = k0 * (M + N * math.tan(latr) * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A ** 4 / 24
+              + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * A ** 6 / 720))
+    return x, y
+
+
 def _soilgrids_ph(lat, lon):
     """SoilGrids v2 pH (0–5 cm) mean, or None."""
     url = (
@@ -575,8 +960,18 @@ def _soilgrids_ph(lat, lon):
         return None
 
 
-def _corine(lat, lon):
-    """CORINE CLC 2018 forest class code, or 'unknown'."""
+def _corine(lat, lon, cache=None):
+    """CORINE CLC 2018 forest class code, or 'unknown'.
+
+    When `cache` is given, the result is cached under the `corine` key (the same
+    rounded-lat/lon scheme) so repeated enrichment runs and the self-test never
+    re-query the WMS for the same cell.
+    """
+    if cache is not None:
+        rec = get_sample(cache, lat, lon, "corine")
+        if rec:
+            return rec["values"].get("code", "unknown")
+
     delta = 0.03
     bbox = f"{lat-delta},{lon-delta},{lat+delta},{lon+delta}"
     url = (
@@ -587,6 +982,7 @@ def _corine(lat, lon):
         f"&CRS=EPSG:4326&BBOX={bbox}&WIDTH=100&HEIGHT=100&I=50&J=50"
         "&INFO_FORMAT=text/html"
     )
+    code = "unknown"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "BoletsForecast/1.0"})
         with urllib.request.urlopen(req, timeout=12) as r:
@@ -595,10 +991,13 @@ def _corine(lat, lon):
         for row in rows[1:]:
             cells = [c.strip() for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.DOTALL)]
             if len(cells) >= 3:
-                return cells[2]
+                code = cells[2]
+                break
     except Exception:
-        pass
-    return "unknown"
+        code = "unknown"
+    if cache is not None:
+        put_sample(cache, lat, lon, "corine", "CORINE CLC 2018 (WMS)", {"code": code})
+    return code
 
 
 # ── Enrichment providers ───────────────────────────────────────────────────────
@@ -624,35 +1023,390 @@ def _lidar_compute(lat, lon, zone, cache):
 
 
 def _soil_compute(lat, lon, zone, cache):
-    """Step 3.4: soil type (IGME lithology) + pH (SoilGrids). Texture pending."""
-    litho, soil_type = _igme_litho(lat, lon)
+    """Step 3.4 + 7.4 + 7.6: soil type + pH, finest available source first.
+
+    Preference order (each step only promotes an unambiguous class):
+      1. ICGC MSC25M 1:25k WFS (step 7.6) — the intended source; records the
+         soil unit, Soil-Taxonomy class and parent-material class. Coverage is
+         sheet-by-sheet, so most Pyrenean/interior zones get "no coverage" and
+         fall through unchanged.
+      2. IGME MAGNA 50 (1:50k) lithology (step 7.4).
+      3. IGME 1:1M lithology + SoilGrids v2 pH (step 3.4).
+
+    Returns (values, source): the source is resolution-specific so a fallback
+    sample is never misread as a finer layer. The step-3.4 `soil_1_25k` cache
+    entry is reused verbatim (its `ph`, even `null`, is the recorded SoilGrids
+    result) so a re-run only re-queries the finer layers and never re-storms the
+    slow SoilGrids service.
+    """
+    msc25 = _msc25_sample(cache, lat, lon)
+    legacy = get_sample(cache, lat, lon, "soil_1_25k")
+    leg_vals = legacy["values"] if legacy else {}
+    hold_reason = MAGNA_REVIEW_HOLDS.get(zone.get("id"))
+
+    # 1. MSC25M 1:25k: promote only an unambiguous calcareous/siliceous parent.
+    if msc25.get("covered") and msc25.get("class") in ("calcareous", "siliceous"):
+        values = {
+            "type": msc25["class"],
+            "texture": None,
+            "ph": leg_vals.get("ph") if legacy else None,
+            "litho_text": msc25.get("descripcio"),
+            "resolution": "1:25k",
+            "fallback_reason": None,
+            "soil_1_25k": {
+                "tipus_sol": msc25.get("tipus_sol"),
+                "soil_taxon": msc25.get("soil_taxon"),
+                "codi_cas": msc25.get("codi_cas"),
+                "class": msc25.get("class"),
+                "source": SOIL_1_25K_SOURCE,
+            },
+        }
+        return values, "ICGC MSC25M (1:25k) soil + SoilGrids v2 (pH)"
+
+    magna = _magna50_sample(cache, lat, lon)
+
+    # 2. MAGNA 50 (1:50k) — unchanged from step 7.4.
+    if _magna_promotable(zone.get("id"), magna):
+        values = {
+            "type": magna["class"],
+            "texture": None,
+            "ph": leg_vals.get("ph") if legacy else None,
+            "litho_text": magna.get("dlo"),
+            "resolution": "1:50k",
+            "magna_hoja": magna.get("hoja"),
+            "fallback_reason": None,
+        }
+        return values, "IGME MAGNA 50 (1:50k) lithology + SoilGrids v2 (pH)"
+
+    if legacy:
+        litho = leg_vals.get("litho_text", "unknown")
+        soil_type = leg_vals.get("type")
+        ph = leg_vals.get("ph")
+    else:
+        litho, soil_type = _igme_litho(lat, lon)
+        ph = None
+        if soil_type not in ("unknown",):
+            ph = _soilgrids_ph(lat, lon)
     if soil_type == "unknown":
         return None
-    ph = _soilgrids_ph(lat, lon)
-    return {
+    values = {
         "type": soil_type,
-        "texture": None,  # 1:25k soil-texture map unavailable (see note)
+        "texture": None,
         "ph": round(ph, 1) if ph is not None else None,
         "litho_text": litho,
+        "resolution": "1:1M",
+        "fallback_reason": (f"MAGNA 50 held for review: {hold_reason}"
+                            if hold_reason else _magna_fallback_reason(magna)),
+    }
+    if hold_reason:
+        # Keep the withheld proposal visible so a reviewer can decide without
+        # re-querying; the promoted value itself stays 1:1M.
+        values["magna_review"] = {
+            "class": magna.get("class"),
+            "litho_text": magna.get("dlo"),
+            "hoja": magna.get("hoja"),
+            "status": "held",
+        }
+    return values, "IGME 1:1M (litho) + SoilGrids v2 (pH)"
+
+
+# ── Step 7.6: CHC50 / CHC3 habitat at 1:25k (SITMUN WMS) ─────────────────────
+#
+# The intended habitat layer is the Cartografia dels hàbitats de Catalunya. The
+# UB "geoveg" CHC50 WMS has been down (README limitation #4); the version 3
+# cartography ("CHC3", 1:25k, 2019-2022) is the current successor and is served
+# for the Barcelona counties by the Diputació de Barcelona SITMUN WMS as layer
+# `SITXELL_MN340` ("Hàbitats -polígons- (CHC3 - 2022)"). It carries the full
+# CORINE list code and name (e.g. 42.5921+ "Boscos de pi roig (Pinus sylvestris),
+# calcícoles i xeròfils, dels Pirineus"), which resolves stand-level tree species
+# — the exact distinction CORINE CLC (100 m) cannot make. Coverage is the
+# Barcelona province only, so most zones fall back to CORINE unchanged.
+
+HABITAT_CHC3_WMS = "http://sitmun.diba.cat/wms/servlet/SITXELL"
+HABITAT_CHC3_LAYER = "SITXELL_MN340"
+HABITAT_CHC3_SOURCE = "DIBA SITMUN CHC3 (1:25k) habitat, 2019-2022"
+HABITAT_CHC3_UA = "BoletsForecast/1.0 (habitat 1:25k enrichment; step 7.6)"
+
+# CORINE list "grup" codes (first two digits of the CORINE-list code) → the
+# coarse forest group the score already uses, so a CHC3 answer can be checked
+# against the curated `forest.type` without changing the score (the shadow value
+# stays reporting-only).
+_CHC3_GROUP_TO_FOREST = {
+    "41": "broadleaf",   # Boscos caducifolis
+    "42": "conifer",     # Boscos aciculifolis
+    "43": "mixed",       # Boscos mixtos
+    "44": "broadleaf",   # boscos de ribera (riparian broadleaf)
+    "45": "broadleaf",   # boscos esclerofil·les (alzinar/sureda)
+}
+
+
+def _chc3_habitat(lat, lon):
+    """CHC3 1:25k habitat polygon at a point → (values dict, status).
+
+    Returns {cod_corine, corine_ca, cod_grup, grup_ca, tipus_ca, subtip_ca} or
+    (None, "no coverage" / "error"). Geometry is served in EPSG:25831, so the
+    query box is in UTM 31N.
+    """
+    x, y = _to_utm31(lat, lon)
+    d = 300  # ~300 m box centred on the centroid → the enclosing polygon
+    url = (
+        f"{HABITAT_CHC3_WMS}?service=WMS&version=1.3.0&request=GetFeatureInfo"
+        f"&layers={HABITAT_CHC3_LAYER}&query_layers={HABITAT_CHC3_LAYER}"
+        f"&CRS=EPSG:25831&BBOX={x-d},{y-d},{x+d},{y+d}"
+        "&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=text/html"
+    )
+    time.sleep(0.1)
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": HABITAT_CHC3_UA})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            html = r.read().decode("utf-8", "replace")
+    except Exception:
+        return None, "error"
+
+    rows = re.findall(r"<tr>(.*?)</tr>", html, re.DOTALL)
+    for row in rows[1:]:
+        cells = [re.sub(r"<[^>]+>", "", c).strip()
+                 for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row, re.DOTALL)]
+        if len(cells) > 27 and cells[0].isdigit():
+            # Column map (see SITMUN MN340 GetFeatureInfo): 3 COD_GRUP, 7 COD_TIPUS,
+            # 11 COD_SUBTIP, 15 COD_CORINE, 16 CORINE_CA, 8 TIPUS_CA, 12 SUBTIP_CA.
+            cod_corine = cells[15] if len(cells) > 15 else ""
+            corine_ca = cells[16] if len(cells) > 16 else ""
+            cod_grup = cells[3] if len(cells) > 3 else ""
+            return {
+                "cod_corine": cod_corine,
+                "corine_ca": corine_ca,
+                "cod_grup": cod_grup,
+                "grup_ca": cells[4] if len(cells) > 4 else "",
+                "tipus_ca": cells[8] if len(cells) > 8 else "",
+                "subtip_ca": cells[12] if len(cells) > 12 else "",
+                "cod_eunis": cells[24] if len(cells) > 24 else "",
+            }, "ok"
+    return None, "no coverage"
+
+
+def _chc3_sample(cache, lat, lon):
+    """Cached CHC3 habitat sample → {covered, ...}."""
+    entry = cache.setdefault(cache_key(lat, lon), {})
+    rec = entry.get("habitat_chc3")
+    if (rec and rec.get("source") == HABITAT_CHC3_SOURCE
+            and isinstance(rec.get("values"), dict)
+            and _negative_cache_usable(rec)):
+        return rec["values"]
+    values, status = _chc3_habitat(lat, lon)
+    if values is None:
+        neg = {"covered": False, "reason": status}
+        _store_negative(entry, "habitat_chc3", HABITAT_CHC3_SOURCE, neg, status)
+        return neg
+    values = dict(values)
+    values["covered"] = True
+    entry["habitat_chc3"] = {"source": HABITAT_CHC3_SOURCE,
+                             "timestamp": _now(), "values": values}
+    return values
+
+
+# ── Step 7.7: GeoVeg / SIVIM (dormant provider) ────────────────────────────────
+#
+# The YouTuber's key vegetation source is the UB/CREAF interactive map ("GeoVeg"
+# / SIVIM), which returns free-text vegetation polygons — e.g. "Pineda de pi roig
+# (Pinus sylvestris) calcícola i xeròfila" — resolving the stand-level tree
+# species and soil reaction that CORINE CLC (100 m) cannot. The host has been down
+# for the whole project (README limitation #4; step 7.6 recorded the ArcIMS
+# endpoint 161.116.68.143/…/UB_Geobotanica_habitats_fulls50m_1 timing out and
+# geoveg.creaf.cat no longer resolving). Rather than invent a value, step 7.7 adds
+# the provider **dormant**: `_geoveg` returns (None, "unavailable") and is never
+# called by the pipeline, `_parse_geoveg` normalises its free text with a reviewed
+# keyword table, and `_geoveg_shadow` diff-computes the parsed result against the
+# CORINE group the score uses. Wiring `_geoveg` into `_habitat_compute` is a
+# one-line change once the host returns; until then the score is byte-identical.
+
+GEOVEG_SOURCE = "GeoVeg / SIVIM (UB-CREAF) vegetation polygon (dormant)"
+GEOVEG_UA = "BoletsForecast/1.0 (habitat enrichment; step 7.7)"
+
+# Reviewed soil-reaction keywords. The GeoVeg text names the stand's ecology, so
+# "calcícola" (lime-loving) → calcareous and "acidòfil" (acid-loving) →
+# siliceous. Both present is "mixed"; neither is None (no invented reaction).
+_GEOVEG_CALC_KW = [
+    "calcícola", "calcicoles", "calcícoles", "calcària", "calcaries",
+    "calcàries", "calcari", "calcaris", "calcícol", "calcic", "calci",
+]
+_GEOVEG_SIL_KW = [
+    "acidòfil", "acidofil", "acidòfila", "acidòfiles", "acidofiles",
+    "silicícola", "silicicoles", "silicícoles", "silicícol", "silícic",
+]
+
+# Reviewed tree-species keywords → (forest group, canonical species). "roure" /
+# "quercus" resolve to the ambiguous "Quercus spp." (oaks are more than one
+# species — the step's documented ambiguity), never a single invented species.
+_GEOVEG_TREE_SPECIES = {
+    # conifer
+    "pi roig": ("conifer", "Pinus sylvestris"),
+    "pinus sylvestris": ("conifer", "Pinus sylvestris"),
+    "pi negre": ("conifer", "Pinus uncinata"),
+    "pinus uncinata": ("conifer", "Pinus uncinata"),
+    "pinassa": ("conifer", "Pinus nigra"),
+    "pinus nigra": ("conifer", "Pinus nigra"),
+    "pi blanc": ("conifer", "Pinus halepensis"),
+    "pinus halepensis": ("conifer", "Pinus halepensis"),
+    "avet": ("conifer", "Abies alba"),
+    "abies alba": ("conifer", "Abies alba"),
+    "avetosa": ("conifer", "Abies alba"),
+    "picea": ("conifer", "Picea abies"),
+    "pinus": ("conifer", "Pinus spp."),
+    # broadleaf
+    "faig": ("broadleaf", "Fagus sylvatica"),
+    "fagus sylvatica": ("broadleaf", "Fagus sylvatica"),
+    "fageda": ("broadleaf", "Fagus sylvatica"),
+    "roure": ("broadleaf", "Quercus spp."),
+    "quercus": ("broadleaf", "Quercus spp."),
+    "alzina": ("broadleaf", "Quercus ilex"),
+    "quercus ilex": ("broadleaf", "Quercus ilex"),
+    "sureda": ("broadleaf", "Quercus suber"),
+    "quercus suber": ("broadleaf", "Quercus suber"),
+    "castanyer": ("broadleaf", "Castanea sativa"),
+    "castanea sativa": ("broadleaf", "Castanea sativa"),
+    "bedoll": ("broadleaf", "Betula pendula"),
+    "betula": ("broadleaf", "Betula spp."),
+    "pollancre": ("broadleaf", "Populus spp."),
+    "freixe": ("broadleaf", "Fraxinus spp."),
+    # "verned" (not "vern") so the winter word "hivern" is not matched as alder.
+    "verned": ("broadleaf", "Alnus glutinosa"),
+    "alnus": ("broadleaf", "Alnus spp."),
+}
+
+
+def _geoveg(lat, lon):
+    """GeoVeg vegetation description at a point → (text, status). Dormant.
+
+    The UB geoveg host has been down and its exact query shape cannot be verified
+    offline, so this provider does not fabricate a request. Returns
+    (None, "unavailable"); the parser (`_parse_geoveg`) and shadow diff
+    (`_geoveg_shadow`) are the testable core and are exercised in the self-test.
+    """
+    return None, "unavailable"
+
+
+def _parse_geoveg(text):
+    """Normalise GeoVeg free-text vegetation → {soil_reaction, tree_species,
+    forest_group} or None.
+
+    A reviewed keyword rule, not a model: soil reaction from the stand's
+    "calcícola"/"acidòfil" ecology words; tree species from the reviewed keyword
+    table (ambiguous "roures" → "Quercus spp."); forest group from the matched
+    trees (one group → that group, more than one → "mixed"). Returns None when
+    nothing recognisable is present, so a manual/free-text note is never turned
+    into a confident value.
+    """
+    if not text:
+        return None
+    t = text.lower()
+    has_cal = any(k in t for k in _GEOVEG_CALC_KW)
+    has_sil = any(k in t for k in _GEOVEG_SIL_KW)
+    if has_sil and not has_cal:
+        soil_reaction = "siliceous"
+    elif has_cal and not has_sil:
+        soil_reaction = "calcareous"
+    elif has_cal and has_sil:
+        soil_reaction = "mixed"
+    else:
+        soil_reaction = None
+
+    species = []
+    groups = set()
+    for kw, (grp, sci) in _GEOVEG_TREE_SPECIES.items():
+        if kw in t:
+            groups.add(grp)
+            if sci not in species:
+                species.append(sci)
+    if len(groups) == 1:
+        forest_group = next(iter(groups))
+    elif len(groups) > 1:
+        forest_group = "mixed"
+    else:
+        forest_group = None
+
+    if soil_reaction is None and forest_group is None and not species:
+        return None
+    return {
+        "soil_reaction": soil_reaction,
+        "tree_species": species or None,
+        "forest_group": forest_group,
+    }
+
+
+def _corine_forest_group(code):
+    """Coarse tree group for a CORINE CLC 2018 code (311/312/313/324)."""
+    return {
+        "311": "broadleaf",
+        "312": "conifer",
+        "313": "mixed",
+    }.get(code)  # 324 → None: transitional shrub, no clear tree group
+
+
+def _geoveg_shadow(parsed, corine_code):
+    """Shadow-diff a parsed GeoVeg result against the CORINE group the score uses.
+
+    Returns None when there is nothing parsed to compare. The `matches_corine`
+    flag is the audit signal: it is `None` when either side has no clear tree
+    group, so a disagreement is never silently treated as agreement.
+    """
+    if not parsed:
+        return None
+    corine_group = _corine_forest_group(corine_code)
+    matches = None
+    if corine_group and parsed.get("forest_group"):
+        matches = parsed["forest_group"] == corine_group
+    return {
+        "soil_reaction": parsed.get("soil_reaction"),
+        "tree_species": parsed.get("tree_species"),
+        "forest_group": parsed.get("forest_group"),
+        "corine_group": corine_group,
+        "matches_corine": matches,
     }
 
 
 def _habitat_compute(lat, lon, zone, cache):
-    """Step 3.4: dominant tree group from CORINE CLC 2018 (fallback for CHC50)."""
-    code = _corine(lat, lon)
+    """Step 3.4 + 7.6: dominant tree group, CHC3 1:25k first, CORINE fallback.
+
+    When the CHC3 1:25k layer answers at the centroid, the habitat block records
+    `resolution: "1:25k"` and the finer CORINE-list code/name in a `chc3` shadow
+    block, while the score keeps using the coarse CORINE `dominant`/`corine_code`
+    (step 7.6 keeps the old value during a shadow period). Where CHC3 has no
+    coverage (outside the Barcelona province) the CORINE CLC 2018 fallback is
+    unchanged.
+    """
+    chc3 = _chc3_sample(cache, lat, lon)
+    code = _corine(lat, lon, cache)
     if code == "unknown":
         return None
-    return {
+    out = {
         "dominant": _CORINE_TREE_GROUP.get(code, "non-forest"),
         "corine_code": code,
     }
+    if chc3.get("covered") and chc3.get("cod_corine"):
+        out["resolution"] = "1:25k"
+        out["chc3"] = {
+            "cod_corine": chc3.get("cod_corine"),
+            "corine_ca": chc3.get("corine_ca"),
+            "cod_grup": chc3.get("cod_grup"),
+            "grup_ca": chc3.get("grup_ca"),
+            "tipus_ca": chc3.get("tipus_ca"),
+            "subtip_ca": chc3.get("subtip_ca"),
+            "cod_eunis": chc3.get("cod_eunis"),
+            "forest_group": _CHC3_GROUP_TO_FOREST.get(str(chc3.get("cod_corine", ""))[:2]),
+            "source": HABITAT_CHC3_SOURCE,
+        }
+        # Per-sample source: only a zone where CHC3 actually answered may claim
+        # the 1:25k layer (the confidence anchor parses this).
+        return out, HABITAT_CHC3_SOURCE
+    return out, "CORINE CLC 2018 (100 m)"
 
 
 PROVIDERS = {
     "dem":      {"step": "3.2", "source": DEM_SOURCE, "compute": _dem_compute},
     "lidar":    {"step": "3.3", "source": CANOPY_SOURCE,      "compute": _lidar_compute},
-    "soil_1_25k": {"step": "3.4", "source": "IGME 1:1M (litho) + SoilGrids v2 (pH)", "compute": _soil_compute},
-    "habitat":  {"step": "3.4", "source": "CORINE CLC 2018 (fallback for CHC50)", "compute": _habitat_compute},
+    "soil":     {"step": "7.6", "source": "ICGC MSC25M (1:25k) → IGME MAGNA 50 (1:50k) → IGME 1:1M fallback + SoilGrids v2 (pH)", "compute": _soil_compute},
+    "habitat":  {"step": "7.6", "source": "DIBA SITMUN CHC3 (1:25k) → CORINE CLC 2018 fallback", "compute": _habitat_compute},
 }
 
 
@@ -678,8 +1432,11 @@ def _sample(cache, lat, lon, provider_key):
     values = PROVIDERS[provider_key]["compute"](lat, lon, None, cache)
     if values is None:
         return None, None, None
-
+    # A provider may return (values, source) to record a per-sample source (the
+    # soil provider does — the 1:50k vs 1:1M source differs per sample).
     source = PROVIDERS[provider_key]["source"]
+    if isinstance(values, tuple) and len(values) == 2 and isinstance(values[1], str):
+        values, source = values
     record = put_sample(cache, lat, lon, provider_key, source, values)
     return values, record["source"], record["timestamp"]
 
@@ -697,8 +1454,32 @@ def enrich_zone(zone, cache):
 
     dem_vals, dem_src, dem_at = _sample(cache, lat, lon, "dem")
     lidar_vals, lidar_src, lidar_at = _sample(cache, lat, lon, "lidar")
-    soil_vals, soil_src, soil_at = _sample(cache, lat, lon, "soil_1_25k")
+    soil_vals, soil_src, soil_at = _sample(cache, lat, lon, "soil")
     hab_vals, hab_src, hab_at = _sample(cache, lat, lon, "habitat")
+
+    # The cached "soil" record is derived from the raw MAGNA/1:1M samples. When
+    # a MAGNA record exists, rebuild it from the current classifier and review
+    # holds so a mapping/hold change applies without clearing the cache.
+    entry = cache.get(cache_key(lat, lon)) or {}
+    if isinstance(entry.get("magna50"), dict) or isinstance(entry.get("soil_1_25k_wfs"), dict):
+        rebuilt, rebuilt_src = _soil_compute(lat, lon, zone, cache)
+        if rebuilt:
+            soil_vals, soil_src = rebuilt, rebuilt_src
+            legacy = get_sample(cache, lat, lon, "soil_1_25k")
+            soil_at = legacy["timestamp"] if legacy else soil_at
+    # Same for habitat: the step-3.4 cache entry predates CHC3, so always
+    # recompute the habitat block. `_habitat_compute` samples CHC3 via its own
+    # cache and merges the finer resolution/chc3 fields when it answers; the
+    # CORINE fallback part reuses the cached `corine` value.
+    rebuilt_hab = _habitat_compute(lat, lon, zone, cache)
+    if rebuilt_hab:
+        hab_vals, hab_src = rebuilt_hab
+        if hab_vals.get("chc3"):
+            chc3_rec = (cache.get(cache_key(lat, lon)) or {}).get("habitat_chc3") or {}
+            hab_at = chc3_rec.get("timestamp") if isinstance(chc3_rec, dict) else None
+        else:
+            corine_rec = get_sample(cache, lat, lon, "corine")
+            hab_at = corine_rec["timestamp"] if corine_rec else hab_at
 
     # Curated (Phase 2) terrain factors — real values, real source, no sampling.
     terrain_source = _terrain_source(zone)
@@ -755,7 +1536,7 @@ def enrich_zone(zone, cache):
     if not lidar_done:
         pending.append("3.3 — LiDAR: canopy cover %, height, undergrowth, edge density")
     if not (soil_done and hab_done):
-        pending.append("3.4 — soil (type/texture/pH) and habitat (dominant tree)")
+        pending.append("soil (MAGNA 50 / 1:1M type, pH) and habitat (dominant tree)")
 
     canopy = {
         "status": "complete" if lidar_done else "pending",  # step 3.3 (LiDAR)
@@ -780,12 +1561,13 @@ def enrich_zone(zone, cache):
         })
 
     soil = {
-        "status": "complete" if soil_done else "pending",  # step 3.4 (soil)
+        "status": "complete" if soil_done else "pending",  # step 7.4 (soil)
         "source": soil_src,
         "sampled_at": soil_at,
         "type": None,
         "texture": None,
         "ph": None,
+        "resolution": None,
     }
     if soil_done:
         soil.update({
@@ -793,9 +1575,21 @@ def enrich_zone(zone, cache):
             "texture": soil_vals.get("texture"),
             "ph": soil_vals.get("ph"),
             "litho_text": soil_vals.get("litho_text"),
-            "note": "type from IGME 1:1M lithology, pH from SoilGrids v2; "
-                    "1:25k soil-texture upgrade pending (source unavailable)",
+            "resolution": soil_vals.get("resolution"),
+            "magna_hoja": soil_vals.get("magna_hoja"),
+            "fallback_reason": soil_vals.get("fallback_reason"),
+            "note": ("type from ICGC MSC25M (1:25k) parent material, pH from SoilGrids v2"
+                     if soil_vals.get("resolution") == "1:25k" else
+                     "type from IGME MAGNA 50 (1:50k), pH from SoilGrids v2"
+                     if soil_vals.get("resolution") == "1:50k" else
+                     "type from IGME 1:1M lithology (MAGNA 50 fell back), pH from "
+                     "SoilGrids v2; 1:25k soil upgrade recorded where the MSC25M "
+                     "sheet covers the point (step 7.6)"),
         })
+        if soil_vals.get("soil_1_25k"):
+            soil["soil_1_25k"] = soil_vals["soil_1_25k"]
+        if soil_vals.get("magna_review"):
+            soil["magna_review"] = soil_vals["magna_review"]
 
     habitat = {
         "status": "complete" if hab_done else "pending",  # step 3.4 (habitat)
@@ -807,9 +1601,15 @@ def enrich_zone(zone, cache):
         habitat.update({
             "dominant": hab_vals["dominant"],
             "corine_code": hab_vals.get("corine_code"),
-            "note": "dominant tree group from CORINE CLC 2018 (fallback for "
-                    "the ICGC/CREAF CHC50 habitat map, source unavailable)",
+            "resolution": hab_vals.get("resolution"),
+            "note": ("dominant tree group from CORINE CLC 2018; CHC3 1:25k habitat "
+                     "recorded in `chc3` for the Barcelona province (step 7.6)"
+                     if hab_vals.get("resolution") == "1:25k" else
+                     "dominant tree group from CORINE CLC 2018 (fallback for "
+                     "the ICGC/CREAF CHC50 habitat map, source unavailable)"),
         })
+        if hab_vals.get("chc3"):
+            habitat["chc3"] = hab_vals["chc3"]
 
     enrichment = {
         "terrain": terrain,
@@ -866,7 +1666,7 @@ def enrich_all():
         "version": source.get("version", 1),
         "zones": out_zones,
         "_meta": {
-            "generator": "enrich_zones.py (Phase 3.4)",
+            "generator": "enrich_zones.py (Phase 7.6)",
             "generated_at": _now(),
             "source_zones": os.path.basename(ZONES_FILE),
             "stations": n_stations,
@@ -874,10 +1674,10 @@ def enrich_all():
             "providers": {
                 "dem":       {"step": "3.2", "status": "done" if n_dem else "pending"},
                 "lidar":     {"step": "3.3", "status": "done" if n_lidar else "pending"},
-                "soil_1_25k": {"step": "3.4", "status": "done" if n_soil else "pending",
-                               "note": "fallback IGME 1:1M + SoilGrids; 1:25k upgrade pending"},
-                "habitat":   {"step": "3.4", "status": "done" if n_habitat else "pending",
-                              "note": "fallback CORINE CLC 2018; CHC50 1:25k upgrade pending"},
+                "soil":      {"step": "7.6", "status": "done" if n_soil else "pending",
+                              "note": "ICGC MSC25M (1:25k) WFS where the sheet covers the point, else IGME MAGNA 50 (1:50k) → IGME 1:1M + SoilGrids"},
+                "habitat":   {"step": "7.6", "status": "done" if n_habitat else "pending",
+                              "note": "DIBA SITMUN CHC3 (1:25k) for the Barcelona province, else CORINE CLC 2018 fallback"},
             },
         },
     }
@@ -903,8 +1703,15 @@ def self_test():
     assert hit["values"] == {"tpi": -1.0}
     assert hit["timestamp"]  # non-empty ISO timestamp
     put_sample(cache, 42.1546, 1.9025, "lidar", "self-test", {"canopy_pct": 0.5})
-    put_sample(cache, 42.1546, 1.9025, "soil_1_25k", "self-test", {"type": "calcareous"})
+    put_sample(cache, 42.1546, 1.9025, "soil", "self-test",
+               {"type": "calcareous", "resolution": "1:50k",
+                "litho_text": "Calizas (Sec. Areny)", "fallback_reason": None})
     put_sample(cache, 42.1546, 1.9025, "habitat", "self-test", {"dominant": "conifer"})
+    # Offline CORINE + CHC3 seeds so `_habitat_compute` (always recomputed) and
+    # the enrichment shape stay deterministic in the self-test.
+    put_sample(cache, 42.1546, 1.9025, "corine", "self-test", {"code": "312"})
+    put_sample(cache, 42.1546, 1.9025, "habitat_chc3", "self-test",
+               {"covered": False, "reason": "no coverage"})
 
     # a different rounded cell does not collide
     assert get_sample(cache, 42.9999, 1.9999, "dem") is None
@@ -973,6 +1780,111 @@ def self_test():
     assert _CORINE_TREE_GROUP["312"] == "conifer (pi/avet)"
     assert _CORINE_TREE_GROUP["311"] == "broadleaf (faig/roure/alzina)"
 
+    # ── Step 7.4 MAGNA 50 legend normalisation (offline) ──────────────────────
+    assert _classify_magna("Calizas (Sec. Areny)") == "calcareous"
+    assert _classify_magna("Dolomías, calizas y margas") == "calcareous"
+    assert _classify_magna("Granodiorita") == "siliceous"
+    assert _classify_magna("Gneises ocelares (Núria y Carancá)") == "siliceous"
+    assert _classify_magna("Pizarras laminadas, cuarcitas, porfiroides y calizas") == "mixed"
+    # Detrital-only must NOT promote to siliceous (a carbonate-cemented
+    # conglomerate is calcareous) → "mixed" (fall back to 1:1M).
+    assert _classify_magna("Conglomerados masivos") == "mixed"
+    assert _classify_magna("Areniscas y arcillas rojas") == "mixed"
+    # A carbonate keyword alongside a detrital one is transitional → mixed.
+    assert _classify_magna("Calizas niveles de carbón areniscas y lutitas rojas") == "mixed"
+    # Surficial/transported deposits are not bedrock → mixed.
+    assert _classify_magna("Bloques y arenas (desmantelamiento glaciar)") == "mixed"
+    assert _classify_magna("DUNAS FIJADAS. Arenas y limos eólicas fijados") == "mixed"
+    assert _classify_magna("") == "unknown"
+    # Fallback reason text.
+    assert _magna_fallback_reason({"covered": False, "reason": "no coverage"}) \
+        .startswith("MAGNA 50 no coverage")
+    assert "ambiguous" in _magna_fallback_reason(
+        {"covered": True, "class": "mixed", "dlo": "Conglomerados masivos"})
+    # Review holds: an unambiguous MAGNA answer is still not promoted on hold.
+    assert _magna_promotable("synthetic-zone", {"covered": True, "class": "siliceous"})
+    assert not _magna_promotable("synthetic-zone", {"covered": True, "class": "mixed"})
+    assert not _magna_promotable("synthetic-zone", {"covered": False, "class": "siliceous"})
+    for held in MAGNA_REVIEW_HOLDS:
+        assert not _magna_promotable(held, {"covered": True, "class": "siliceous"}), held
+    assert set(MAGNA_REVIEW_HOLDS) == {"colldepal-cresta-alta", "baga-obaga-pi"}
+
+    # ── Step 7.6 MSC25M parent-material classification (offline) ───────────────
+    assert _classify_msc25_parent("S'han format sobre calcàries.") == "calcareous"
+    assert _classify_msc25_parent("S'han format sobre roques calcàries que afloren.") == "calcareous"
+    assert _classify_msc25_parent("S'han format sobre granits i esquistos.") == "siliceous"
+    # Detrital/transported parents are NOT promoted (unknown carbonate/siliceous).
+    assert _classify_msc25_parent("S'han format sobre sediments detrítics terrígens.") == "mixed"
+    assert _classify_msc25_parent("S'han format sobre dipòsits al·luvials.") == "mixed"
+    assert _classify_msc25_parent("") == "unknown"
+    # UTM 31N conversion: Rasos de Peguera (42.1546, 1.9025) → ~(409327, 4667524).
+    ux, uy = _to_utm31(42.1546, 1.9025)
+    assert abs(ux - 409327.44) < 1.0 and abs(uy - 4667524.38) < 1.0, (ux, uy)
+    # CHC3 group → forest group mapping.
+    assert _CHC3_GROUP_TO_FOREST["42"] == "conifer"
+    assert _CHC3_GROUP_TO_FOREST["41"] == "broadleaf"
+    assert _CHC3_GROUP_TO_FOREST["43"] == "mixed"
+
+    # ── Step 7.7 GeoVeg keyword parser + shadow diff (offline) ─────────────────
+    p = _parse_geoveg("Pineda de pi roig (Pinus sylvestris) calcícola i xeròfila")
+    assert p["soil_reaction"] == "calcareous", p
+    assert p["forest_group"] == "conifer", p
+    assert "Pinus sylvestris" in p["tree_species"], p
+    p2 = _parse_geoveg("Fageda acidòfila amb roures (Fagus sylvatica)")
+    assert p2["soil_reaction"] == "siliceous", p2
+    assert p2["forest_group"] == "broadleaf", p2
+    # "roures" is ambiguous → Quercus spp., never a single invented species.
+    assert "Quercus spp." in p2["tree_species"], p2
+    assert "Fagus sylvatica" in p2["tree_species"], p2
+    # One conifer + one broadleaf tree → mixed.
+    p3 = _parse_geoveg("Bosc mixt de pi roig i faig")
+    assert p3["forest_group"] == "mixed", p3
+    # No recognisable signal → None (never a confident value from free text).
+    assert _parse_geoveg("") is None
+    assert _parse_geoveg("herbassar de muntanya") is None
+    # Substring guard: "hivern" (winter) must not be read as "vern" (alder).
+    assert _parse_geoveg("obaga d'hivern") is None
+    # The alder grove form still matches.
+    p4 = _parse_geoveg("verneda de ribera")
+    assert p4["forest_group"] == "broadleaf", p4
+    assert "Alnus glutinosa" in p4["tree_species"], p4
+    # Shadow diff against CORINE.
+    sh = _geoveg_shadow(_parse_geoveg("Pineda de pi roig calcícola"), "312")
+    assert sh["matches_corine"] is True, sh
+    assert sh["corine_group"] == "conifer", sh
+    sh2 = _geoveg_shadow(_parse_geoveg("Pineda de pi roig calcícola"), "311")
+    assert sh2["matches_corine"] is False, sh2
+    # 324 has no clear tree group → match is None (never silently "agree").
+    sh3 = _geoveg_shadow(_parse_geoveg("Pineda de pi roig calcícola"), "324")
+    assert sh3["matches_corine"] is None, sh3
+    # Dormant provider records "unavailable", never a fabricated query.
+    text, status = _geoveg(42.0, 1.9)
+    assert text is None and status == "unavailable", (text, status)
+
+    # Point-in-polygon selection (the MSC25M WFS returns intersecting polygons,
+    # so the containing one must be chosen, not the first in server order).
+    square = {"type": "Polygon",
+              "coordinates": [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]]}
+    assert _point_in_geom(5, 5, square)
+    assert not _point_in_geom(15, 5, square)
+    holed = {"type": "Polygon",
+             "coordinates": [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+                             [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]]]}
+    assert not _point_in_geom(5, 5, holed)      # in the hole
+    assert _point_in_geom(7, 5, holed)
+    multi = {"type": "MultiPolygon", "coordinates": [square["coordinates"],
+                                                     [[[20, 0], [30, 0], [30, 10], [20, 10], [20, 0]]]]}
+    assert _point_in_geom(25, 5, multi) and not _point_in_geom(15, 5, multi)
+
+    # Cache policy: no-coverage is permanent, transient errors retry after a TTL.
+    assert _negative_cache_usable({"values": {"covered": False, "reason": "no coverage"}})
+    assert _negative_cache_usable({"values": {"covered": False, "reason": "error"},
+                                   "retry_at": time.time() + 60})
+    assert not _negative_cache_usable({"values": {"covered": False, "reason": "error"},
+                                       "retry_at": time.time() - 60})
+    assert not _negative_cache_usable({"values": {"covered": False, "reason": "error"}})
+
+
     # ── enrich_zone shape (offline, cached dem sample) ────────────────────────
     zone = {
         "id": "test", "name": "Test", "lat": 42.1546, "lon": 1.9025,
@@ -993,11 +1905,51 @@ def self_test():
     assert e["canopy"]["status"] == "pending"
     assert e["soil"]["type"] == "calcareous"       # partial cached sample
     assert e["soil"]["ph"] is None                 # pH not in the partial sample
-    assert e["habitat"]["dominant"] == "conifer"   # partial cached sample
+    assert e["soil"]["resolution"] == "1:50k"      # MAGNA 50 resolution recorded
+    assert e["soil"]["fallback_reason"] is None    # MAGNA answered clearly
+    assert e["habitat"]["dominant"] == "conifer (pi/avet)"  # CORINE 312 via cache
     assert t["source"] == "ICGC 5m LiDAR DEM (2021-2023)"
     assert len(e["pending_steps"]) == 2  # only 3.2 + 3.3 remain for this partial sample
 
-    print("self-test OK: cache round-trip + DEM + canopy + soil/habitat + enrichment shape")
+    # A review-held zone must not use a promoted 1:50k soil answer, even when the
+    # provider cache already holds one; the MAGNA proposal is kept for review.
+    held_lat, held_lon = 42.296, 1.8772
+    put_sample(cache, held_lat, held_lon, "dem", "self-test", {})
+    put_sample(cache, held_lat, held_lon, "lidar", "self-test", {})
+    put_sample(cache, held_lat, held_lon, "corine", "self-test", {"code": "312"})
+    put_sample(cache, held_lat, held_lon, "habitat_chc3", "self-test",
+               {"covered": False, "reason": "no coverage"})
+    put_sample(cache, held_lat, held_lon, "habitat", "self-test", {"dominant": "conifer"})
+    put_sample(cache, held_lat, held_lon, "soil", "self-test", {
+        "type": "siliceous", "resolution": "1:50k",
+        "litho_text": "Liditas y alternancia de areniscas y lutitas",
+        "magna_hoja": "255", "fallback_reason": None,
+    })
+    put_sample(cache, held_lat, held_lon, "soil_1_25k", "self-test", {
+        "type": "calcareous", "ph": 6.4,
+        "litho_text": "Dolomías, calizas y margas. Areniscas",
+    })
+    # Offline MSC25M negative so the held-zone rebuild never touches the WFS.
+    put_sample(cache, held_lat, held_lon, "soil_1_25k_wfs", SOIL_1_25K_SOURCE,
+               {"covered": False, "reason": "no coverage", "class": "unknown"})
+    cache[cache_key(held_lat, held_lon)]["magna50"] = {
+        "source": MAGNA_SOURCE, "timestamp": "self-test",
+        "values": {"covered": True, "dlo": "Liditas y alternancia de areniscas y lutitas",
+                   "hoja": "255", "class": "siliceous", "reason": "ok"},
+    }
+    held_out = enrich_zone({
+        "id": "baga-obaga-pi", "name": "Held", "lat": held_lat, "lon": held_lon,
+        "alt_m": 1400, "slope_deg": 20, "aspect_deg": 10, "aspect": "north",
+        "forest": {"type": "conifer", "dominant": "Pinus sylvestris"},
+        "sources": [],
+    }, cache)["enrichment"]["soil"]
+    assert held_out["resolution"] == "1:1M", held_out
+    assert held_out["type"] == "calcareous", held_out
+    assert "held for review" in held_out["fallback_reason"], held_out
+    assert held_out["magna_review"]["class"] == "siliceous", held_out
+    assert held_out["magna_review"]["status"] == "held", held_out
+
+    print("self-test OK: cache round-trip + DEM + canopy + soil/habitat + MAGNA hold + MSC25M + CHC3 + enrichment shape")
 
 
 def main():

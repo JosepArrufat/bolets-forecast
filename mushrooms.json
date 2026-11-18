@@ -2,9 +2,28 @@
   "meta": {
     "region": "Catalunya",
     "focus_comarques": [
+      "Alt Penedès",
+      "Alt Urgell",
+      "Alta Ribagorça",
+      "Baix Empordà",
       "Berguedà",
+      "Cerdanya",
+      "Garraf",
+      "Garrotxa",
+      "Gironès",
+      "La Selva",
+      "Maresme",
+      "Montseny",
+      "Montsià",
+      "Noguera",
+      "Osona",
+      "Pallars Sobirà",
+      "Priorat",
       "Ripollès",
-      "Cerdanya"
+      "Solsonès",
+      "Terra Alta",
+      "Val d'Aran",
+      "Vallès Oriental"
     ],
     "season": "autumn",
     "version": "1.0"
@@ -59,7 +78,14 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 5,
       "wind_sensitivity": "high",
-      "notes": "Prefers open pine forests (reforestation, no undergrowth). Solana (south-facing). Calcareous soil. Emerges well after rain + mild temps."
+      "notes": "Prefers open pine forests (reforestation, no undergrowth). Solana (south-facing). Calcareous soil. Emerges well after rain + mild temps.",
+      "lookalikes": [
+        {
+          "name": "Rovelló bord · Lactarius torminosus",
+          "danger": "toxic",
+          "differences": "Barret amb pèls llanosos i làtex blanc que no es torna vinós; sabor coent. El rovelló té làtex ataronjat-vermellós."
+        }
+      ]
     },
     {
       "id": "cep",
@@ -113,7 +139,19 @@
       "rain_window_days": 10,
       "dry_spell_before_days": 7,
       "wind_sensitivity": "medium",
-      "notes": "Likes sustained moisture. High altitude. Obaga (north-facing). Prefers acidic soils but found in both types."
+      "notes": "Likes sustained moisture. High altitude. Obaga (north-facing). Prefers acidic soils but found in both types.",
+      "lookalikes": [
+        {
+          "name": "Bolet amargant · Tylopilus felleus",
+          "danger": "inedible",
+          "differences": "Porus que rosagen i sabor molt amarg; reticle fosc al peu."
+        },
+        {
+          "name": "Mataparent · Rubroboletus satanas",
+          "danger": "toxic",
+          "differences": "Porus vermells, peu vermellós i olor desagradable."
+        }
+      ]
     },
     {
       "id": "fredolic",
@@ -162,7 +200,14 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 3,
       "wind_sensitivity": "low",
-      "notes": "Late autumn / early winter mushroom. Tolerates cold well. Often grows after rovellons season ends."
+      "notes": "Late autumn / early winter mushroom. Tolerates cold well. Often grows after rovellons season ends.",
+      "lookalikes": [
+        {
+          "name": "Fredolic tigrat · Tricholoma pardinum",
+          "danger": "toxic",
+          "differences": "Barret amb escates grises concèntriques, més robust i en grups. El fredolic té el barret fibril·lós gris ratolí i és més petit."
+        }
+      ]
     },
     {
       "id": "rossinyol",
@@ -213,7 +258,19 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 4,
       "wind_sensitivity": "medium",
-      "notes": "Broadleaf forests on siliceous/acid soils. Obaga. More of a summer-autumn mushroom."
+      "notes": "Broadleaf forests on siliceous/acid soils. Obaga. More of a summer-autumn mushroom.",
+      "lookalikes": [
+        {
+          "name": "Fals rossinyol · Hygrophoropsis aurantiaca",
+          "danger": "toxic",
+          "differences": "Làmines molt fines i bifurcades, color més ataronjat uniforme. El rossinyol té plecs, no làmines."
+        },
+        {
+          "name": "Bolet de soca · Omphalotus olearius",
+          "danger": "toxic",
+          "differences": "Creix en grups sobre soques i té làmines que brillen a la foscor."
+        }
+      ]
     },
     {
       "id": "trompeta-de-la-mort",
@@ -260,7 +317,14 @@
       "rain_window_days": 10,
       "dry_spell_before_days": 5,
       "wind_sensitivity": "low",
-      "notes": "Late autumn rains trigger. Grows in clusters in humid broadleaf forests. Easy to miss due to dark color."
+      "notes": "Late autumn rains trigger. Grows in clusters in humid broadleaf forests. Easy to miss due to dark color.",
+      "lookalikes": [
+        {
+          "name": "Trompeta cendrosa · Cantharellus cinereus",
+          "danger": "none",
+          "differences": "Comestible i molt semblant; la trompeta de la mort és gairebé negra i buida fins al peu, no només grisa."
+        }
+      ]
     },
     {
       "id": "llenega-negra",
@@ -307,7 +371,14 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 3,
       "wind_sensitivity": "low",
-      "notes": "High altitude conifer forests. Very cold tolerant. Slippery cap. Often found in fir/spruce forests of Ripollès and Cerdanya."
+      "notes": "High altitude conifer forests. Very cold tolerant. Slippery cap. Often found in fir/spruce forests of Ripollès and Cerdanya.",
+      "lookalikes": [
+        {
+          "name": "Altres Hygrophorus foscos",
+          "danger": "none",
+          "differences": "Cap de perillós a Catalunya; identificar-lo pel barret viscós gris-oliva i el peu llistat de blanc."
+        }
+      ]
     },
     {
       "id": "llenega-blanca",
@@ -352,7 +423,14 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 4,
       "wind_sensitivity": "medium",
-      "notes": "Calcareous broadleaf forests. Often found alongside other hygrophorus species."
+      "notes": "Calcareous broadleaf forests. Often found alongside other hygrophorus species.",
+      "lookalikes": [
+        {
+          "name": "Hygrophorus discoideus i afins",
+          "danger": "none",
+          "differences": "Cap de perillós; distingir-los pel color blanc marfil uniforme i la viscositat del barret."
+        }
+      ]
     },
     {
       "id": "camagroc",
@@ -399,7 +477,14 @@
       "rain_window_days": 8,
       "dry_spell_before_days": 4,
       "wind_sensitivity": "low",
-      "notes": "High altitude pine forests, acidic soil. Late autumn. Very common in Pyrenees. Appears after first cold rains."
+      "notes": "High altitude pine forests, acidic soil. Late autumn. Very common in Pyrenees. Appears after first cold rains.",
+      "lookalikes": [
+        {
+          "name": "Fals rossinyol · Hygrophoropsis aurantiaca",
+          "danger": "toxic",
+          "differences": "Làmines molt fines i bifurcades. El camagroc té plecs grocs decurrents, no làmines."
+        }
+      ]
     },
     {
       "id": "ou-de-reig",
@@ -449,7 +534,20 @@
       "rain_window_days": 5,
       "dry_spell_before_days": 3,
       "wind_sensitivity": "medium",
-      "notes": "Summer mushroom (June-September). Lower altitude. Warm temperatures needed. Very prized. Siliceous soils."
+      "season": "summer",
+      "notes": "Summer mushroom (June-September). Lower altitude. Warm temperatures needed. Very prized. Siliceous soils.",
+      "lookalikes": [
+        {
+          "name": "Reig bord · Amanita muscaria",
+          "danger": "toxic",
+          "differences": "Barret vermell viu amb taques blanques i làmines blanques. L'ou de reig té el barret taronja llis, làmines i peu grocs, i volva blanca en sac."
+        },
+        {
+          "name": "Farinera borda · Amanita phalloides",
+          "danger": "mortal",
+          "differences": "Barret verd-oliva, làmines i peu blancs amb anell; mai té làmines grogues."
+        }
+      ]
     },
     {
       "id": "bolet-de-tinta",
@@ -493,7 +591,14 @@
       "rain_window_days": 5,
       "dry_spell_before_days": 2,
       "wind_sensitivity": "low",
-      "notes": "Meadows, roadsides, disturbed soils. Not forest. Must be eaten very fresh - autodigests quickly."
+      "notes": "Meadows, roadsides, disturbed soils. Not forest. Must be eaten very fresh - autodigests quickly.",
+      "lookalikes": [
+        {
+          "name": "Bolet de tinta comú · Coprinopsis atramentaria",
+          "danger": "toxic",
+          "differences": "Molt semblant però tòxic amb alcohol. El bolet de tinta comestible té el barret més esfilagarsat i no grisa tan ràpid."
+        }
+      ]
     },
     {
       "id": "orella-de-llebre",
@@ -537,7 +642,14 @@
       "rain_window_days": 7,
       "dry_spell_before_days": 4,
       "wind_sensitivity": "low",
-      "notes": "Mixed and conifer forests on acid soils. Distinctly ear-shaped. Less common, requires good eye."
+      "notes": "Mixed and conifer forests on acid soils. Distinctly ear-shaped. Less common, requires good eye.",
+      "lookalikes": [
+        {
+          "name": "Altres Otidea i Peziza",
+          "danger": "none",
+          "differences": "Cap de perillós conegut; l'orella de llebre és una copa lateral esquinçada de color taronja-rosat."
+        }
+      ]
     },
     {
       "id": "murgola",
@@ -587,7 +699,19 @@
       "dry_spell_before_days": 3,
       "wind_sensitivity": "low",
       "season": "spring",
-      "notes": "SPRING mushroom (March-May). Very different season logic. Riverbanks, forest edges. Highly prized."
+      "notes": "SPRING mushroom (March-May). Very different season logic. Riverbanks, forest edges. Highly prized.",
+      "lookalikes": [
+        {
+          "name": "Murgola falsa · Gyromitra esculenta",
+          "danger": "mortal",
+          "differences": "Barret cerebral i irregular, no té els alvèols ni és buida per dins com la murgola."
+        },
+        {
+          "name": "Verpa bohemica",
+          "danger": "inedible",
+          "differences": "Barret enganxat només per la punta i plecs longitudinals, no alvèols."
+        }
+      ]
     },
     {
       "id": "picornell",
@@ -633,7 +757,496 @@
       "rain_window_days": 6,
       "dry_spell_before_days": 3,
       "wind_sensitivity": "low",
-      "notes": "Forest edges and clearings. Very tall. Hard to confuse. Good after rain in warm autumn."
+      "notes": "Forest edges and clearings. Very tall. Hard to confuse. Good after rain in warm autumn.",
+      "lookalikes": [
+        {
+          "name": "Palometa petita · Lepiota brunneoincarnata",
+          "danger": "mortal",
+          "differences": "Molt més petita i de barret escatós; mai collir barrets d'ombrel·la petits sense anell mòbil."
+        },
+        {
+          "name": "Palometa de làmines verdes · Chlorophyllum molybdites",
+          "danger": "toxic",
+          "differences": "Làmines que es tornen verd-gris i creix en gespa."
+        }
+      ]
+    },
+    {
+      "id": "bolet-de-sant-jordi",
+      "common_name": "Bolet de Sant Jordi",
+      "scientific_name": "Calocybe gambosa",
+      "aka": [
+        "Muserola",
+        "Perretxiko"
+      ],
+      "trees": [
+        "forest edges",
+        "mixed"
+      ],
+      "tree_keywords": [
+        "vores de bosc",
+        "prat",
+        "meadow",
+        "forest edge"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "calcareous",
+        "keyword": [
+          "calcícola",
+          "mesòfil"
+        ],
+        "ph": "basic"
+      },
+      "altitude_m": {
+        "min": 200,
+        "ideal_min": 400,
+        "ideal_max": 900,
+        "max": 1200
+      },
+      "slope_aspect": [
+        "any"
+      ],
+      "temperature_c": {
+        "min": 5,
+        "ideal_min": 10,
+        "ideal_max": 18,
+        "max": 22
+      },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "season": "spring",
+      "notes": "El bolet de primavera per excel·lència (Sant Jordi, abril-maig). Prats, clarianes i vores de bosc sobre sòl calcari. Olor farinosa.",
+      "lookalikes": [
+        {
+          "name": "Bolet de paller · Entoloma sinuatum",
+          "danger": "toxic",
+          "differences": "Làmines rosades a la maduresa i olor de farina; creix a la tardor. El de Sant Jordi té làmines blanques i olor farinosa agradable."
+        },
+        {
+          "name": "Farinera vernal · Amanita verna",
+          "danger": "mortal",
+          "differences": "Volva i làmines sempre blanques; mai té l'olor farinosa del de Sant Jordi."
+        }
+      ]
+    },
+    {
+      "id": "cep-destiu",
+      "common_name": "Cep d'estiu",
+      "scientific_name": "Boletus reticulatus",
+      "aka": [
+        "Sureny d'estiu",
+        "Cep reticulat"
+      ],
+      "trees": [
+        "Quercus spp.",
+        "Fagus sylvatica",
+        "Castanea sativa"
+      ],
+      "tree_keywords": [
+        "roure",
+        "faig",
+        "castanyer",
+        "oak",
+        "beech",
+        "chestnut"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "acidòfil",
+          "mesòfil"
+        ],
+        "ph": "neutral_to_acid"
+      },
+      "altitude_m": {
+        "min": 300,
+        "ideal_min": 500,
+        "ideal_max": 1100,
+        "max": 1400
+      },
+      "slope_aspect": [
+        "south",
+        "southeast"
+      ],
+      "temperature_c": {
+        "min": 12,
+        "ideal_min": 16,
+        "ideal_max": 26,
+        "max": 30
+      },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "medium",
+      "season": "summer",
+      "notes": "El cep que surt primer, de maig a agost, en rouredes i fagedes. Barret marró amb reticle ben marcat al peu.",
+      "lookalikes": [
+        {
+          "name": "Bolet amargant · Tylopilus felleus",
+          "danger": "inedible",
+          "differences": "Porus que rosagen i sabor molt amarg; reticle fosc al peu."
+        },
+        {
+          "name": "Mataparent · Rubroboletus satanas",
+          "danger": "toxic",
+          "differences": "Porus vermells, peu vermellós i olor desagradable."
+        }
+      ]
+    },
+    {
+      "id": "girgola",
+      "common_name": "Gírgola",
+      "scientific_name": "Pleurotus ostreatus",
+      "aka": [
+        "Gírgola d'ostra",
+        "Orellana"
+      ],
+      "trees": [
+        "Fagus sylvatica",
+        "Quercus spp.",
+        "Populus spp."
+      ],
+      "tree_keywords": [
+        "faig",
+        "roure",
+        "pollancre",
+        "fusta morta",
+        "beech",
+        "oak",
+        "poplar",
+        "dead wood"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "sapròfit"
+        ],
+        "ph": "neutral"
+      },
+      "altitude_m": {
+        "min": 0,
+        "ideal_min": 200,
+        "ideal_max": 900,
+        "max": 1400
+      },
+      "slope_aspect": [
+        "any"
+      ],
+      "temperature_c": {
+        "min": 3,
+        "ideal_min": 6,
+        "ideal_max": 16,
+        "max": 20
+      },
+      "rain_trigger_mm": 20,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 4,
+      "wind_sensitivity": "medium",
+      "season": "winter",
+      "notes": "Bolet d'hivern que creix en flotes sobre fusta morta de planifolis (faig, roure, pollancre). De novembre a març.",
+      "lookalikes": [
+        {
+          "name": "Bolet de soca · Omphalotus olearius",
+          "danger": "toxic",
+          "differences": "Làmines ataronjades que brillen a la foscor; creix en grups a la soca. La gírgola té làmines blanques decurrents."
+        },
+        {
+          "name": "Pleurocybella porrigens",
+          "danger": "toxic",
+          "differences": "Blanc pur, làmines molt espaiades, creix sobre fusta de conífera."
+        }
+      ]
+    },
+    {
+      "id": "camperol",
+      "common_name": "Camperol",
+      "scientific_name": "Agaricus campestris",
+      "aka": [
+        "Rubiol",
+        "Xampinyó de prat"
+      ],
+      "trees": [],
+      "tree_keywords": [
+        "grassland",
+        "meadow",
+        "prat",
+        "herba"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "ric en humus"
+        ],
+        "ph": "neutral"
+      },
+      "altitude_m": {
+        "min": 0,
+        "ideal_min": 200,
+        "ideal_max": 1000,
+        "max": 1500
+      },
+      "slope_aspect": [
+        "any"
+      ],
+      "temperature_c": {
+        "min": 8,
+        "ideal_min": 12,
+        "ideal_max": 22,
+        "max": 27
+      },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 5,
+      "dry_spell_before_days": 2,
+      "wind_sensitivity": "low",
+      "season": "autumn",
+      "notes": "El xampinyó dels prats. Prats i pastures, de tardor. Làmines rosades que enfosqueixen a xocolata.",
+      "lookalikes": [
+        {
+          "name": "Bola de neu pudent · Agaricus xanthodermus",
+          "danger": "toxic",
+          "differences": "Grogueja en ratllar la base del peu i fa olor de fenol o tinta."
+        },
+        {
+          "name": "Farinera vernal · Amanita verna",
+          "danger": "mortal",
+          "differences": "Volva i làmines sempre blanques; els camperols tenen làmines rosades que enfosqueixen."
+        }
+      ]
+    },
+    {
+      "id": "fredolic-gros",
+      "common_name": "Fredolic gros",
+      "scientific_name": "Tricholoma portentosum",
+      "aka": [
+        "Negret"
+      ],
+      "trees": [
+        "Pinus sylvestris",
+        "Pinus nigra"
+      ],
+      "tree_keywords": [
+        "pi roig",
+        "pi negre",
+        "scots pine",
+        "black pine"
+      ],
+      "prefers_scots_pine": true,
+      "soil": {
+        "type": "acidic",
+        "keyword": [
+          "acidòfil",
+          "silícic"
+        ],
+        "ph": "acid"
+      },
+      "altitude_m": {
+        "min": 600,
+        "ideal_min": 900,
+        "ideal_max": 1500,
+        "max": 1800
+      },
+      "slope_aspect": [
+        "north",
+        "northeast"
+      ],
+      "temperature_c": {
+        "min": 2,
+        "ideal_min": 5,
+        "ideal_max": 14,
+        "max": 17
+      },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "season": "autumn",
+      "notes": "Parent gran del fredolic, en pinedes sobre sòl àcid. Barret gris amb reflexes grocs. Tardor avançada.",
+      "lookalikes": [
+        {
+          "name": "Fredolic tigrat · Tricholoma pardinum",
+          "danger": "toxic",
+          "differences": "Barret amb escates grises concèntriques i més robust; olor farinosa. El fredolic gros és més esvelt i de barret fibril·lós."
+        }
+      ]
+    },
+    {
+      "id": "cama-sec",
+      "common_name": "Cama-sec",
+      "scientific_name": "Marasmius oreades",
+      "aka": [
+        "Cama-seca",
+        "Carretxa"
+      ],
+      "trees": [],
+      "tree_keywords": [
+        "grassland",
+        "meadow",
+        "prat",
+        "herba"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "ric en humus"
+        ],
+        "ph": "neutral"
+      },
+      "altitude_m": {
+        "min": 0,
+        "ideal_min": 200,
+        "ideal_max": 1100,
+        "max": 1600
+      },
+      "slope_aspect": [
+        "any"
+      ],
+      "temperature_c": {
+        "min": 10,
+        "ideal_min": 14,
+        "ideal_max": 22,
+        "max": 26
+      },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 6,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "season": "autumn",
+      "notes": "Bolet de prat que creix en rotllanes (anells de bruixa). Assecat conserva l'aroma. De maig a novembre, màxim a la tardor.",
+      "lookalikes": [
+        {
+          "name": "Clitocybe rivulosa",
+          "danger": "toxic",
+          "differences": "Blanc i amb làmines decurrents; el cama-sec té làmines espaiades i el barret bru clar."
+        }
+      ]
+    },
+    {
+      "id": "cep-negre",
+      "common_name": "Cep negre",
+      "scientific_name": "Boletus aereus",
+      "aka": [
+        "Sureny",
+        "Cep bronzejat"
+      ],
+      "trees": [
+        "Quercus spp.",
+        "Castanea sativa",
+        "Fagus sylvatica"
+      ],
+      "tree_keywords": [
+        "roure",
+        "castanyer",
+        "faig",
+        "oak",
+        "chestnut",
+        "beech"
+      ],
+      "prefers_scots_pine": false,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "acidòfil",
+          "mesòfil"
+        ],
+        "ph": "neutral_to_acid"
+      },
+      "altitude_m": {
+        "min": 200,
+        "ideal_min": 400,
+        "ideal_max": 1000,
+        "max": 1400
+      },
+      "slope_aspect": [
+        "south",
+        "southwest"
+      ],
+      "temperature_c": {
+        "min": 10,
+        "ideal_min": 15,
+        "ideal_max": 24,
+        "max": 28
+      },
+      "rain_trigger_mm": 25,
+      "rain_window_days": 10,
+      "dry_spell_before_days": 7,
+      "wind_sensitivity": "medium",
+      "season": "autumn",
+      "notes": "El cep més preuat del sud, en rouredes i castanyedes. Barret marró fosc gairebé negre. Tardor càlida.",
+      "lookalikes": [
+        {
+          "name": "Bolet amargant · Tylopilus felleus",
+          "danger": "inedible",
+          "differences": "Porus que rosagen i sabor molt amarg; reticle fosc."
+        },
+        {
+          "name": "Mataparent · Rubroboletus satanas",
+          "danger": "toxic",
+          "differences": "Porus vermells, peu vermellós i olor desagradable."
+        }
+      ]
+    },
+    {
+      "id": "molleric",
+      "common_name": "Molleric",
+      "scientific_name": "Suillus luteus",
+      "aka": [
+        "Pinatell",
+        "Bolet de greix"
+      ],
+      "trees": [
+        "Pinus sylvestris",
+        "Pinus nigra"
+      ],
+      "tree_keywords": [
+        "pi roig",
+        "pi negre",
+        "scots pine",
+        "black pine"
+      ],
+      "prefers_scots_pine": true,
+      "soil": {
+        "type": "both",
+        "keyword": [
+          "acidòfil"
+        ],
+        "ph": "neutral_to_acid"
+      },
+      "altitude_m": {
+        "min": 400,
+        "ideal_min": 700,
+        "ideal_max": 1500,
+        "max": 1800
+      },
+      "slope_aspect": [
+        "south",
+        "southeast"
+      ],
+      "temperature_c": {
+        "min": 4,
+        "ideal_min": 8,
+        "ideal_max": 18,
+        "max": 22
+      },
+      "rain_trigger_mm": 15,
+      "rain_window_days": 7,
+      "dry_spell_before_days": 3,
+      "wind_sensitivity": "low",
+      "season": "autumn",
+      "notes": "Bolet de pi de barret viscós, abundant a la tardor en pinedes. Cal treure la cutícula viscosa abans de cuinar-lo.",
+      "lookalikes": [
+        {
+          "name": "Molleric granellut · Suillus granulatus",
+          "danger": "none",
+          "differences": "Comestible i sense anell; no té cap bessó perillós. Retirar sempre la cutícula viscosa."
+        }
+      ]
     }
   ],
   "scoring_rules": {
@@ -664,6 +1277,70 @@
     }
   },
   "target_stations": {
+    "Alt Penedès": [
+      {
+        "name": "Puig de la Mola",
+        "lat": 41.3283,
+        "lon": 1.8358,
+        "alt_m": 324,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "Alt Urgell": [
+      {
+        "name": "Serra del Cadí",
+        "lat": 42.3037,
+        "lon": 1.6236,
+        "alt_m": 1569,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Serra_del_Cadí."
+      },
+      {
+        "name": "Serra d'Aubenç",
+        "lat": 42.082,
+        "lon": 1.2758,
+        "alt_m": 950,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Serra_d'Aubenç."
+      },
+      {
+        "name": "Serra de Turp",
+        "lat": 42.1331,
+        "lon": 1.3473,
+        "alt_m": 1034,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Serra_de_Turp."
+      }
+    ],
+    "Alta Ribagorça": [
+      {
+        "name": "Aigüestortes",
+        "lat": 42.5713,
+        "lon": 0.9477,
+        "alt_m": 2031,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312, 313); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl siliceous. Coordenada de partida: OSM/Nominatim place record."
+      },
+      {
+        "name": "Vall de Boí",
+        "lat": 42.486,
+        "lon": 0.7954,
+        "alt_m": 1696,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "Baix Empordà": [
+      {
+        "name": "Massís del Montgrí",
+        "lat": 42.0589,
+        "lon": 3.1536,
+        "alt_m": 117,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record (Puig Rodó)."
+      }
+    ],
     "Berguedà": [
       {
         "name": "Rasos de Peguera",
@@ -704,6 +1381,206 @@
         "alt_m": 1219,
         "radius_m": 2500,
         "notes": "Bosc de faig i pi. Accés per la pista de Gresolet. Calcari. Fredolic tardor."
+      }
+    ],
+    "Cerdanya": [
+      {
+        "name": "Tossa d'Alp – vessants",
+        "lat": 42.3065,
+        "lon": 1.9,
+        "alt_m": 1808,
+        "radius_m": 2500,
+        "notes": "Pi negre subalpí (CORINE 312) als vessants de la Tossa. Sòl mixt (calcari-silícic). Llenegra negra, camagroc, cep d'altura."
+      },
+      {
+        "name": "Bagà – carena",
+        "lat": 42.2825,
+        "lon": 1.8711,
+        "alt_m": 1392,
+        "radius_m": 2000,
+        "notes": "Fageda (CORINE 311) i pineda de pi roig (312) properes, bosc mixt (313). Calcari. Entre Berguedà i Cerdanya."
+      },
+      {
+        "name": "La Canya – Ripollès/Cerdanya",
+        "lat": 42.223,
+        "lon": 2.35,
+        "alt_m": 938,
+        "radius_m": 2500,
+        "notes": "Roureda (CORINE 311) i pineda de pi roig (312). Calcari. Zona poc transitada entre Ripollès i Garrotxa."
+      }
+    ],
+    "Garraf": [
+      {
+        "name": "Montgròs",
+        "lat": 41.2754,
+        "lon": 1.749,
+        "alt_m": 215,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "Garrotxa": [
+      {
+        "name": "Garrotxa – Santa Pau",
+        "lat": 42.168,
+        "lon": 2.58,
+        "alt_m": 735,
+        "radius_m": 2500,
+        "notes": "Pineda (CORINE 312) sobre la Zona Volcànica (basalt). IGME 1:1M no resol el basalt i reporta calcari. Rovelló i fredolic."
+      },
+      {
+        "name": "Garrotxa – Collsacabra",
+        "lat": 42.018,
+        "lon": 2.448,
+        "alt_m": 1028,
+        "radius_m": 3000,
+        "notes": "Fageda i roureda (CORINE 311) sobre calcari (IGME). Llenegra blanca, trompeta de la mort i rossinyol."
+      },
+      {
+        "name": "Garrotxa – Sales de Llierca",
+        "lat": 42.2,
+        "lon": 2.62,
+        "alt_m": 356,
+        "radius_m": 2000,
+        "notes": "Coníferes i roureda (CORINE 312/311) a la vall del Llierca. IGME: calcari; volcànic no resolt a 1:1M. Cep i rossinyol."
+      }
+    ],
+    "Gironès": [
+      {
+        "name": "Les Gavarres",
+        "lat": 41.9822,
+        "lon": 2.9074,
+        "alt_m": 474,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "La Selva": [
+      {
+        "name": "Les Guilleries",
+        "lat": 41.9077,
+        "lon": 2.5121,
+        "alt_m": 674,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl siliceous. Coordenada de partida: ca.wikipedia.org/wiki/Les_Guilleries."
+      }
+    ],
+    "Maresme": [
+      {
+        "name": "Montnegre",
+        "lat": 41.6459,
+        "lon": 2.6622,
+        "alt_m": 233,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record (Parc del Montnegre i el Corredor)."
+      }
+    ],
+    "Montseny": [
+      {
+        "name": "Montseny – Arbúcies",
+        "lat": 41.83,
+        "lon": 2.43,
+        "alt_m": 780,
+        "radius_m": 3000,
+        "notes": "Roureda i fageda sobre granit (CORINE 311). Silícic (IGME: granitoides). Cep, rossinyol, ou de reig. Parc Natural del Montseny."
+      },
+      {
+        "name": "Montseny – Santa Fe",
+        "lat": 41.795,
+        "lon": 2.422,
+        "alt_m": 929,
+        "radius_m": 2000,
+        "notes": "Fageda (CORINE 311) sobre granit i metasediments (IGME mixt/silícic). Cep i trompeta de la mort. Obaga nord del Turó de l'Home."
+      },
+      {
+        "name": "Montseny – El Brull",
+        "lat": 41.834,
+        "lon": 2.405,
+        "alt_m": 1058,
+        "radius_m": 2500,
+        "notes": "Roureda (CORINE 311) amb pi dispers sobre granit (silícic). Cep, rossinyol, camagroc a tardor."
+      }
+    ],
+    "Montsià": [
+      {
+        "name": "Serra del Montsià",
+        "lat": 40.6323,
+        "lon": 0.5324,
+        "alt_m": 389,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 313); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record (la Foradada)."
+      }
+    ],
+    "Noguera": [
+      {
+        "name": "Serra de la Figuera",
+        "lat": 41.8441,
+        "lon": 0.6768,
+        "alt_m": 551,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record."
+      },
+      {
+        "name": "Comiols",
+        "lat": 42.0365,
+        "lon": 1.0901,
+        "alt_m": 990,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "Osona": [
+      {
+        "name": "Collsacabra",
+        "lat": 41.982,
+        "lon": 2.3879,
+        "alt_m": 570,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Collsacabra."
+      },
+      {
+        "name": "Serra de Curull",
+        "lat": 42.1175,
+        "lon": 2.3677,
+        "alt_m": 1214,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
+      }
+    ],
+    "Pallars Sobirà": [
+      {
+        "name": "Pallars – Espot",
+        "lat": 42.596,
+        "lon": 1.095,
+        "alt_m": 1816,
+        "radius_m": 3000,
+        "notes": "Avet i pi negre (CORINE 312) al Parc Nacional d'Aigüestortes. Sòl mixt (IGME). Llenegra negra, camagroc, cep d'altura."
+      },
+      {
+        "name": "Pallars – Vall Fosca",
+        "lat": 42.56,
+        "lon": 1.1,
+        "alt_m": 1567,
+        "radius_m": 2500,
+        "notes": "Pineda subalpina (CORINE 312). Sòl mixt/silícic (IGME). Camagroc, fredolic, llenegra negra. Zona poc transitada."
+      },
+      {
+        "name": "Pallars – Sort",
+        "lat": 42.408,
+        "lon": 1.138,
+        "alt_m": 835,
+        "radius_m": 2500,
+        "notes": "Roureda i pineda (CORINE 311/312) sobre la Noguera Pallaresa. Calcari (IGME). Rovelló i fredolic de tardor."
+      }
+    ],
+    "Priorat": [
+      {
+        "name": "Serra de Montsant",
+        "lat": 41.2976,
+        "lon": 0.832,
+        "alt_m": 807,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 324); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
       }
     ],
     "Ripollès": [
@@ -748,108 +1625,68 @@
         "notes": "Roureda de fulla caduca (CORINE 311); pi roig minoritari. Silícic/mixt. Rossinyol, trompeta de la mort, cep."
       }
     ],
-    "Cerdanya": [
+    "Solsonès": [
       {
-        "name": "Tossa d'Alp – vessants",
-        "lat": 42.3065,
-        "lon": 1.9,
-        "alt_m": 1808,
+        "name": "Serra de Busa",
+        "lat": 42.0918,
+        "lon": 1.6146,
+        "alt_m": 1226,
         "radius_m": 2500,
-        "notes": "Pi negre subalpí (CORINE 312) als vessants de la Tossa. Sòl mixt (calcari-silícic). Llenegra negra, camagroc, cep d'altura."
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Serra_de_Busa."
       },
       {
-        "name": "Bagà – carena",
-        "lat": 42.2825,
-        "lon": 1.8711,
-        "alt_m": 1392,
-        "radius_m": 2000,
-        "notes": "Fageda (CORINE 311) i pineda de pi roig (312) properes, bosc mixt (313). Calcari. Entre Berguedà i Cerdanya."
-      },
-      {
-        "name": "La Canya – Ripollès/Cerdanya",
-        "lat": 42.223,
-        "lon": 2.35,
-        "alt_m": 938,
+        "name": "Serra de Pinós",
+        "lat": 41.8471,
+        "lon": 1.5378,
+        "alt_m": 806,
         "radius_m": 2500,
-        "notes": "Roureda (CORINE 311) i pineda de pi roig (312). Calcari. Zona poc transitada entre Ripollès i Garrotxa."
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: ca.wikipedia.org/wiki/Serra_de_Pinós."
       }
     ],
-    "Montseny": [
+    "Terra Alta": [
       {
-        "name": "Montseny – Arbúcies",
-        "lat": 41.83,
-        "lon": 2.43,
-        "alt_m": 780,
-        "radius_m": 3000,
-        "notes": "Roureda i fageda sobre granit (CORINE 311). Silícic (IGME: granitoides). Cep, rossinyol, ou de reig. Parc Natural del Montseny."
-      },
-      {
-        "name": "Montseny – Santa Fe",
-        "lat": 41.795,
-        "lon": 2.422,
-        "alt_m": 929,
-        "radius_m": 2000,
-        "notes": "Fageda (CORINE 311) sobre granit i metasediments (IGME mixt/silícic). Cep i trompeta de la mort. Obaga nord del Turó de l'Home."
-      },
-      {
-        "name": "Montseny – El Brull",
-        "lat": 41.834,
-        "lon": 2.405,
-        "alt_m": 1058,
+        "name": "Serra de Pàndols",
+        "lat": 41.0252,
+        "lon": 0.4628,
+        "alt_m": 646,
         "radius_m": 2500,
-        "notes": "Roureda (CORINE 311) amb pi dispers sobre granit (silícic). Cep, rossinyol, camagroc a tardor."
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl calcareous. Coordenada de partida: OSM/Nominatim place record."
+      },
+      {
+        "name": "Serra de Cavalls",
+        "lat": 41.0749,
+        "lon": 0.5104,
+        "alt_m": 350,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record."
       }
     ],
-    "Garrotxa": [
+    "Val d'Aran": [
       {
-        "name": "Garrotxa – Santa Pau",
-        "lat": 42.168,
-        "lon": 2.58,
-        "alt_m": 735,
+        "name": "Artiga de Lin",
+        "lat": 42.7232,
+        "lon": 0.7001,
+        "alt_m": 1820,
         "radius_m": 2500,
-        "notes": "Pineda (CORINE 312) sobre la Zona Volcànica (basalt). IGME 1:1M no resol el basalt i reporta calcari. Rovelló i fredolic."
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl mixed. Coordenada de partida: OSM/Nominatim place record."
       },
       {
-        "name": "Garrotxa – Collsacabra",
-        "lat": 42.018,
-        "lon": 2.448,
-        "alt_m": 1028,
-        "radius_m": 3000,
-        "notes": "Fageda i roureda (CORINE 311) sobre calcari (IGME). Llenegra blanca, trompeta de la mort i rossinyol."
-      },
-      {
-        "name": "Garrotxa – Sales de Llierca",
-        "lat": 42.2,
-        "lon": 2.62,
-        "alt_m": 356,
-        "radius_m": 2000,
-        "notes": "Coníferes i roureda (CORINE 312/311) a la vall del Llierca. IGME: calcari; volcànic no resolt a 1:1M. Cep i rossinyol."
+        "name": "Montardo",
+        "lat": 42.6423,
+        "lon": 0.8631,
+        "alt_m": 2056,
+        "radius_m": 2500,
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311, 312); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl siliceous. Coordenada de partida: OSM/Nominatim place record."
       }
     ],
-    "Pallars Sobirà": [
+    "Vallès Oriental": [
       {
-        "name": "Pallars – Espot",
-        "lat": 42.596,
-        "lon": 1.095,
-        "alt_m": 1816,
-        "radius_m": 3000,
-        "notes": "Avet i pi negre (CORINE 312) al Parc Nacional d'Aigüestortes. Sòl mixt (IGME). Llenegra negra, camagroc, cep d'altura."
-      },
-      {
-        "name": "Pallars – Vall Fosca",
-        "lat": 42.56,
-        "lon": 1.1,
-        "alt_m": 1567,
+        "name": "Serra de Sant Mateu",
+        "lat": 41.5245,
+        "lon": 2.3147,
+        "alt_m": 235,
         "radius_m": 2500,
-        "notes": "Pineda subalpina (CORINE 312). Sòl mixt/silícic (IGME). Camagroc, fredolic, llenegra negra. Zona poc transitada."
-      },
-      {
-        "name": "Pallars – Sort",
-        "lat": 42.408,
-        "lon": 1.138,
-        "alt_m": 835,
-        "radius_m": 2500,
-        "notes": "Roureda i pineda (CORINE 311/312) sobre la Noguera Pallaresa. Calcari (IGME). Rovelló i fredolic de tardor."
+        "notes": "Punt de bosc verificat CORINE CLC 2018 (311); altitud/aspecte/pendent de l'ICGC 5m DEM. Sòl siliceous. Coordenada de partida: OSM/Nominatim place record."
       }
     ]
   },

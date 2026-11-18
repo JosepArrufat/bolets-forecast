@@ -1,0 +1,672 @@
+{
+  "step": "7.1",
+  "generated_at": "2026-11-12T20:55:36Z",
+  "gate": {
+    "source": "CORINE CLC 2018 WMS (forest classes 311/312/313/324)",
+    "forest_codes": [
+      "311",
+      "312",
+      "313",
+      "324"
+    ]
+  },
+  "candidate_source": "ICGC 5m LiDAR DEM (2021-2023)",
+  "stations_checked": 46,
+  "passed": 46,
+  "candidates": 0,
+  "needs_review": 0,
+  "stations": [
+    {
+      "name": "Puig de la Mola",
+      "comarca": "Alt Penedès",
+      "old": {
+        "lat": 41.3283,
+        "lon": 1.8358,
+        "alt_m": 324
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra del Cadí",
+      "comarca": "Alt Urgell",
+      "old": {
+        "lat": 42.3037,
+        "lon": 1.6236,
+        "alt_m": 1569
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra d'Aubenç",
+      "comarca": "Alt Urgell",
+      "old": {
+        "lat": 42.082,
+        "lon": 1.2758,
+        "alt_m": 950
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Turp",
+      "comarca": "Alt Urgell",
+      "old": {
+        "lat": 42.1331,
+        "lon": 1.3473,
+        "alt_m": 1034
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Aigüestortes",
+      "comarca": "Alta Ribagorça",
+      "old": {
+        "lat": 42.5713,
+        "lon": 0.9477,
+        "alt_m": 2031
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Vall de Boí",
+      "comarca": "Alta Ribagorça",
+      "old": {
+        "lat": 42.486,
+        "lon": 0.7954,
+        "alt_m": 1696
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Massís del Montgrí",
+      "comarca": "Baix Empordà",
+      "old": {
+        "lat": 42.0589,
+        "lon": 3.1536,
+        "alt_m": 117
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Rasos de Peguera",
+      "comarca": "Berguedà",
+      "old": {
+        "lat": 42.1582,
+        "lon": 1.9074,
+        "alt_m": 1268
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Coll de Pal",
+      "comarca": "Berguedà",
+      "old": {
+        "lat": 42.2991,
+        "lon": 1.8885,
+        "alt_m": 1678
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Vallcebre",
+      "comarca": "Berguedà",
+      "old": {
+        "lat": 42.1463,
+        "lon": 1.9049,
+        "alt_m": 1134
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Sant Jaume de Frontanyà",
+      "comarca": "Berguedà",
+      "old": {
+        "lat": 42.1574,
+        "lon": 2.0044,
+        "alt_m": 940
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Fígols – Gresolet",
+      "comarca": "Berguedà",
+      "old": {
+        "lat": 42.175,
+        "lon": 1.935,
+        "alt_m": 1219
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Tossa d'Alp – vessants",
+      "comarca": "Cerdanya",
+      "old": {
+        "lat": 42.3065,
+        "lon": 1.9,
+        "alt_m": 1808
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Bagà – carena",
+      "comarca": "Cerdanya",
+      "old": {
+        "lat": 42.2825,
+        "lon": 1.8711,
+        "alt_m": 1392
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "La Canya – Ripollès/Cerdanya",
+      "comarca": "Cerdanya",
+      "old": {
+        "lat": 42.223,
+        "lon": 2.35,
+        "alt_m": 938
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montgròs",
+      "comarca": "Garraf",
+      "old": {
+        "lat": 41.2754,
+        "lon": 1.749,
+        "alt_m": 215
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 2,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Garrotxa – Santa Pau",
+      "comarca": "Garrotxa",
+      "old": {
+        "lat": 42.168,
+        "lon": 2.58,
+        "alt_m": 735
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Garrotxa – Collsacabra",
+      "comarca": "Garrotxa",
+      "old": {
+        "lat": 42.018,
+        "lon": 2.448,
+        "alt_m": 1028
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Garrotxa – Sales de Llierca",
+      "comarca": "Garrotxa",
+      "old": {
+        "lat": 42.2,
+        "lon": 2.62,
+        "alt_m": 356
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Les Gavarres",
+      "comarca": "Gironès",
+      "old": {
+        "lat": 41.9822,
+        "lon": 2.9074,
+        "alt_m": 474
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Les Guilleries",
+      "comarca": "La Selva",
+      "old": {
+        "lat": 41.9077,
+        "lon": 2.5121,
+        "alt_m": 674
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montnegre",
+      "comarca": "Maresme",
+      "old": {
+        "lat": 41.6459,
+        "lon": 2.6622,
+        "alt_m": 233
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montseny – Arbúcies",
+      "comarca": "Montseny",
+      "old": {
+        "lat": 41.83,
+        "lon": 2.43,
+        "alt_m": 780
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montseny – Santa Fe",
+      "comarca": "Montseny",
+      "old": {
+        "lat": 41.795,
+        "lon": 2.422,
+        "alt_m": 929
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montseny – El Brull",
+      "comarca": "Montseny",
+      "old": {
+        "lat": 41.834,
+        "lon": 2.405,
+        "alt_m": 1058
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra del Montsià",
+      "comarca": "Montsià",
+      "old": {
+        "lat": 40.6323,
+        "lon": 0.5324,
+        "alt_m": 389
+      },
+      "gate_code": "313",
+      "gate_label": "Mixed forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": false
+    },
+    {
+      "name": "Serra de la Figuera",
+      "comarca": "Noguera",
+      "old": {
+        "lat": 41.8441,
+        "lon": 0.6768,
+        "alt_m": 551
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Comiols",
+      "comarca": "Noguera",
+      "old": {
+        "lat": 42.0365,
+        "lon": 1.0901,
+        "alt_m": 990
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Collsacabra",
+      "comarca": "Osona",
+      "old": {
+        "lat": 41.982,
+        "lon": 2.3879,
+        "alt_m": 570
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Curull",
+      "comarca": "Osona",
+      "old": {
+        "lat": 42.1175,
+        "lon": 2.3677,
+        "alt_m": 1214
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Pallars – Espot",
+      "comarca": "Pallars Sobirà",
+      "old": {
+        "lat": 42.596,
+        "lon": 1.095,
+        "alt_m": 1816
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Pallars – Vall Fosca",
+      "comarca": "Pallars Sobirà",
+      "old": {
+        "lat": 42.56,
+        "lon": 1.1,
+        "alt_m": 1567
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Pallars – Sort",
+      "comarca": "Pallars Sobirà",
+      "old": {
+        "lat": 42.408,
+        "lon": 1.138,
+        "alt_m": 835
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": false
+    },
+    {
+      "name": "Serra de Montsant",
+      "comarca": "Priorat",
+      "old": {
+        "lat": 41.2976,
+        "lon": 0.832,
+        "alt_m": 807
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Ogassa – Ripoll",
+      "comarca": "Ripollès",
+      "old": {
+        "lat": 42.215,
+        "lon": 2.182,
+        "alt_m": 859
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Planoles",
+      "comarca": "Ripollès",
+      "old": {
+        "lat": 42.2705,
+        "lon": 2.0909,
+        "alt_m": 1458
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Queralbs – Núria",
+      "comarca": "Ripollès",
+      "old": {
+        "lat": 42.362,
+        "lon": 2.1811,
+        "alt_m": 1482
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Setcases",
+      "comarca": "Ripollès",
+      "old": {
+        "lat": 42.373,
+        "lon": 2.282,
+        "alt_m": 1832
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Camprodon",
+      "comarca": "Ripollès",
+      "old": {
+        "lat": 42.326,
+        "lon": 2.372,
+        "alt_m": 1184
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Busa",
+      "comarca": "Solsonès",
+      "old": {
+        "lat": 42.0918,
+        "lon": 1.6146,
+        "alt_m": 1226
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Pinós",
+      "comarca": "Solsonès",
+      "old": {
+        "lat": 41.8471,
+        "lon": 1.5378,
+        "alt_m": 806
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 2,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Pàndols",
+      "comarca": "Terra Alta",
+      "old": {
+        "lat": 41.0252,
+        "lon": 0.4628,
+        "alt_m": 646
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Cavalls",
+      "comarca": "Terra Alta",
+      "old": {
+        "lat": 41.0749,
+        "lon": 0.5104,
+        "alt_m": 350
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 2,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Artiga de Lin",
+      "comarca": "Val d'Aran",
+      "old": {
+        "lat": 42.7232,
+        "lon": 0.7001,
+        "alt_m": 1820
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Montardo",
+      "comarca": "Val d'Aran",
+      "old": {
+        "lat": 42.6423,
+        "lon": 0.8631,
+        "alt_m": 2056
+      },
+      "gate_code": "312",
+      "gate_label": "Coniferous forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    },
+    {
+      "name": "Serra de Sant Mateu",
+      "comarca": "Vallès Oriental",
+      "old": {
+        "lat": 41.5245,
+        "lon": 2.3147,
+        "alt_m": 235
+      },
+      "gate_code": "311",
+      "gate_label": "Broadleaf forest",
+      "zone_count": 3,
+      "status": "pass",
+      "forest_class_match": true
+    }
+  ],
+  "zone_gate": {
+    "source": "CORINE CLC 2018 WMS (forest classes 311/312/313/324)",
+    "checked": 135,
+    "forest": 135,
+    "mismatches": []
+  },
+  "changes": [],
+  "applied": false
+}
